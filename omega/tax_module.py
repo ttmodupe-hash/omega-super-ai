@@ -998,3 +998,4 @@ class InternationalTax:
             "contact_email": "info@bviita.vg",
             "last_updated": LAST_UPDATED,
         },
+    }
