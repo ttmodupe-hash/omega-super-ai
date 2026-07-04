@@ -998,3 +998,12 @@ class FinancialAdvisor:
             "red_flags": all_red_flags + [rf for rf in additional_red_flags
                                            if rf not in all_red_flags][:10],
             "yellow_flags": analysis["yellow_flags"],
+            "protections": protections,
+            "report_to": [
+                "SEC — SEC.gov/tcr (for securities fraud)",
+                "FTC — ReportFraud.FTC.gov (for general fraud)",
+                "FBI IC3 — IC3.gov (for internet crime)",
+                "Your state securities regulator — NASAA.org",
+                "Local law enforcement",
+            ],
+        })
