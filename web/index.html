@@ -16,13 +16,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/html.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/rust.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -34,572 +28,261 @@
           colors: {
             accent: '#00d4ff',
             'accent-dim': '#00a3cc',
-            'accent-glow': 'rgba(0, 212, 255, 0.15)',
-            surface: {
-              900: '#0a0e1a',
-              800: '#0f1629',
-              700: '#141d35',
-              600: '#1a2642',
-              500: '#223055',
-              400: '#2d3f66',
-            },
+            surface: { 900: '#0a0e1a', 800: '#0f1629', 700: '#141d35', 600: '#1a2642', 500: '#223055', 400: '#2d3f66' },
           },
           animation: {
-            'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
             'slide-up': 'slideUp 0.3s ease-out',
             'fade-in': 'fadeIn 0.2s ease-out',
-          }
-        }
-      }
-    }
+          },
+          keyframes: {
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+          },
+        },
+      },
+    };
   </script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #0a0e1a;
-      color: #e2e8f0;
-      overflow: hidden;
-      height: 100vh;
-    }
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 20px rgba(0,212,255,0.1); }
-      50% { box-shadow: 0 0 40px rgba(0,212,255,0.2); }
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
-    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-    .scrollbar-thin::-webkit-scrollbar-thumb { background: #1a2642; border-radius: 3px; }
-    .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #2d3f66; }
-    .message-content h1 { font-size: 1.25rem; font-weight: 700; margin: 0.75rem 0 0.5rem; }
-    .message-content h2 { font-size: 1.1rem; font-weight: 600; margin: 0.625rem 0 0.5rem; }
-    .message-content h3 { font-size: 1rem; font-weight: 600; margin: 0.5rem 0; }
-    .message-content p { margin: 0.5rem 0; line-height: 1.6; }
-    .message-content pre {
-      background: #0a0e1a;
-      border: 1px solid #1a2642;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 0.75rem 0;
-      overflow-x: auto;
-    }
-    .message-content code {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.875rem;
-    }
-    .message-content pre code { background: none; padding: 0; }
-    .message-content :not(pre) code {
-      background: rgba(0,212,255,0.1);
-      color: #00d4ff;
-      padding: 0.125rem 0.375rem;
-      border-radius: 4px;
-      font-size: 0.8rem;
-    }
-    .message-content ul, .message-content ol { margin: 0.5rem 0; padding-left: 1.5rem; }
-    .message-content li { margin: 0.25rem 0; }
-    .message-content blockquote {
-      border-left: 3px solid #00d4ff;
-      padding-left: 1rem;
-      margin: 0.75rem 0;
-      color: #94a3b8;
-    }
-    .message-content a { color: #00d4ff; text-decoration: none; }
-    .message-content a:hover { text-decoration: underline; }
-    .message-content table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 0.75rem 0;
-    }
-    .message-content th, .message-content td {
-      border: 1px solid #1a2642;
-      padding: 0.5rem;
-      text-align: left;
-    }
-    .message-content th { background: #141d35; font-weight: 600; }
-    .typing-dot {
-      width: 6px;
-      height: 6px;
-      background: #00d4ff;
-      border-radius: 50%;
-      display: inline-block;
-      animation: typingBounce 1.4s infinite ease-in-out both;
-    }
-    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    * { scrollbar-width: thin; scrollbar-color: #223055 #0a0e1a; }
+    *::-webkit-scrollbar { width: 6px; }
+    *::-webkit-scrollbar-track { background: #0a0e1a; }
+    *::-webkit-scrollbar-thumb { background: #223055; border-radius: 3px; }
+    html, body, #root { height: 100%; margin: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0e1a; color: #e2e8f0; overflow: hidden; }
+    .msg-appear { animation: slideUp 0.3s ease-out forwards; }
+    .code-block { position: relative; border-radius: 0.75rem; overflow: hidden; margin: 0.75rem 0; }
+    .code-block pre { margin: 0; padding: 1rem; overflow-x: auto; font-size: 0.875rem; line-height: 1.6; background: #0a0e1a; border: 1px solid #1a2642; }
+    .markdown-content table { border-collapse: collapse; width: 100%; margin: 0.75rem 0; font-size: 0.875rem; }
+    .markdown-content th, .markdown-content td { border: 1px solid #223055; padding: 0.5rem; text-align: left; }
+    .markdown-content th { background: rgba(0,212,255,0.08); font-weight: 600; }
+    .markdown-content blockquote { border-left: 3px solid #00d4ff; padding-left: 1rem; margin: 0.75rem 0; color: #94a3b8; }
+    .markdown-content a { color: #00d4ff; text-decoration: none; }
+    .typing-dot { width: 6px; height: 6px; background: #00d4ff; border-radius: 50%; display: inline-block; animation: typingBounce 1.4s infinite ease-in-out both; }
     .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-    @keyframes typingBounce {
-      0%, 80%, 100% { transform: scale(0); }
-      40% { transform: scale(1); }
-    }
+    @keyframes typingBounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    @keyframes cursorBlink { 50% { opacity: 0; } }
+    .typing-cursor::after { content: '|'; animation: cursorBlink 1s step-end infinite; color: #00d4ff; }
   </style>
 </head>
 <body>
   <div id="root"></div>
   <script type="text/babel">
     const { useState, useEffect, useRef, useCallback } = React;
-
-    // ── Configuration ────────────────────────────────────────────────────
     const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
-    const API_KEY_STORAGE_KEY = 'luqi_api_key';
-
-    // ── Command Definitions ──────────────────────────────────────────────
+    const API_KEY = 'luqi_api_key';
     const COMMANDS = {
-      research: { emoji: '🔬', name: 'Research', desc: 'Deep research with citations', prompt: 'You are a research analyst. Provide thorough, well-cited research on the topic. Include sources and methodology.' },
-      finance: { emoji: '💰', name: 'Finance', desc: 'Financial analysis & advice', prompt: 'You are a financial analyst. Provide data-driven insights. Always note this is not financial advice.' },
-      tax: { emoji: '📋', name: 'Tax', desc: 'Global tax guidance', prompt: 'You are a tax advisor with knowledge of global tax systems. Provide general guidance and always recommend consulting a local professional.' },
-      opps: { emoji: '🚀', name: 'Opportunities', desc: 'Find opportunities', prompt: 'You are an opportunity analyst. Identify trends, emerging markets, and actionable opportunities with specific steps.' },
-      scam: { emoji: '🛡️', name: 'Scam Guard', desc: 'Detect scams & fraud', prompt: 'You are a scam detection expert. Analyze for red flags, verify legitimacy, and provide safety recommendations.' },
-      think: { emoji: '🧠', name: 'Deep Think', desc: 'Critical thinking mode', prompt: 'You are a critical thinking coach. Analyze problems from multiple angles, challenge assumptions, and explore implications.' },
-      mentor: { emoji: '👨‍🏫', name: 'Mentor', desc: 'Learn any topic', prompt: 'You are a patient mentor. Break down complex topics into simple steps with examples and exercises.' },
-      expert: { emoji: '⚡', name: 'Expert', desc: 'Technical deep-dive', prompt: 'You are a domain expert. Provide authoritative, technical responses with best practices and edge cases.' },
-      learn: { emoji: '📚', name: 'Learn', desc: 'Structured learning', prompt: 'You are a curriculum designer. Create structured learning paths with clear objectives, examples, and practice exercises.' },
+      research: { emoji: '🔬', name: 'Research', desc: 'Deep research with citations', prompt: 'You are a research analyst. Provide thorough, well-cited research. Include sources and methodology.' },
+      finance: { emoji: '💰', name: 'Finance', desc: 'Financial analysis', prompt: 'You are a financial analyst. Provide data-driven insights. Note: not financial advice.' },
+      tax: { emoji: '📋', name: 'Tax', desc: 'Global tax guidance', prompt: 'You are a tax advisor with global knowledge. Provide general guidance. Recommend consulting a local professional.' },
+      opps: { emoji: '🚀', name: 'Opportunities', desc: 'Find opportunities', prompt: 'You are an opportunity analyst. Identify trends, emerging markets, and actionable opportunities.' },
+      scam: { emoji: '🛡️', name: 'Scam Guard', desc: 'Detect scams', prompt: 'You are a scam detection expert. Analyze for red flags and provide safety recommendations.' },
+      think: { emoji: '🧠', name: 'Deep Think', desc: 'Critical thinking', prompt: 'You are a critical thinking coach. Analyze from multiple angles and challenge assumptions.' },
+      mentor: { emoji: '👨‍🏫', name: 'Mentor', desc: 'Learn anything', prompt: 'You are a patient mentor. Break down topics into simple steps with examples.' },
+      expert: { emoji: '⚡', name: 'Expert', desc: 'Technical deep-dive', prompt: 'You are a domain expert. Provide authoritative, technical responses.' },
+      learn: { emoji: '📚', name: 'Learn', desc: 'Structured learning', prompt: 'You are a curriculum designer. Create structured learning paths.' },
     };
-
-    // ── Icons (inline SVG) ───────────────────────────────────────────────
-    const Icons = {
-      send: () => React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('line', { x1: 22, y1: 2, x2: 11, y2: 13 }), React.createElement('polygon', { points: '22 2 15 22 11 13 2 9 22 2' })),
-      mic: () => React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('path', { d: 'M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z' }), React.createElement('path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' }), React.createElement('line', { x1: 12, y1: 19, x2: 12, y2: 22 }), React.createElement('line', { x1: 8, y1: 22, x2: 16, y2: 22 })),
-      micOff: () => React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('line', { x1: 2, y1: 2, x2: 22, y2: 22 }), React.createElement('path', { d: 'M18.57 12.91a7 7 0 0 0-2.82-5.17' }), React.createElement('path', { d: 'M4.24 6.38a7 7 0 0 0 1.18 12.3' }), React.createElement('path', { d: 'M19 10v2a7 7 0 0 1-.64 2.92' }), React.createElement('line', { x1: 12, y1: 19, x2: 12, y2: 22 }), React.createElement('line', { x1: 8, y1: 22, x2: 16, y2: 22 }), React.createElement('path', { d: 'M15 10.54a3 3 0 0 0-5.14-2.12' })),
-      trash: () => React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('polyline', { points: '3 6 5 6 21 6' }), React.createElement('path', { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2' })),
-      copy: () => React.createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('rect', { x: 9, y: 9, width: 13, height: 13, rx: 2, ry: 2 }), React.createElement('path', { d: 'M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1' })),
-      check: () => React.createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: '#4ade80', strokeWidth: 3 }, React.createElement('polyline', { points: '20 6 9 17 4 12' })),
-      settings: () => React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, React.createElement('circle', { cx: 12, cy: 12, r: 3 }), React.createElement('path', { d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z' })),
-      diamond: () => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: '#00d4ff', strokeWidth: 2 }, React.createElement('path', { d: 'M6 3h12l4 6-10 13L2 9z' })),
-    };
-
-    // ── Components ───────────────────────────────────────────────────────
+    const h = React.createElement;
 
     function App() {
       const [messages, setMessages] = useState([]);
       const [input, setInput] = useState('');
-      const [isLoading, setIsLoading] = useState(false);
-      const [activeCommand, setActiveCommand] = useState(null);
-      const [showCommands, setShowCommands] = useState(false);
-      const [apiKey, setApiKey] = useState(localStorage.getItem(API_KEY_STORAGE_KEY) || '');
+      const [loading, setLoading] = useState(false);
+      const [activeCmd, setActiveCmd] = useState(null);
+      const [showCmds, setShowCmds] = useState(false);
+      const [apiKey, setApiKey] = useState(localStorage.getItem(API_KEY) || '');
       const [showSettings, setShowSettings] = useState(false);
-      const [isRecording, setIsRecording] = useState(false);
-      const [sessionId] = useState(() => 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9));
-      const messagesEndRef = useRef(null);
+      const [recording, setRecording] = useState(false);
+      const [sessionId] = useState(() => 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8));
+      const endRef = useRef(null);
       const textareaRef = useRef(null);
-      const recognitionRef = useRef(null);
+      const recogRef = useRef(null);
 
-      // Auto-scroll
-      useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, [messages]);
-
-      // Textarea auto-resize
+      useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
       useEffect(() => {
         const el = textareaRef.current;
-        if (el) {
-          el.style.height = 'auto';
-          el.style.height = Math.min(el.scrollHeight, 120) + 'px';
-        }
+        if (el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
       }, [input]);
 
-      // Speech recognition setup
       useEffect(() => {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          recognitionRef.current = new SpeechRecognition();
-          recognitionRef.current.continuous = false;
-          recognitionRef.current.interimResults = true;
-          recognitionRef.current.onresult = (event) => {
-            const transcript = Array.from(event.results).map(r => r[0].transcript).join('');
-            setInput(transcript);
-          };
-          recognitionRef.current.onend = () => setIsRecording(false);
-          recognitionRef.current.onerror = () => setIsRecording(false);
-        }
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) return;
+        const r = new SR();
+        r.continuous = false; r.interimResults = true;
+        r.onresult = (e) => setInput(Array.from(e.results).map(x => x[0].transcript).join(''));
+        r.onend = () => setRecording(false);
+        r.onerror = () => setRecording(false);
+        recogRef.current = r;
       }, []);
 
-      const toggleRecording = () => {
-        if (!recognitionRef.current) return alert('Speech recognition not supported in this browser');
-        if (isRecording) {
-          recognitionRef.current.stop();
-          setIsRecording(false);
-        } else {
-          recognitionRef.current.start();
-          setIsRecording(true);
-        }
-      };
-
-      const handleSend = useCallback(async () => {
+      const send = useCallback(async () => {
         const text = input.trim();
-        if (!text || isLoading) return;
+        if (!text || loading) return;
 
-        // Check for API key command
         if (text.toLowerCase().startsWith('key ')) {
           const key = text.slice(4).trim();
-          localStorage.setItem(API_KEY_STORAGE_KEY, key);
+          localStorage.setItem(API_KEY, key);
           setApiKey(key);
-          setMessages(prev => [...prev,
-            { role: 'user', content: text },
-            { role: 'assistant', content: 'API key saved! You can now use all features.' }
-          ]);
+          setMessages(p => [...p, { role: 'user', content: text }, { role: 'assistant', content: 'API key saved!' }]);
           setInput('');
           return;
         }
 
-        // Check for command
-        let command = activeCommand;
-        let messageText = text;
+        let cmd = activeCmd, msgText = text;
         if (text.startsWith('/')) {
-          const cmdName = text.slice(1).split(' ')[0].toLowerCase();
-          if (COMMANDS[cmdName]) {
-            command = cmdName;
-            messageText = text.slice(cmdName.length + 2).trim();
-          }
+          const c = text.slice(1).split(' ')[0].toLowerCase();
+          if (COMMANDS[c]) { cmd = c; msgText = text.slice(c.length + 2).trim(); }
         }
 
-        const userMessage = { role: 'user', content: text };
-        setMessages(prev => [...prev, userMessage]);
+        setMessages(p => [...p, { role: 'user', content: text }]);
         setInput('');
-        setIsLoading(true);
-        setShowCommands(false);
+        setLoading(true);
+        setShowCmds(false);
 
         try {
-          const useDirectOpenAI = !apiKey;
-          let responseText = '';
-
-          if (useDirectOpenAI) {
-            // Fallback: use OpenAI directly
-            const systemPrompt = command ? COMMANDS[command].prompt : COMMANDS.default?.prompt || 'You are a helpful assistant.';
-            const msgs = [
-              { role: 'system', content: systemPrompt },
-              ...messages.filter(m => m.role !== 'system').slice(-10),
-              { role: 'user', content: messageText || text }
-            ];
-            const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey || ''}`
-              },
+          let respText = '';
+          if (!apiKey) {
+            const sp = cmd ? COMMANDS[cmd].prompt : 'You are a helpful assistant.';
+            const msgs = [{ role: 'system', content: sp }, ...messages.filter(m => m.role !== 'system').slice(-10), { role: 'user', content: msgText || text }];
+            const r = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
               body: JSON.stringify({ model: 'gpt-4o-mini', messages: msgs, temperature: 0.7 })
             });
-            if (!resp.ok) throw new Error(`API error: ${resp.status}`);
-            const data = await resp.json();
-            responseText = data.choices?.[0]?.message?.content || 'No response';
+            if (!r.ok) throw new Error('API error: ' + r.status);
+            const d = await r.json();
+            respText = d.choices?.[0]?.message?.content || 'No response';
           } else {
-            // Use local backend
-            const resp = await fetch(`${API_BASE}/api/chat`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                message: messageText || text,
-                mode: command || 'default',
-                session_id: sessionId,
-                temperature: 0.7
-              })
+            const r = await fetch(API_BASE + '/api/chat', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ message: msgText || text, mode: cmd || 'default', session_id: sessionId, temperature: 0.7 })
             });
-            if (!resp.ok) {
-              const err = await resp.json().catch(() => ({}));
-              throw new Error(err.detail || `Server error: ${resp.status}`);
-            }
-            const data = await resp.json();
-            responseText = data.response;
+            if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.detail || 'Server error: ' + r.status); }
+            const d = await r.json();
+            respText = d.response;
           }
-
-          setMessages(prev => [...prev, { role: 'assistant', content: responseText, command }]);
+          setMessages(p => [...p, { role: 'assistant', content: respText, command: cmd }]);
         } catch (err) {
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: `**Error:** ${err.message}\n\nPlease make sure:\n1. The server is running (\`py -3.11 start_server.py\`)\n2. Your API key is configured\n3. Or set your key with: \`key YOUR_API_KEY\``,
-            isError: true
-          }]);
-        } finally {
-          setIsLoading(false);
-        }
-      }, [input, isLoading, activeCommand, apiKey, messages, sessionId]);
+          setMessages(p => [...p, { role: 'assistant', content: '**Error:** ' + err.message + '\\n\\nMake sure the server is running (`py -3.11 start_server.py`) or set your key with: `key YOUR_KEY`', isError: true }]);
+        } finally { setLoading(false); }
+      }, [input, loading, activeCmd, apiKey, messages, sessionId]);
 
-      const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          handleSend();
-        }
-        if (e.key === 'Escape') {
-          setShowCommands(false);
-          setShowSettings(false);
-        }
+      const onKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+        if (e.key === 'Escape') { setShowCmds(false); setShowSettings(false); }
       };
+      const clear = () => { if (confirm('Clear all?')) { setMessages([]); setActiveCmd(null); } };
+      const pickCmd = (k) => { setActiveCmd(k); setShowCmds(false); textareaRef.current?.focus(); };
+      const saveKey = () => { const k = document.getElementById('aki').value.trim(); if (k) { localStorage.setItem(API_KEY, k); setApiKey(k); setShowSettings(false); } };
+      const rmKey = () => { localStorage.removeItem(API_KEY); setApiKey(''); setShowSettings(false); };
+      const toggleRec = () => { const r = recogRef.current; if (!r) return; if (recording) { r.stop(); setRecording(false); } else { r.start(); setRecording(true); } };
 
-      const clearChat = () => {
-        if (confirm('Clear all messages?')) {
-          setMessages([]);
-          setActiveCommand(null);
-        }
-      };
-
-      const handleCommandClick = (cmdKey) => {
-        setActiveCommand(cmdKey);
-        setShowCommands(false);
-        textareaRef.current?.focus();
-      };
-
-      const saveApiKey = () => {
-        const key = document.getElementById('api-key-input').value.trim();
-        if (key) {
-          localStorage.setItem(API_KEY_STORAGE_KEY, key);
-          setApiKey(key);
-          setShowSettings(false);
-        }
-      };
-
-      const removeApiKey = () => {
-        localStorage.removeItem(API_KEY_STORAGE_KEY);
-        setApiKey('');
-        setShowSettings(false);
-      };
-
-      return React.createElement('div', { className: 'flex flex-col h-screen bg-surface-900' },
-        // Header
-        React.createElement('header', { className: 'flex items-center justify-between px-4 py-3 border-b border-surface-700 bg-surface-800/80 backdrop-blur-sm flex-shrink-0' },
-          React.createElement('div', { className: 'flex items-center gap-3' },
-            React.createElement('div', { className: 'w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center' },
-              React.createElement(Icons.diamond)
-            ),
-            React.createElement('div', null,
-              React.createElement('h1', { className: 'text-lg font-bold tracking-tight' }, 'Luqi ', React.createElement('span', { className: 'text-cyan-400' }, 'AI')),
-              React.createElement('p', { className: 'text-[11px] text-gray-500 -mt-0.5' }, 'World-class AI for Africa & beyond')
-            )
+      return h('div', { className: 'flex flex-col h-screen bg-surface-900' },
+        h('header', { className: 'flex items-center justify-between px-4 py-3 border-b border-surface-700 bg-surface-800 flex-shrink-0' },
+          h('div', { className: 'flex items-center gap-3' },
+            h('div', { className: 'w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-lg' }, '💎'),
+            h('div', null, h('h1', { className: 'text-lg font-bold' }, 'Luqi ', h('span', { className: 'text-cyan-400' }, 'AI')), h('p', { className: 'text-[11px] text-gray-500' }, 'World-class AI for Africa & beyond'))
           ),
-          React.createElement('div', { className: 'flex items-center gap-2' },
-            apiKey && React.createElement('span', { className: 'text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20' }, 'Ready'),
-            React.createElement('button', {
-              onClick: () => setShowSettings(!showSettings),
-              className: 'p-2 rounded-lg hover:bg-surface-700 transition-colors text-gray-400 hover:text-white'
-            }, React.createElement(Icons.settings)),
-            React.createElement('button', {
-              onClick: clearChat,
-              className: 'p-2 rounded-lg hover:bg-red-500/10 transition-colors text-gray-400 hover:text-red-400',
-              title: 'Clear chat'
-            }, React.createElement(Icons.trash))
+          h('div', { className: 'flex items-center gap-2' },
+            apiKey && h('span', { className: 'text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20' }, 'Ready'),
+            h('button', { onClick: () => setShowSettings(!showSettings), className: 'p-2 rounded-lg hover:bg-surface-700 text-gray-400 transition-colors', title: 'Settings' }, '⚙️'),
+            h('button', { onClick: clear, className: 'p-2 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors', title: 'Clear' }, '🗑️')
           )
         ),
-
-        // Settings Panel
-        showSettings && React.createElement('div', { className: 'border-b border-surface-700 bg-surface-800 p-4 animate-fade-in' },
-          React.createElement('div', { className: 'max-w-xl' },
-            React.createElement('h3', { className: 'text-sm font-semibold mb-3' }, 'API Key Settings'),
-            React.createElement('div', { className: 'flex gap-2' },
-              React.createElement('input', {
-                id: 'api-key-input',
-                type: 'password',
-                defaultValue: apiKey,
-                placeholder: 'sk-...',
-                className: 'flex-1 bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500 transition-colors'
-              }),
-              React.createElement('button', {
-                onClick: saveApiKey,
-                className: 'px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-sm font-medium transition-colors'
-              }, 'Save'),
-              apiKey && React.createElement('button', {
-                onClick: removeApiKey,
-                className: 'px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm transition-colors'
-              }, 'Remove')
+        showSettings && h('div', { className: 'border-b border-surface-700 bg-surface-800 p-4 animate-fade-in' },
+          h('div', { className: 'max-w-xl' },
+            h('h3', { className: 'text-sm font-semibold mb-3' }, 'API Key'),
+            h('div', { className: 'flex gap-2' },
+              h('input', { id: 'aki', type: 'password', defaultValue: apiKey, placeholder: 'sk-...', className: 'flex-1 bg-surface-900 border border-surface-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500' }),
+              h('button', { onClick: saveKey, className: 'px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-sm font-medium' }, 'Save'),
+              apiKey && h('button', { onClick: rmKey, className: 'px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm' }, 'Remove')
             ),
-            React.createElement('p', { className: 'text-xs text-gray-500 mt-2' }, 'Your API key is stored only in your browser. Set via chat with: key YOUR_KEY')
+            h('p', { className: 'text-xs text-gray-500 mt-2' }, 'Stored only in browser. Or type: key YOUR_KEY in chat')
           )
         ),
-
-        // Active Command Badge
-        activeCommand && React.createElement('div', { className: 'flex-shrink-0 px-4 py-2 border-b border-surface-700/50 bg-surface-800/30' },
-          React.createElement('div', { className: 'flex items-center gap-2' },
-            React.createElement('span', { className: 'text-xs px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' },
-              COMMANDS[activeCommand].emoji + ' ' + COMMANDS[activeCommand].name + ' Mode'
-            ),
-            React.createElement('button', {
-              onClick: () => setActiveCommand(null),
-              className: 'text-xs text-gray-500 hover:text-gray-300'
-            }, 'Clear')
+        activeCmd && h('div', { className: 'flex-shrink-0 px-4 py-2 border-b border-surface-700/50 bg-surface-800/30' },
+          h('div', { className: 'flex items-center gap-2' },
+            h('span', { className: 'text-xs px-2 py-1 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' }, COMMANDS[activeCmd].emoji + ' ' + COMMANDS[activeCmd].name + ' Mode'),
+            h('button', { onClick: () => setActiveCmd(null), className: 'text-xs text-gray-500 hover:text-gray-300' }, 'Clear')
           )
         ),
-
-        // Messages Area
-        React.createElement('div', { className: 'flex-1 overflow-y-auto scrollbar-thin px-4 py-4' },
-          messages.length === 0 && React.createElement('div', { className: 'flex flex-col items-center justify-center h-full text-center animate-slide-up' },
-            React.createElement('div', { className: 'w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center mb-4' },
-              React.createElement('div', { className: 'scale-150' }, React.createElement(Icons.diamond))
-            ),
-            React.createElement('h2', { className: 'text-xl font-bold mb-2' }, 'Welcome to Luqi AI'),
-            React.createElement('p', { className: 'text-sm text-gray-400 max-w-md mb-6' },
-              'Your world-class AI assistant. Ask me anything, use commands below, or type \`/\` to see all options.'
-            ),
-            React.createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-lg w-full' },
-              Object.entries(COMMANDS).slice(0, 6).map(([key, cmd]) =>
-                React.createElement('button', {
-                  key,
-                  onClick: () => handleCommandClick(key),
-                  className: 'flex flex-col items-center gap-1 p-3 rounded-xl bg-surface-800 border border-surface-700 hover:border-cyan-500/30 hover:bg-surface-700/50 transition-all text-center'
-                },
-                  React.createElement('span', { className: 'text-lg' }, cmd.emoji),
-                  React.createElement('span', { className: 'text-xs font-medium' }, cmd.name),
-                  React.createElement('span', { className: 'text-[10px] text-gray-500' }, cmd.desc)
+        h('div', { className: 'flex-1 overflow-y-auto px-4 py-4' },
+          messages.length === 0 && h('div', { className: 'flex flex-col items-center justify-center h-full text-center animate-slide-up' },
+            h('div', { className: 'w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-600/20 flex items-center justify-center mb-4 text-3xl' }, '💎'),
+            h('h2', { className: 'text-xl font-bold mb-2' }, 'Welcome to Luqi AI'),
+            h('p', { className: 'text-sm text-gray-400 max-w-md mb-6' }, 'Your world-class AI assistant. Ask anything, use commands, or type `/` for options.'),
+            h('div', { className: 'grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-lg w-full' },
+              Object.entries(COMMANDS).slice(0, 6).map(([k, c]) =>
+                h('button', { key: k, onClick: () => pickCmd(k), className: 'flex flex-col items-center gap-1 p-3 rounded-xl bg-surface-800 border border-surface-700 hover:border-cyan-500/30 transition-all' },
+                  h('span', null, c.emoji), h('span', { className: 'text-xs font-medium' }, c.name), h('span', { className: 'text-[10px] text-gray-500' }, c.desc)
                 )
               )
             )
           ),
-
-          messages.map((msg, i) =>
-            React.createElement(MessageBubble, { key: i, message: msg, isLast: i === messages.length - 1 })
+          messages.map((m, i) => h(Message, { key: i, msg: m })),
+          loading && h('div', { className: 'flex items-start gap-3 animate-fade-in' },
+            h('div', { className: 'w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0 text-sm' }, '💎'),
+            h('div', { className: 'flex-1' }, h('div', { className: 'inline-flex items-center gap-1 px-4 py-3 rounded-2xl rounded-tl-sm bg-surface-800 border border-surface-700' },
+              h('span', { className: 'typing-dot' }), h('span', { className: 'typing-dot' }), h('span', { className: 'typing-dot' })
+            ))
           ),
-
-          isLoading && React.createElement('div', { className: 'flex items-start gap-3 animate-fade-in' },
-            React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0 mt-1' },
-              React.createElement('span', { className: 'text-xs' }, '💎')
-            ),
-            React.createElement('div', { className: 'flex-1' },
-              React.createElement('div', { className: 'inline-flex items-center gap-1 px-4 py-3 rounded-2xl rounded-tl-sm bg-surface-800 border border-surface-700' },
-                React.createElement('span', { className: 'typing-dot' }),
-                React.createElement('span', { className: 'typing-dot' }),
-                React.createElement('span', { className: 'typing-dot' })
-              )
-            )
-          ),
-
-          React.createElement('div', { ref: messagesEndRef })
+          h('div', { ref: endRef })
         ),
-
-        // Command Palette
-        showCommands && React.createElement('div', { className: 'flex-shrink-0 px-4 py-2 border-t border-surface-700 bg-surface-800/50' },
-          React.createElement('div', { className: 'flex gap-2 overflow-x-auto pb-1 scrollbar-thin' },
-            Object.entries(COMMANDS).map(([key, cmd]) =>
-              React.createElement('button', {
-                key,
-                onClick: () => handleCommandClick(key),
-                className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-700 hover:bg-surface-600 border border-surface-600 hover:border-cyan-500/30 transition-all whitespace-nowrap text-xs'
-              },
-                React.createElement('span', null, cmd.emoji),
-                React.createElement('span', { className: 'font-medium' }, '/' + key),
-                React.createElement('span', { className: 'text-gray-500 hidden sm:inline' }, cmd.desc)
+        showCmds && h('div', { className: 'flex-shrink-0 px-4 py-2 border-t border-surface-700 bg-surface-800/50' },
+          h('div', { className: 'flex gap-2 overflow-x-auto pb-1' },
+            Object.entries(COMMANDS).map(([k, c]) =>
+              h('button', { key: k, onClick: () => pickCmd(k), className: 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-700 hover:bg-surface-600 border border-surface-600 hover:border-cyan-500/30 transition-all whitespace-nowrap text-xs' },
+                h('span', null, c.emoji), h('span', { className: 'font-medium' }, '/' + k)
               )
             )
           )
         ),
-
-        // Input Area
-        React.createElement('div', { className: 'flex-shrink-0 border-t border-surface-700 bg-surface-800/80 backdrop-blur-sm px-4 py-3' },
-          React.createElement('div', { className: 'max-w-3xl mx-auto' },
-            React.createElement('div', { className: 'flex items-end gap-2 bg-surface-900 border border-surface-600 rounded-2xl p-2 focus-within:border-cyan-500/50 focus-within:shadow-[0_0_0_3px_rgba(0,212,255,0.1)] transition-all' },
-              React.createElement('button', {
-                onClick: () => setShowCommands(!showCommands),
-                className: 'flex-shrink-0 p-2 rounded-xl hover:bg-surface-700 text-gray-400 hover:text-cyan-400 transition-colors text-lg',
-                title: 'Commands'
-              }, '⌘'),
-              React.createElement('textarea', {
-                ref: textareaRef,
-                value: input,
-                onChange: (e) => setInput(e.target.value),
-                onKeyDown: handleKeyDown,
-                placeholder: activeCommand ? `Using ${COMMANDS[activeCommand].name} mode...` : 'Ask Luqi AI anything...',
-                rows: 1,
-                className: 'flex-1 bg-transparent border-none outline-none text-sm resize-none py-2.5 px-1 max-h-[120px] placeholder-gray-500'
-              }),
-              React.createElement('button', {
-                onClick: toggleRecording,
-                className: `flex-shrink-0 p-2.5 rounded-xl transition-colors ${isRecording ? 'bg-red-500/20 text-red-400 animate-pulse' : 'hover:bg-surface-700 text-gray-400 hover:text-white'}`,
-                title: isRecording ? 'Stop recording' : 'Voice input'
-              }, isRecording ? React.createElement(Icons.micOff) : React.createElement(Icons.mic)),
-              React.createElement('button', {
-                onClick: handleSend,
-                disabled: !input.trim() || isLoading,
-                className: 'flex-shrink-0 p-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 disabled:hover:bg-cyan-600 text-white transition-all hover:scale-105 active:scale-95'
-              }, React.createElement(Icons.send))
+        h('div', { className: 'flex-shrink-0 border-t border-surface-700 bg-surface-800 px-4 py-3' },
+          h('div', { className: 'max-w-3xl mx-auto' },
+            h('div', { className: 'flex items-end gap-2 bg-surface-900 border border-surface-600 rounded-2xl p-2 focus-within:border-cyan-500/50 transition-all' },
+              h('button', { onClick: () => setShowCmds(!showCmds), className: 'flex-shrink-0 p-2 rounded-xl hover:bg-surface-700 text-gray-400 hover:text-cyan-400 transition-colors text-lg', title: 'Commands' }, '⌘'),
+              h('textarea', { ref: textareaRef, value: input, onChange: e => setInput(e.target.value), onKeyDown, placeholder: activeCmd ? 'Using ' + COMMANDS[activeCmd].name + ' mode...' : 'Ask Luqi AI...', rows: 1, className: 'flex-1 bg-transparent border-none outline-none text-sm resize-none py-2.5 px-1 max-h-[120px] placeholder-gray-500' }),
+              h('button', { onClick: toggleRec, className: 'flex-shrink-0 p-2.5 rounded-xl transition-colors ' + (recording ? 'bg-red-500/20 text-red-400 animate-pulse' : 'hover:bg-surface-700 text-gray-400 hover:text-white'), title: recording ? 'Stop' : 'Voice' }, recording ? '⏹️' : '🎤'),
+              h('button', { onClick: send, disabled: !input.trim() || loading, className: 'flex-shrink-0 p-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-30 text-white transition-all' }, '➤')
             ),
-            React.createElement('p', { className: 'text-[10px] text-gray-600 text-center mt-1.5' },
-              'Press / for commands • Enter to send • Shift+Enter for new line'
-            )
+            h('p', { className: 'text-[10px] text-gray-600 text-center mt-1.5' }, '/ for commands · Enter to send · Shift+Enter newline')
           )
         )
       );
     }
 
-    // ── Message Bubble Component ─────────────────────────────────────────
-
-    function MessageBubble({ message, isLast }) {
+    function Message({ msg }) {
       const [copied, setCopied] = useState(false);
-      const isUser = message.role === 'user';
+      const isUser = msg.role === 'user';
+      const html = typeof window !== 'undefined' && window.marked ? window.marked.parse(msg.content || '', { breaks: true }) : (msg.content || '').replace(/\\n/g, '<br>');
 
-      const handleCopy = () => {
-        navigator.clipboard.writeText(message.content).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        });
-      };
+      useEffect(() => { if (window.hljs) document.querySelectorAll('pre code').forEach(b => window.hljs.highlightElement(b)); }, [html]);
 
-      // Parse markdown
-      const htmlContent = typeof window !== 'undefined' && window.marked
-        ? window.marked.parse(message.content || '', { breaks: true })
-        : (message.content || '').replace(/\n/g, '<br>');
+      const copy = () => navigator.clipboard.writeText(msg.content).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
 
-      useEffect(() => {
-        if (window.hljs) {
-          document.querySelectorAll('pre code').forEach((block) => {
-            window.hljs.highlightElement(block);
-          });
-        }
-      }, [htmlContent]);
+      if (isUser) return h('div', { className: 'flex items-start gap-3 mb-4 animate-slide-up justify-end' },
+        h('div', { className: 'flex-1 max-w-[85%]' },
+          h('div', { className: 'flex justify-end mb-1' }, h('span', { className: 'text-[10px] text-gray-500' }, 'You')),
+          h('div', { className: 'bg-cyan-600/20 border border-cyan-500/20 rounded-2xl rounded-tr-sm px-4 py-3' },
+            h('div', { className: 'text-sm whitespace-pre-wrap' }, msg.content)
+          )
+        ),
+        h('div', { className: 'w-8 h-8 rounded-lg bg-surface-700 flex items-center justify-center flex-shrink-0' }, '👤')
+      );
 
-      if (isUser) {
-        return React.createElement('div', { className: 'flex items-start gap-3 mb-4 animate-slide-up justify-end' },
-          React.createElement('div', { className: 'flex-1 max-w-[85%]' },
-            React.createElement('div', { className: 'flex items-center gap-2 justify-end mb-1' },
-              React.createElement('span', { className: 'text-[10px] text-gray-500' }, 'You')
-            ),
-            React.createElement('div', { className: 'bg-cyan-600/20 border border-cyan-500/20 rounded-2xl rounded-tr-sm px-4 py-3' },
-              React.createElement('div', { className: 'text-sm whitespace-pre-wrap' }, message.content)
-            )
+      return h('div', { className: 'flex items-start gap-3 mb-4 animate-slide-up' },
+        h('div', { className: 'w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0 text-sm' }, '💎'),
+        h('div', { className: 'flex-1 max-w-[90%]' },
+          h('div', { className: 'flex items-center gap-2 mb-1' },
+            h('span', { className: 'text-[10px] text-gray-500' }, 'Luqi AI'),
+            msg.command && h('span', { className: 'text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' }, COMMANDS[msg.command]?.emoji + ' ' + COMMANDS[msg.command]?.name),
+            h('button', { onClick: copy, className: 'text-gray-500 hover:text-cyan-400 text-xs', title: 'Copy' }, copied ? '✓' : '📋')
           ),
-          React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-surface-700 flex items-center justify-center flex-shrink-0 text-sm' }, '👤')
-        );
-      }
-
-      return React.createElement('div', { className: 'flex items-start gap-3 mb-4 animate-slide-up' },
-        React.createElement('div', { className: 'w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center flex-shrink-0 text-sm' }, '💎'),
-        React.createElement('div', { className: 'flex-1 max-w-[90%]' },
-          React.createElement('div', { className: 'flex items-center gap-2 mb-1' },
-            React.createElement('span', { className: 'text-[10px] text-gray-500' }, 'Luqi AI'),
-            message.command && React.createElement('span', { className: 'text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' },
-              COMMANDS[message.command]?.emoji + ' ' + COMMANDS[message.command]?.name
-            ),
-            React.createElement('button', {
-              onClick: handleCopy,
-              className: 'opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-surface-700 rounded',
-              title: 'Copy'
-            }, copied ? React.createElement(Icons.check) : React.createElement(Icons.copy))
-          ),
-          React.createElement('div', {
-            className: `bg-surface-800 border ${message.isError ? 'border-red-500/20' : 'border-surface-700'} rounded-2xl rounded-tl-sm px-4 py-3 message-content group`,
-            dangerouslySetInnerHTML: { __html: htmlContent }
-          })
+          h('div', { className: 'bg-surface-800 border ' + (msg.isError ? 'border-red-500/20' : 'border-surface-700') + ' rounded-2xl rounded-tl-sm px-4 py-3 markdown-content', dangerouslySetInnerHTML: { __html: html } })
         )
       );
     }
-
-    // ── Mount ────────────────────────────────────────────────────────────
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(App));
-  </script>
-  <script>
-    // Register service worker for PWA
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('data:text/javascript;base64,' + btoa(`
-        self.addEventListener('install', e => self.skipWaiting());
-        self.addEventListener('activate', e => e.waitUntil(clients.claim()));
-        self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response('Offline', { status: 503 }))));
-      `)).catch(() => {});
-    }
+    root.render(h(App));
   </script>
 </body>
 </html>
