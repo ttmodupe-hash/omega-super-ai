@@ -54,7 +54,15 @@ from backend.memory import VectorMemory
 from backend.search import SearchEngine
 
 # v13 modules — language system, Prometheus, labs
-from backend.lang.african_languages import AFRICAN_LANGUAGES, GLOBAL_LANGUAGES
+from backend.lang.african_languages import AFRICAN_LANGUAGES
+try:
+    from backend.lang.african_languages import GLOBAL_LANGUAGES
+except ImportError:
+    try:
+        from backend.lang.global_languages import GLOBAL_LANGUAGES
+    except ImportError:
+        GLOBAL_LANGUAGES = {}  # Fallback if module not present
+
 from backend.lang.language_detector import LanguageDetector
 from backend.lang.multilingual_router import MultilingualRouter
 
