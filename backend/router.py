@@ -35,7 +35,7 @@ from fastapi.responses import (
     PlainTextResponse,
     StreamingResponse,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from backend.agents import AgentOrchestrator
 from backend.ai_engine import AIEngine
@@ -134,13 +134,38 @@ def get_agents() -> AgentOrchestrator:
     return _agent_orchestrator
 
 
+# ── Message Normalization ──────────────────────────────────────────────
+
+
+def normalize_messages(request: "ChatRequest") -> List[Dict[str, str]]:
+    """Convert simple 'message' field to OpenAI-style 'messages' list.
+
+    If request.messages is already provided, return it as-is.
+    If only request.message is provided, wrap it in a messages list.
+    Raises HTTPException if neither is provided (should be caught by
+    model_validator, but this is a safety net).
+    """
+    if request.messages is not None:
+        return request.messages
+    if request.message is not None:
+        return [{"role": "user", "content": request.message}]
+    raise HTTPException(
+        status_code=422, detail="Either 'message' or 'messages' must be provided"
+    )
+
+
 # ── Pydantic Models ────────────────────────────────────────────────────
 
 
 class ChatRequest(BaseModel):
     """Request body for chat endpoint.
 
+    Supports two input formats:
+        1. Simple: {"message": "hello", "session_id": "abc", "mode": "default"}
+        2. OpenAI-style: {"messages": [{"role": "user", "content": "hello"}], ...}
+
     Attributes:
+        message: Simple text message (alternative to messages).
         messages: List of message dicts with role and content.
         stream: Whether to stream the response.
         mode: Operational mode (default, research, think, etc.).
@@ -149,8 +174,11 @@ class ChatRequest(BaseModel):
         max_tokens: Maximum tokens to generate.
     """
 
-    messages: List[Dict[str, str]] = Field(
-        ..., description="Chat messages [{role, content}]"
+    message: Optional[str] = Field(
+        default=None, description="Simple text message"
+    )
+    messages: Optional[List[Dict[str, str]]] = Field(
+        default=None, description="Chat messages [{role, content}]"
     )
     stream: bool = Field(default=False, description="Enable streaming")
     mode: str = Field(default="default", description="AI mode")
@@ -159,6 +187,12 @@ class ChatRequest(BaseModel):
     )
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: int = Field(default=4096, ge=1, le=8192)
+
+    @model_validator(mode="after")
+    def check_message_or_messages(self):
+        if self.message is None and self.messages is None:
+            raise ValueError("Either 'message' or 'messages' must be provided")
+        return self
 
 
 class SearchRequest(BaseModel):
@@ -234,9 +268,10 @@ async def api_chat(request: ChatRequest) -> JSONResponse:
         JSON with response text and metadata.
     """
     try:
+        messages = normalize_messages(request)
         ai = get_ai()
         response_text = ai.chat_sync(
-            messages=[dict(m) for m in request.messages],
+            messages=[dict(m) for m in messages],
             mode=request.mode,
             session_id=request.session_id,
             temperature=request.temperature,
@@ -244,9 +279,9 @@ async def api_chat(request: ChatRequest) -> JSONResponse:
         )
 
         # Save to memory if session_id provided
-        if request.session_id and request.messages:
+        if request.session_id and messages:
             mem = get_memory()
-            last_msg = request.messages[-1]
+            last_msg = messages[-1]
             mem.save_message(
                 request.session_id, last_msg.get("role", "user"), last_msg.get("content", "")
             )
@@ -261,6 +296,8 @@ async def api_chat(request: ChatRequest) -> JSONResponse:
                 "session_id": request.session_id,
             }
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Chat error: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -280,11 +317,12 @@ async def api_chat_stream(request: ChatRequest) -> StreamingResponse:
     """
 
     async def event_stream() -> AsyncGenerator[str, None]:
+        messages = normalize_messages(request)
         ai = get_ai()
         full_text = ""
 
         async for token in ai.chat_async(
-            messages=[dict(m) for m in request.messages],
+            messages=[dict(m) for m in messages],
             stream=True,
             mode=request.mode,
             session_id=request.session_id,
@@ -295,10 +333,10 @@ async def api_chat_stream(request: ChatRequest) -> StreamingResponse:
             yield f"data: {json.dumps({'type': 'delta', 'token': token})}\n\n"
 
         # Save to memory
-        if request.session_id and request.messages:
+        if request.session_id and messages:
             try:
                 mem = get_memory()
-                last_msg = request.messages[-1]
+                last_msg = messages[-1]
                 mem.save_message(
                     request.session_id,
                     last_msg.get("role", "user"),
