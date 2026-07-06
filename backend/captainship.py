@@ -39,9 +39,6 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 from collections import defaultdict
 
-# ---------------------------------------------------------------------------
-# Logging setup
-# ---------------------------------------------------------------------------
 logger = logging.getLogger("captainship")
 logger.setLevel(logging.DEBUG)
 if not logger.handlers:
@@ -52,10 +49,6 @@ if not logger.handlers:
     )
     _handler.setFormatter(_formatter)
     logger.addHandler(_handler)
-
-# ---------------------------------------------------------------------------
-# Constants & Configuration
-# ---------------------------------------------------------------------------
 
 DEFAULT_DB_PATH = os.environ.get("LUQI_DB_PATH", "/mnt/agents/output/project/backend/luqi_projects.db")
 
@@ -166,45 +159,27 @@ SWOT_TEMPLATES = {
     ],
 }
 
-# ---------------------------------------------------------------------------
-# Helper Functions
-# ---------------------------------------------------------------------------
-
-
 def _generate_id(prefix: str = "") -> str:
-    """Generate a unique identifier string."""
     raw = f"{prefix}{uuid.uuid4().hex}{random.randint(1000, 9999)}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
-
 def _now_iso() -> str:
-    """Return current UTC timestamp in ISO-8601 format."""
     return datetime.datetime.utcnow().isoformat() + "Z"
 
-
 def _parse_date(date_str: str) -> datetime.date:
-    """Parse a date string (YYYY-MM-DD) into a date object."""
     return datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
 
-
 def _date_add_days(date_str: str, days: int) -> str:
-    """Add days to a date string and return new date string."""
     d = _parse_date(date_str) + datetime.timedelta(days=days)
     return d.isoformat()
 
-
 def _days_between(start: str, end: str) -> int:
-    """Return number of days between two date strings."""
     return (_parse_date(end) - _parse_date(start)).days
 
-
 def _clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
-    """Clamp a float between low and high."""
     return max(low, min(high, value))
 
-
 def _db_connect(db_path: str = DEFAULT_DB_PATH) -> sqlite3.Connection:
-    """Open a SQLite connection with row factory."""
     conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
