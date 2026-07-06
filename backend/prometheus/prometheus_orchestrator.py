@@ -18,11 +18,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from prometheus.config import PrometheusConfig
-from prometheus.research_agent import ResearchAgent
-from prometheus.gap_analyzer import GapAnalyzer
-from prometheus.improvement_engine import ImprovementEngine
-from prometheus.benchmark_runner import BenchmarkRunner
+from backend.prometheus.config import PrometheusConfig
+from backend.prometheus.research_agent import ResearchAgent
+from backend.prometheus.gap_analyzer import GapAnalyzer
+from backend.prometheus.improvement_engine import ImprovementEngine
+from backend.prometheus.benchmark_runner import BenchmarkRunner
 
 logger = logging.getLogger(__name__)
 
