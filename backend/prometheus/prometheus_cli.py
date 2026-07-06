@@ -18,8 +18,8 @@ import logging
 import sys
 from datetime import datetime
 
-from prometheus.prometheus_orchestrator import PrometheusOrchestrator
-from prometheus.config import PrometheusConfig
+from backend.prometheus.prometheus_orchestrator import PrometheusOrchestrator
+from backend.prometheus.config import PrometheusConfig
 
 logger = logging.getLogger(__name__)
 
