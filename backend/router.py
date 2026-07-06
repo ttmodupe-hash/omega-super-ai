@@ -683,6 +683,8 @@ async def api_health() -> JSONResponse:
             "data_portability": "enabled",
             "captainship": "enabled",
             "companionship": "enabled",
+            "automotive": "enabled",
+            "writing_assistant": "enabled",
         }
     )
 
@@ -1300,3 +1302,10 @@ try:
     logger.info("v17 endpoints activated successfully")
 except Exception as exc:
     logger.warning("v17 endpoints not available: %s", exc)
+
+# -- v18: Activate automotive & writing assistant endpoints --
+try:
+    import backend.v18_endpoints
+    logger.info("v18 endpoints activated successfully")
+except Exception as exc:
+    logger.warning("v18 endpoints not available: %s", exc)
