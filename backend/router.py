@@ -1,9 +1,10 @@
-"""FastAPI Router -- Luqi AI v14 REST API
+"""FastAPI Router -- Luqi AI v16 REST API
 
 Provides all HTTP endpoints for the AI system including streaming chat,
 file upload, image generation, memory search, 85-language support,
 virtual science labs, Prometheus self-improvement, subscriptions,
-developer workspace, website builder, dashboard, and auto-upgrader.
+developer workspace, website builder, dashboard, auto-upgrader, PWA,
+GitHub integration, notifications, and data portability.
 
 Run:
     uvicorn backend.router:app --host 0.0.0.0 --port 8000 --reload
@@ -67,6 +68,8 @@ Endpoints:
     GET  /api/admin/health/detailed          -- Detailed health
     GET  /                       -- Serve web UI
     GET  /{path}                -- Serve static files
+    -- v16 Production Endpoints --
+    PWA, GitHub integration, notifications, data portability
 """
 
 import json
@@ -121,9 +124,9 @@ CONFIG = load_backend_config()
 # -- FastAPI App --------------------------------------------------------
 
 app = FastAPI(
-    title="Luqi AI v14",
-    description="World-class AI SaaS platform: 85 languages, virtual labs, developer workspace, website builder, subscriptions, and self-improving intelligence",
-    version="14.0.0",
+    title="Luqi AI v16",
+    description="World-class AI SaaS platform: 85 languages, virtual labs, developer workspace, website builder, subscriptions, PWA, GitHub integration, notifications, data portability, and self-improving intelligence",
+    version="16.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -663,7 +666,7 @@ async def api_health() -> JSONResponse:
     return JSONResponse(
         content={
             "status": "healthy",
-            "version": "14.0.0",
+            "version": "16.0.0",
             "model": CONFIG.get("model", "unknown"),
             "search_available": bool(CONFIG.get("serper_api_key")),
             "languages_supported": 85,
@@ -674,6 +677,10 @@ async def api_health() -> JSONResponse:
             "website_builder": "enabled",
             "dashboard": "enabled",
             "auto_upgrader": "enabled",
+            "pwa": "enabled",
+            "github_integration": "enabled",
+            "notifications": "enabled",
+            "data_portability": "enabled",
         }
     )
 
@@ -707,7 +714,11 @@ async def api_models() -> JSONResponse:
             "developer_workspace": "enabled",
             "website_builder": "enabled",
             "dashboard": "enabled",
-            "version": "14.0.0",
+            "pwa": "enabled",
+            "github_integration": "enabled",
+            "notifications": "enabled",
+            "data_portability": "enabled",
+            "version": "16.0.0",
         }
     )
 
@@ -1241,7 +1252,7 @@ async def serve_index() -> FileResponse:
         return FileResponse(str(index_file))
     return JSONResponse(
         content={
-            "message": "Luqi AI v14 Backend",
+            "message": "Luqi AI v16 Backend",
             "docs": "/docs",
             "status": "No frontend built yet. Place files in ./web/",
         }
@@ -1272,3 +1283,11 @@ try:
     logger.info("v14 endpoints activated successfully")
 except Exception as exc:
     logger.warning("v14 endpoints not available: %s", exc)
+
+# -- v16: Activate production endpoints ---------------------------------
+# PWA, GitHub integration, notifications, data portability
+try:
+    import backend.v16_endpoints
+    logger.info("v16 endpoints activated successfully")
+except Exception as exc:
+    logger.warning("v16 endpoints not available: %s", exc)
