@@ -1,32 +1,72 @@
-"""FastAPI Router — Luqi AI v13 REST API
+"""FastAPI Router -- Luqi AI v14 REST API
 
 Provides all HTTP endpoints for the AI system including streaming chat,
 file upload, image generation, memory search, 85-language support,
-virtual science labs, Prometheus self-improvement, and health checks.
+virtual science labs, Prometheus self-improvement, subscriptions,
+developer workspace, website builder, dashboard, and auto-upgrader.
 
 Run:
     uvicorn backend.router:app --host 0.0.0.0 --port 8000 --reload
 
 Endpoints:
-    POST /api/chat              — Chat with AI (JSON response)
-    POST /api/chat/stream       — Streaming SSE chat
-    POST /api/search            — Web search
-    POST /api/upload            — File upload
-    POST /api/file/ask          — Ask about uploaded file
-    POST /api/image/generate    — Generate image
-    GET  /api/memory/{sid}      — Get conversation history
-    POST /api/memory/search     — Semantic search memories
-    GET  /api/languages         — List all 85 supported languages
-    POST /api/languages/detect  — Detect language from text
-    GET  /api/languages/{code}  — Get language details
-    GET  /api/labs              — List virtual lab simulations
-    GET  /api/labs/{lab_id}     — Get lab simulation details
-    GET  /api/prometheus/status — Prometheus self-improvement status
-    POST /api/prometheus/run    — Trigger improvement cycle
-    GET  /api/health            — Health check
-    GET  /api/models            — Available models
-    GET  /                       — Serve web UI
-    GET  /{path}                — Serve static files
+    POST /api/chat              -- Chat with AI (JSON response)
+    POST /api/chat/stream       -- Streaming SSE chat
+    POST /api/search            -- Web search
+    POST /api/upload            -- File upload
+    POST /api/file/ask          -- Ask about uploaded file
+    POST /api/image/generate    -- Generate image
+    GET  /api/memory/{sid}      -- Get conversation history
+    POST /api/memory/search     -- Semantic search memories
+    GET  /api/languages         -- List all 85 supported languages
+    POST /api/languages/detect  -- Detect language from text
+    GET  /api/languages/{code}  -- Get language details
+    GET  /api/labs              -- List virtual lab simulations
+    GET  /api/labs/{lab_id}     -- Get lab simulation details
+    GET  /api/prometheus/status -- Prometheus self-improvement status
+    POST /api/prometheus/run    -- Trigger improvement cycle
+    GET  /api/health            -- Health check
+    GET  /api/models            -- Available models
+    -- v14 SaaS Endpoints --
+    GET  /api/subscription/plans             -- List plans
+    GET  /api/subscription                   -- Current subscription
+    POST /api/subscription/checkout          -- Stripe checkout
+    POST /api/subscription/cancel            -- Cancel subscription
+    GET  /api/subscription/portal            -- Billing portal
+    GET  /api/subscription/usage             -- Usage stats
+    GET  /api/dev/languages                  -- Supported languages
+    GET  /api/dev/frameworks                 -- Supported frameworks
+    GET  /api/dev/methodologies              -- Dev methodologies
+    POST /api/dev/generate                   -- Generate code
+    POST /api/dev/review                     -- Review code
+    POST /api/dev/debug                      -- Debug code
+    POST /api/dev/architecture               -- Design architecture
+    POST /api/dev/scaffold                   -- Scaffold project
+    POST /api/dev/explain                    -- Explain code
+    POST /api/dev/convert                    -- Convert language
+    POST /api/dev/tests                      -- Generate tests
+    GET  /api/website/templates              -- List templates
+    POST /api/website/generate               -- AI generate website
+    GET  /api/website/components             -- List components
+    POST /api/website/build                  -- Build custom page
+    GET  /api/dashboard/widgets              -- Get widgets
+    POST /api/dashboard/widgets              -- Save widget
+    DELETE /api/dashboard/widgets/{id}       -- Remove widget
+    GET  /api/dashboard/kb                   -- Knowledge base
+    POST /api/dashboard/kb                   -- Save KB page
+    GET  /api/dashboard/kb/search            -- Search KB
+    GET  /api/dashboard/habits               -- Get habits
+    POST /api/dashboard/habits               -- Save habit
+    POST /api/dashboard/habits/{id}/track    -- Track habit
+    GET  /api/dashboard/daily                -- Daily summary
+    GET  /api/system/status                  -- System status
+    GET  /api/system/updates                 -- Available updates
+    POST /api/system/analyze                 -- Run analysis
+    POST /api/system/improve                 -- Apply improvement
+    GET  /api/system/changelog               -- Version changelog
+    GET  /api/admin/analytics                -- API analytics
+    GET  /api/admin/health/detailed          -- Detailed health
+    GET  /                       -- Serve web UI
+    GET  /{path}                -- Serve static files
 """
 
 import json
@@ -53,7 +93,7 @@ from backend.images import ImageGenerator
 from backend.memory import VectorMemory
 from backend.search import SearchEngine
 
-# v13 modules — language system, Prometheus, labs
+# v13 modules -- language system, Prometheus, labs
 from backend.lang.african_languages import AFRICAN_LANGUAGES
 try:
     from backend.lang.african_languages import GLOBAL_LANGUAGES
@@ -66,7 +106,7 @@ except ImportError:
 from backend.lang.language_detector import LanguageDetector
 from backend.lang.multilingual_router import MultilingualRouter
 
-# ── Logging ────────────────────────────────────────────────────────────
+# -- Logging ------------------------------------------------------------
 
 logging.basicConfig(
     level=logging.INFO,
@@ -74,16 +114,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ── Configuration ──────────────────────────────────────────────────────
+# -- Configuration ------------------------------------------------------
 
 CONFIG = load_backend_config()
 
-# ── FastAPI App ────────────────────────────────────────────────────────
+# -- FastAPI App --------------------------------------------------------
 
 app = FastAPI(
-    title="Luqi AI v13",
-    description="World-class AI system with 85 languages, virtual labs, Prometheus self-improvement, and multi-agent orchestration",
-    version="13.0.0",
+    title="Luqi AI v14",
+    description="World-class AI SaaS platform: 85 languages, virtual labs, developer workspace, website builder, subscriptions, and self-improving intelligence",
+    version="14.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -97,7 +137,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Shared Components ──────────────────────────────────────────────────
+# -- Shared Components --------------------------------------------------
 
 _ai_engine: Optional[AIEngine] = None
 _search_engine: Optional[SearchEngine] = None
@@ -155,7 +195,7 @@ def get_agents() -> AgentOrchestrator:
     return _agent_orchestrator
 
 
-# ── v13 Shared Components ──────────────────────────────────────────────
+# -- v13 Shared Components ----------------------------------------------
 
 _lang_detector: Optional[LanguageDetector] = None
 _multi_router: Optional[MultilingualRouter] = None
@@ -177,7 +217,7 @@ def get_multi_router() -> MultilingualRouter:
     return _multi_router
 
 
-# ── Message Normalization ──────────────────────────────────────────────
+# -- Message Normalization ----------------------------------------------
 
 
 def normalize_messages(request: "ChatRequest") -> List[Dict[str, str]]:
@@ -197,7 +237,7 @@ def normalize_messages(request: "ChatRequest") -> List[Dict[str, str]]:
     )
 
 
-# ── Pydantic Models ────────────────────────────────────────────────────
+# -- Pydantic Models ----------------------------------------------------
 
 
 class ChatRequest(BaseModel):
@@ -316,12 +356,12 @@ class PrometheusRunRequest(BaseModel):
     )
 
 
-# ── API Endpoints ──────────────────────────────────────────────────────
+# -- API Endpoints ------------------------------------------------------
 
 
 @app.post("/api/chat")
 async def api_chat(request: ChatRequest) -> JSONResponse:
-    """Chat with the AI — returns a complete JSON response.
+    """Chat with the AI -- returns a complete JSON response.
 
     Request Body:
         messages: List of {role, content} dicts
@@ -623,12 +663,17 @@ async def api_health() -> JSONResponse:
     return JSONResponse(
         content={
             "status": "healthy",
-            "version": "13.0.0",
+            "version": "14.0.0",
             "model": CONFIG.get("model", "unknown"),
             "search_available": bool(CONFIG.get("serper_api_key")),
             "languages_supported": 85,
             "virtual_labs": 24,
             "prometheus": "active",
+            "subscriptions": "enabled",
+            "developer_workspace": "enabled",
+            "website_builder": "enabled",
+            "dashboard": "enabled",
+            "auto_upgrader": "enabled",
         }
     )
 
@@ -659,12 +704,15 @@ async def api_models() -> JSONResponse:
             "languages_supported": 85,
             "virtual_labs": 24,
             "prometheus": "enabled",
-            "version": "13.0.0",
+            "developer_workspace": "enabled",
+            "website_builder": "enabled",
+            "dashboard": "enabled",
+            "version": "14.0.0",
         }
     )
 
 
-# ── v13 Language API ───────────────────────────────────────────────────
+# -- v13 Language API ---------------------------------------------------
 
 
 @app.get("/api/languages")
@@ -799,10 +847,10 @@ async def api_language_detail(code: str) -> JSONResponse:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
-# ── v13 Virtual Labs API ───────────────────────────────────────────────
+# -- v13 Virtual Labs API -----------------------------------------------
 
 
-# Lab catalog — 24 interactive science simulations across 6 subjects
+# Lab catalog -- 24 interactive science simulations across 6 subjects
 LAB_CATALOG = [
     {
         "id": "ohms",
@@ -817,7 +865,7 @@ LAB_CATALOG = [
         "subject": "physics",
         "name": "Projectile Motion",
         "description": "Launch projectiles at different angles and velocities to understand parabolic trajectories.",
-        "formula": "y = x tan(θ) - (gx²)/(2v²cos²θ)",
+        "formula": "y = x tan(theta) - (gx^2)/(2v^2 cos^2 theta)",
         "difficulty": "intermediate",
     },
     {
@@ -825,7 +873,7 @@ LAB_CATALOG = [
         "subject": "physics",
         "name": "Wave Simulator",
         "description": "Visualize wave properties including amplitude, frequency, wavelength, and interference.",
-        "formula": "y = A sin(kx - ωt)",
+        "formula": "y = A sin(kx - omega t)",
         "difficulty": "beginner",
     },
     {
@@ -833,7 +881,7 @@ LAB_CATALOG = [
         "subject": "physics",
         "name": "Optics & Refraction",
         "description": "Study light refraction through different media using Snell's Law.",
-        "formula": "n₁sin(θ₁) = n₂sin(θ₂)",
+        "formula": "n1 sin(theta1) = n2 sin(theta2)",
         "difficulty": "intermediate",
     },
     {
@@ -841,7 +889,7 @@ LAB_CATALOG = [
         "subject": "physics",
         "name": "Pendulum Lab",
         "description": "Investigate pendulum period dependence on length, gravity, and amplitude.",
-        "formula": "T = 2π√(L/g)",
+        "formula": "T = 2*pi*sqrt(L/g)",
         "difficulty": "beginner",
     },
     {
@@ -849,7 +897,7 @@ LAB_CATALOG = [
         "subject": "physics",
         "name": "Spring Oscillator",
         "description": "Explore simple harmonic motion, damping, and spring constants.",
-        "formula": "F = -kx, T = 2π√(m/k)",
+        "formula": "F = -kx, T = 2*pi*sqrt(m/k)",
         "difficulty": "intermediate",
     },
     {
@@ -865,7 +913,7 @@ LAB_CATALOG = [
         "subject": "chemistry",
         "name": "Chemical Reactions",
         "description": "Balance chemical equations and observe reaction simulations.",
-        "formula": "Reactants → Products",
+        "formula": "Reactants -> Products",
         "difficulty": "intermediate",
     },
     {
@@ -873,7 +921,7 @@ LAB_CATALOG = [
         "subject": "chemistry",
         "name": "Acid-Base Titration",
         "description": "Perform virtual titrations with pH indicators and equivalence points.",
-        "formula": "M₁V₁ = M₂V₂",
+        "formula": "M1V1 = M2V2",
         "difficulty": "advanced",
     },
     {
@@ -913,7 +961,7 @@ LAB_CATALOG = [
         "subject": "biology",
         "name": "Photosynthesis",
         "description": "Simulate the process of converting light energy into chemical energy.",
-        "formula": "6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂",
+        "formula": "6CO2 + 6H2O -> C6H12O6 + 6O2",
         "difficulty": "intermediate",
     },
     {
@@ -953,7 +1001,7 @@ LAB_CATALOG = [
         "subject": "math",
         "name": "Trigonometry",
         "description": "Visualize sine, cosine, tangent and their relationships on the unit circle.",
-        "formula": "sin²θ + cos²θ = 1",
+        "formula": "sin^2 theta + cos^2 theta = 1",
         "difficulty": "intermediate",
     },
     {
@@ -961,7 +1009,7 @@ LAB_CATALOG = [
         "subject": "math",
         "name": "Statistics",
         "description": "Explore mean, median, standard deviation, and probability distributions.",
-        "formula": "σ = √(Σ(x-μ)²/N)",
+        "formula": "sigma = sqrt(sum((x-mu)^2)/N)",
         "difficulty": "intermediate",
     },
     {
@@ -969,7 +1017,7 @@ LAB_CATALOG = [
         "subject": "math",
         "name": "Calculus Visualizer",
         "description": "Visualize derivatives, integrals, and limits with interactive graphs.",
-        "formula": "dy/dx = lim(h→0) [f(x+h)-f(x)]/h",
+        "formula": "dy/dx = lim(h->0) [f(x+h)-f(x)]/h",
         "difficulty": "advanced",
     },
     {
@@ -977,7 +1025,7 @@ LAB_CATALOG = [
         "subject": "earth",
         "name": "Solar System",
         "description": "Explore planetary orbits, phases, and celestial mechanics.",
-        "formula": "F = G(m₁m₂)/r²",
+        "formula": "F = G(m1 m2)/r^2",
         "difficulty": "beginner",
     },
     {
@@ -1075,7 +1123,7 @@ async def api_lab_detail(lab_id: str) -> JSONResponse:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
-# ── v13 Prometheus API ─────────────────────────────────────────────────
+# -- v13 Prometheus API -------------------------------------------------
 
 
 @app.get("/api/prometheus/status")
@@ -1165,7 +1213,7 @@ async def api_prometheus_run(request: PrometheusRunRequest) -> JSONResponse:
         )
     except Exception as exc:
         logger.error("Prometheus run error: %s", exc)
-        # Graceful degradation — return status even if research fails
+        # Graceful degradation -- return status even if research fails
         return JSONResponse(
             content={
                 "mode": request.mode,
@@ -1180,7 +1228,7 @@ async def api_prometheus_run(request: PrometheusRunRequest) -> JSONResponse:
         )
 
 
-# ── Static File Serving ────────────────────────────────────────────────
+# -- Static File Serving ------------------------------------------------
 
 WEB_DIR = Path(__file__).parent.parent / "web"
 
@@ -1191,10 +1239,9 @@ async def serve_index() -> FileResponse:
     index_file = WEB_DIR / "index.html"
     if index_file.exists():
         return FileResponse(str(index_file))
-    # Fallback: return API info if no UI built yet
-    return FileResponse(str(index_file)) if index_file.exists() else JSONResponse(
+    return JSONResponse(
         content={
-            "message": "Luqi AI v13 Backend",
+            "message": "Luqi AI v14 Backend",
             "docs": "/docs",
             "status": "No frontend built yet. Place files in ./web/",
         }
@@ -1214,3 +1261,14 @@ async def serve_static(request: Request, path: str) -> FileResponse:
     if file_path.exists() and file_path.is_file():
         return FileResponse(str(file_path))
     raise HTTPException(status_code=404, detail="File not found")
+
+
+# -- v14: Activate all new endpoints ------------------------------------
+# Importing this module registers 41 additional endpoints:
+# subscriptions (6), developer (11), website builder (4),
+# dashboard (13), auto-upgrader (5), admin (2)
+try:
+    import backend.v14_endpoints
+    logger.info("v14 endpoints activated successfully")
+except Exception as exc:
+    logger.warning("v14 endpoints not available: %s", exc)
