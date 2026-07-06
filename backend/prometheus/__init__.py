@@ -14,7 +14,7 @@ Modules:
     prometheus_cli: Command-line interface for interacting with Prometheus.
 
 Example:
-    from prometheus.prometheus_orchestrator import PrometheusOrchestrator
+    from backend.prometheus.prometheus_orchestrator import PrometheusOrchestrator
 
     orchestrator = PrometheusOrchestrator(db_path="./prometheus.db")
     results = orchestrator.run_daily_cycle()
@@ -23,11 +23,11 @@ Example:
 __version__ = "1.0.0"
 __author__ = "Luqi AI Engineering"
 
-from prometheus.prometheus_orchestrator import PrometheusOrchestrator
-from prometheus.research_agent import ResearchAgent
-from prometheus.gap_analyzer import GapAnalyzer
-from prometheus.improvement_engine import ImprovementEngine
-from prometheus.benchmark_runner import BenchmarkRunner
+from backend.prometheus.prometheus_orchestrator import PrometheusOrchestrator
+from backend.prometheus.research_agent import ResearchAgent
+from backend.prometheus.gap_analyzer import GapAnalyzer
+from backend.prometheus.improvement_engine import ImprovementEngine
+from backend.prometheus.benchmark_runner import BenchmarkRunner
 
 __all__ = [
     "PrometheusOrchestrator",
