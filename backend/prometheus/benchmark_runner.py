@@ -22,7 +22,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from prometheus.config import BENCHMARK_TEMPERATURE, BENCHMARK_TIMEOUT_SECONDS
+from backend.prometheus.config import BENCHMARK_TEMPERATURE, BENCHMARK_TIMEOUT_SECONDS
 
 logger = logging.getLogger(__name__)
 
