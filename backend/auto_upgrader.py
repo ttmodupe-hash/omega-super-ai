@@ -124,6 +124,7 @@ _CAPABILITY_REGISTRY: dict[str, Capability] = {
     ),
 }
 
+
 # In-memory changelog (append-only)
 _CHANGELOG: list[dict[str, Any]] = [
     {
@@ -235,7 +236,7 @@ def generate_improvement_plan() -> list[dict[str, Any]]:
                 "capability": cap_id,
                 "title": f"Improve {cap.name} score",
                 "description": f"Current score is {cap.score:.0f}. Target: 90+. "
-                               f"Gaps: {', '.join(finding['gards'])}",
+                               f"Gaps: {', '.join(finding['gaps'])}",
                 "impact": int(100 - cap.score),
                 "ease": 3 if cap.score > 70 else 2,
                 "status": "pending",
@@ -276,14 +277,15 @@ def generate_improvement_plan() -> list[dict[str, Any]]:
     _IMPROVEMENT_QUEUE = tasks
 
     # Update the auto_upgrader capability metric
-    _CAPABILITY_REGISTRY["auto_upgrader"].metrics["plans_generated"] = \
+    _CAPABILITY_REGISTRY["auto_upgrader"].metrics["plans_generated"] = (
         _CAPABILITY_REGISTRY["auto_upgrader"].metrics.get("plans_generated", 0) + 1
+    )
 
     return tasks
 
 
 def apply_improvement(task_id: str) -> dict[str, Any]:
-    """Apply a single improvement from the queue.
+    """Apply a single improvement task from the queue.
 
     Returns a dict with the result.  Actual code modifications are logged
     but not written automatically — a human review gate is recommended.

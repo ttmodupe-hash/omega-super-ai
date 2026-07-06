@@ -1,639 +1,1054 @@
 #!/usr/bin/env python3
-"""Luqi AI v14 -- Subscription Management System
-
-Production-grade SaaS billing with three tiers: Free, Pro, Enterprise.
-Supports Stripe integration with graceful mock fallback for development.
-SQLite-backed with usage tracking, quota enforcement, and rate limiting.
-
-Usage:
-    from backend.subscriptions import init_db, get_plans, check_quota
-    init_db()
-    plans = get_plans()
-    ok = check_quota("user_123", "messages")
 """
+Luqi AI — Subscription & Billing Management Module
+====================================================
+
+Production-grade subscription system with SQLite backend, usage tracking,
+rate limiting, Stripe integration (with graceful mock fallback), and
+tier-based access control via decorator factories.
+
+Intended usage in `backend/router.py`::
+
+    from backend.subscriptions import (
+        init_db, get_plans, get_or_create_subscription,
+        check_quota, increment_usage, get_usage,
+        require_plan, get_health_detailed,
+        create_checkout_session, create_customer_portal, handle_webhook,
+        get_analytics, log_api_call, get_user_id, track_request,
+    )
+"""
+
+from __future__ import annotations
 
 import hashlib
 import json
 import logging
+import os
 import sqlite3
 import threading
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from enum import Enum
+from functools import wraps
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-logger = logging.getLogger(__name__)
-
-# ---------------------------------------------------------------------------
-# CONFIGURATION
-# ---------------------------------------------------------------------------
-
-DB_PATH = Path("./data/subscriptions.db")
-PLAN_HIERARCHY = {"free": 0, "pro": 1, "enterprise": 2}
+logger = logging.getLogger("luqi.subscriptions")
 
 # ---------------------------------------------------------------------------
-# DATA MODELS
+# Constants & Configuration
 # ---------------------------------------------------------------------------
 
-@dataclass
-class Plan:
-    """Subscription plan definition."""
-    id: str
-    name: str
-    price_monthly: int       # cents
-    price_yearly: int        # cents
-    daily_messages: int      # -1 = unlimited
-    max_projects: int        # -1 = unlimited
-    max_storage_mb: int
-    features: List[str]
-    description: str
+DEFAULT_DB_PATH = os.environ.get("LUQI_DB_PATH", "/mnt/agents/output/project/data/luqi.db")
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "sk_test_placeholder")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "whsec_placeholder")
+STRIPE_ENABLED = False  # determined at import time below
 
+# Rate-limiting settings
+RATE_LIMIT_WINDOW_SECONDS = 60
+RATE_LIMIT_FREE = 30          # requests per window
+RATE_LIMIT_PRO = 120
+RATE_LIMIT_ENTERPRISE = 600
 
-# Plan catalog
-PLANS = {
-    "free": Plan(
-        id="free",
-        name="Free",
-        price_monthly=0,
-        price_yearly=0,
-        daily_messages=50,
-        max_projects=3,
-        max_storage_mb=100,
-        features=[
-            "50 messages per day",
-            "3 projects",
-            "100 MB storage",
-            "Basic code generation",
-            "Community support",
-        ],
-        description="Perfect for getting started with Luqi AI."
-    ),
-    "pro": Plan(
-        id="pro",
-        name="Pro",
-        price_monthly=999,     # $9.99
-        price_yearly=9990,     # $99.90
-        daily_messages=-1,     # unlimited
-        max_projects=20,
-        max_storage_mb=1000,   # 1 GB
-        features=[
-            "Unlimited messages",
-            "20 projects",
-            "1 GB storage",
-            "Advanced code generation",
-            "Code review & debugging",
-            "Website builder",
-            "Priority support",
-            "API access",
-        ],
-        description="For professional developers and creators."
-    ),
-    "enterprise": Plan(
-        id="enterprise",
-        name="Enterprise",
-        price_monthly=2999,    # $29.99
-        price_yearly=29990,    # $299.90
-        daily_messages=-1,
-        max_projects=-1,
-        max_storage_mb=10000,  # 10 GB
-        features=[
-            "Everything in Pro",
-            "Unlimited projects",
-            "10 GB storage",
-            "Team collaboration",
-            "Custom integrations",
-            "SSO authentication",
-            "Dedicated support",
-            "SLA guarantee",
-            "On-premise option",
-        ],
-        description="For teams and organizations at scale."
-    ),
-}
+# API key → user_id cache (in-memory, per-process)
+_user_id_cache: Dict[str, str] = {}
+_rate_limit_buckets: Dict[str, List[float]] = {}
+_lock = threading.RLock()
+
+# ---------------------------------------------------------------------------
+# Stripe availability
+# ---------------------------------------------------------------------------
+
+try:
+    import stripe as stripe_lib
+
+    if STRIPE_SECRET_KEY.startswith("sk_"):
+        stripe_lib.api_key = STRIPE_SECRET_KEY
+        STRIPE_ENABLED = True
+        logger.info("Stripe library loaded and configured.")
+    else:
+        logger.warning("Stripe key not set or invalid — using mock mode.")
+except ImportError:
+    stripe_lib = None  # type: ignore[assignment]
+    logger.warning("stripe library not installed — using mock mode.")
 
 
 # ---------------------------------------------------------------------------
-# DATABASE
+# Plan definitions
 # ---------------------------------------------------------------------------
 
-def _get_db() -> sqlite3.Connection:
-    """Get a database connection."""
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+class PlanId(str, Enum):
+    FREE = "free"
+    PRO = "pro"
+    ENTERPRISE = "enterprise"
+
+
+PLANS: List[Dict[str, Any]] = [
+    {
+        "id": PlanId.FREE,
+        "name": "Free",
+        "price_monthly": 0.0,
+        "price_id": "",
+        "features": {
+            "messages_per_day": 50,
+            "projects": 3,
+            "storage_mb": 100,
+            "unlimited_messages": False,
+            "unlimited_projects": False,
+            "team_features": False,
+            "priority_support": False,
+        },
+    },
+    {
+        "id": PlanId.PRO,
+        "name": "Pro",
+        "price_monthly": 19.99,
+        "price_id": "price_pro_monthly",
+        "features": {
+            "messages_per_day": -1,  # unlimited
+            "projects": 20,
+            "storage_mb": 1024,
+            "unlimited_messages": True,
+            "unlimited_projects": False,
+            "team_features": False,
+            "priority_support": True,
+        },
+    },
+    {
+        "id": PlanId.ENTERPRISE,
+        "name": "Enterprise",
+        "price_monthly": 29.99,
+        "price_id": "price_enterprise_monthly",
+        "features": {
+            "messages_per_day": -1,  # unlimited
+            "projects": -1,          # unlimited
+            "storage_mb": 10240,
+            "unlimited_messages": True,
+            "unlimited_projects": True,
+            "team_features": True,
+            "priority_support": True,
+        },
+    },
+]
+
+_PLAN_BY_ID: Dict[str, Dict[str, Any]] = {p["id"]: p for p in PLANS}
+
+
+# ---------------------------------------------------------------------------
+# Database helpers
+# ---------------------------------------------------------------------------
+
+@contextmanager
+def _db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
+    """Yield a SQLite connection with row factory, auto-create parent dirs."""
+    path = db_path or DEFAULT_DB_PATH
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
-def init_db():
-    """Create all subscription-related tables."""
-    with _get_db() as conn:
-        # Subscriptions
-        conn.executescript("""
-            CREATE TABLE IF NOT EXISTS subscriptions (
-                user_id TEXT PRIMARY KEY,
-                plan_id TEXT NOT NULL DEFAULT 'free',
-                status TEXT NOT NULL DEFAULT 'active',
-                current_period_end TIMESTAMP,
-                stripe_customer_id TEXT,
-                stripe_subscription_id TEXT,
-                cancel_at_period_end BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE INDEX IF NOT EXISTS idx_subs_status ON subscriptions(status);
-            CREATE INDEX IF NOT EXISTS idx_subs_plan ON subscriptions(plan_id);
+# ---------------------------------------------------------------------------
+# 1. init_db
+# ---------------------------------------------------------------------------
 
-            CREATE TABLE IF NOT EXISTS usage_log (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT NOT NULL,
-                resource TEXT NOT NULL,
-                amount INTEGER DEFAULT 1,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE INDEX IF NOT EXISTS idx_usage_user ON usage_log(user_id);
-            CREATE INDEX IF NOT EXISTS idx_usage_ts ON usage_log(timestamp);
+def init_db(db_path: Optional[str] = None) -> None:
+    """Create all required tables and indexes if they do not exist.
 
-            CREATE TABLE IF NOT EXISTS api_log (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT,
-                endpoint TEXT NOT NULL,
-                method TEXT NOT NULL,
-                duration_ms REAL,
-                status_code INTEGER,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            CREATE INDEX IF NOT EXISTS idx_api_user ON api_log(user_id);
-            CREATE INDEX IF NOT EXISTS idx_api_endpoint ON api_log(endpoint);
-            CREATE INDEX IF NOT EXISTS idx_api_ts ON api_log(timestamp);
-        """)
+    Tables created:
+        - subscriptions
+        - usage_log
+        - api_log
+    """
+    schema = """
+    CREATE TABLE IF NOT EXISTS subscriptions (
+        user_id                 TEXT PRIMARY KEY,
+        plan_id                 TEXT NOT NULL DEFAULT 'free',
+        status                  TEXT NOT NULL DEFAULT 'active',
+        current_period_end      TEXT,
+        stripe_customer_id      TEXT,
+        stripe_subscription_id  TEXT,
+        cancel_at_period_end    INTEGER NOT NULL DEFAULT 0,
+        created_at              TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at              TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_subs_plan       ON subscriptions(plan_id);
+    CREATE INDEX IF NOT EXISTS idx_subs_status     ON subscriptions(status);
+    CREATE INDEX IF NOT EXISTS idx_subs_period_end ON subscriptions(current_period_end);
+
+    CREATE TABLE IF NOT EXISTS usage_log (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id     TEXT NOT NULL,
+        resource    TEXT NOT NULL,
+        amount      INTEGER NOT NULL DEFAULT 1,
+        timestamp   TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_usage_user_ts   ON usage_log(user_id, timestamp);
+    CREATE INDEX IF NOT EXISTS idx_usage_resource  ON usage_log(resource);
+
+    CREATE TABLE IF NOT EXISTS api_log (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id     TEXT NOT NULL,
+        endpoint    TEXT NOT NULL,
+        method      TEXT NOT NULL,
+        duration_ms REAL,
+        status_code INTEGER,
+        timestamp   TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_api_user_ts     ON api_log(user_id, timestamp);
+    CREATE INDEX IF NOT EXISTS idx_api_endpoint    ON api_log(endpoint);
+    CREATE INDEX IF NOT EXISTS idx_api_status      ON api_log(status_code);
+    """
+    with _db_connection(db_path) as conn:
+        conn.executescript(schema)
         conn.commit()
-    logger.info("Subscription database initialized")
+    logger.info("Database initialised at %s", db_path or DEFAULT_DB_PATH)
 
 
 # ---------------------------------------------------------------------------
-# PLANS
+# 2. get_plans
 # ---------------------------------------------------------------------------
 
-def get_plans() -> List[dict]:
-    """Return all subscription plans with pricing and features."""
-    return [
-        {
-            "id": p.id,
-            "name": p.name,
-            "price_monthly": p.price_monthly,
-            "price_yearly": p.price_yearly,
-            "price_monthly_display": f"${p.price_monthly / 100:.2f}",
-            "price_yearly_display": f"${p.price_yearly / 100:.2f}",
-            "daily_messages": p.daily_messages,
-            "max_projects": p.max_projects,
-            "max_storage_mb": p.max_storage_mb,
-            "features": p.features,
-            "description": p.description,
-        }
-        for p in PLANS.values()
-    ]
+def get_plans() -> List[Dict[str, Any]]:
+    """Return the three available subscription plans with full feature lists.
 
-
-def get_plan(plan_id: str) -> Optional[Plan]:
-    """Get a plan by ID."""
-    return PLANS.get(plan_id)
+    Returns:
+        A list of plan dictionaries (id, name, price_monthly, price_id, features).
+    """
+    return [p.copy() for p in PLANS]
 
 
 # ---------------------------------------------------------------------------
-# SUBSCRIPTION CRUD
+# 3. get_or_create_subscription
 # ---------------------------------------------------------------------------
 
-def get_or_create_subscription(user_id: str) -> dict:
-    """Get existing subscription or create a free one."""
-    with _get_db() as conn:
+def get_or_create_subscription(user_id: str, db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Fetch the subscription for *user_id*, creating a free tier row if absent.
+
+    Args:
+        user_id: Opaque user identifier.
+
+    Returns:
+        Subscription row as a dict.
+    """
+    with _db_connection(db_path) as conn:
         row = conn.execute(
-            "SELECT * FROM subscriptions WHERE user_id = ?",
-            (user_id,)
+            "SELECT * FROM subscriptions WHERE user_id = ?", (user_id,)
         ).fetchone()
 
         if row is None:
-            # Create free subscription
+            now = datetime.now(timezone.utc).isoformat()
             conn.execute(
-                """INSERT INTO subscriptions
-                   (user_id, plan_id, status, current_period_end)
-                   VALUES (?, 'free', 'active', ?)""",
-                (user_id, (datetime.utcnow() + timedelta(days=365)).isoformat())
+                """
+                INSERT INTO subscriptions
+                    (user_id, plan_id, status, current_period_end, created_at, updated_at)
+                VALUES (?, 'free', 'active', ?, ?, ?)
+                """,
+                (user_id, now, now, now),
             )
             conn.commit()
             row = conn.execute(
-                "SELECT * FROM subscriptions WHERE user_id = ?",
-                (user_id,)
+                "SELECT * FROM subscriptions WHERE user_id = ?", (user_id,)
             ).fetchone()
+            logger.info("Created free subscription for user=%s", user_id)
 
-        return dict(row)
-
-
-def upgrade_subscription(user_id: str, plan_id: str) -> dict:
-    """Upgrade user to a new plan."""
-    plan = PLANS.get(plan_id)
-    if not plan:
-        raise ValueError(f"Unknown plan: {plan_id}")
-
-    with _get_db() as conn:
-        conn.execute(
-            """UPDATE subscriptions
-               SET plan_id = ?, status = 'active',
-                   current_period_end = ?,
-                   cancel_at_period_end = FALSE,
-                   updated_at = CURRENT_TIMESTAMP
-               WHERE user_id = ?""",
-            (plan_id, (datetime.utcnow() + timedelta(days=30)).isoformat(), user_id)
-        )
-        conn.commit()
-
-    return get_or_create_subscription(user_id)
-
-
-def cancel_subscription(user_id: str) -> dict:
-    """Cancel subscription -- downgrades to free at period end."""
-    with _get_db() as conn:
-        conn.execute(
-            """UPDATE subscriptions
-               SET cancel_at_period_end = TRUE, updated_at = CURRENT_TIMESTAMP
-               WHERE user_id = ?""",
-            (user_id,)
-        )
-        conn.commit()
-    return {"status": "cancelled", "message": "Subscription will downgrade to Free at period end."}
+        return dict(row)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
-# USAGE TRACKING & QUOTAS
+# 4. upgrade_subscription
 # ---------------------------------------------------------------------------
 
-def check_quota(user_id: str, resource: str) -> bool:
-    """Check if user has remaining quota for a resource."""
-    sub = get_or_create_subscription(user_id)
-    plan = PLANS.get(sub["plan_id"], PLANS["free"])
+def upgrade_subscription(
+    user_id: str,
+    plan_id: str,
+    stripe_subscription_id: Optional[str] = None,
+    db_path: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Move *user_id* onto *plan_id* and activate the new period.
 
-    if resource == "messages":
-        limit = plan.daily_messages
-        if limit == -1:
-            return True
-        used = get_usage(user_id).get("messages_today", 0)
-        return used < limit
+    Args:
+        user_id: Target user.
+        plan_id: One of ``free``, ``pro``, ``enterprise``.
+        stripe_subscription_id: Optional Stripe subscription identifier.
 
-    if resource == "projects":
-        limit = plan.max_projects
-        if limit == -1:
-            return True
-        # Count from usage log
-        return True  # Simplified
+    Returns:
+        Updated subscription dict.
 
-    return True
+    Raises:
+        ValueError: If *plan_id* is not recognised.
+    """
+    if plan_id not in _PLAN_BY_ID:
+        raise ValueError(f"Unknown plan_id: {plan_id!r}")
 
+    period_end = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+    now = datetime.now(timezone.utc).isoformat()
 
-def increment_usage(user_id: str, resource: str, amount: int = 1):
-    """Record usage of a resource."""
-    with _get_db() as conn:
+    with _db_connection(db_path) as conn:
         conn.execute(
-            "INSERT INTO usage_log (user_id, resource, amount) VALUES (?, ?, ?)",
-            (user_id, resource, amount)
+            """
+            INSERT INTO subscriptions (user_id, plan_id, status, current_period_end,
+                                       stripe_subscription_id, cancel_at_period_end,
+                                       created_at, updated_at)
+            VALUES (?, ?, 'active', ?, ?, 0, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                plan_id                = excluded.plan_id,
+                status                 = excluded.status,
+                current_period_end     = excluded.current_period_end,
+                stripe_subscription_id = COALESCE(excluded.stripe_subscription_id,
+                                                   subscriptions.stripe_subscription_id),
+                cancel_at_period_end   = 0,
+                updated_at             = excluded.updated_at
+            """,
+            (user_id, plan_id, period_end, stripe_subscription_id, now, now),
+        )
+        conn.commit()
+
+    logger.info("User %s upgraded to plan=%s", user_id, plan_id)
+    return get_or_create_subscription(user_id, db_path)
+
+
+# ---------------------------------------------------------------------------
+# 5. cancel_subscription
+# ---------------------------------------------------------------------------
+
+def cancel_subscription(user_id: str, db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Mark *user_id*'s subscription as cancelling at period end and downgrade
+    them to the free plan immediately.
+
+    Args:
+        user_id: Target user.
+
+    Returns:
+        Updated subscription dict.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    with _db_connection(db_path) as conn:
+        conn.execute(
+            """
+            UPDATE subscriptions
+            SET plan_id = 'free',
+                status = 'cancelled',
+                cancel_at_period_end = 1,
+                updated_at = ?
+            WHERE user_id = ?
+            """,
+            (now, user_id),
+        )
+        conn.commit()
+
+    logger.info("User %s subscription cancelled (downgraded to free).", user_id)
+    return get_or_create_subscription(user_id, db_path)
+
+
+# ---------------------------------------------------------------------------
+# 6. check_quota
+# ---------------------------------------------------------------------------
+
+def check_quota(user_id: str, resource: str, db_path: Optional[str] = None) -> bool:
+    """Return ``True`` if *user_id* has not exceeded their quota for *resource*.
+
+    Supported resources: ``messages``, ``projects``, ``storage_mb``.
+    """
+    sub = get_or_create_subscription(user_id, db_path)
+    plan = _PLAN_BY_ID.get(sub["plan_id"], _PLAN_BY_ID[PlanId.FREE])
+    features = plan["features"]
+
+    # Map resource name to plan feature key
+    resource_map = {
+        "messages": "messages_per_day",
+        "projects": "projects",
+        "storage_mb": "storage_mb",
+    }
+    feature_key = resource_map.get(resource)
+    if feature_key is None:
+        # Unknown resource — allow by default
+        return True
+
+    limit = features.get(feature_key, 0)
+    if limit == -1:
+        return True  # unlimited
+
+    # Compute today's usage
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    with _db_connection(db_path) as conn:
+        row = conn.execute(
+            """
+            SELECT COALESCE(SUM(amount), 0) as total
+            FROM usage_log
+            WHERE user_id = ? AND resource = ? AND date(timestamp) = ?
+            """,
+            (user_id, resource, today),
+        ).fetchone()
+    used = row["total"] if row else 0
+
+    return used < limit
+
+
+# ---------------------------------------------------------------------------
+# 7. increment_usage
+# ---------------------------------------------------------------------------
+
+def increment_usage(
+    user_id: str, resource: str, amount: int = 1, db_path: Optional[str] = None
+) -> None:
+    """Record *amount* consumption of *resource* for *user_id*.
+
+    Args:
+        user_id: Target user.
+        resource: Resource slug, e.g. ``messages``, ``projects``.
+        amount: How much to increment by (default 1).
+    """
+    with _db_connection(db_path) as conn:
+        conn.execute(
+            """
+            INSERT INTO usage_log (user_id, resource, amount, timestamp)
+            VALUES (?, ?, ?, ?)
+            """,
+            (user_id, resource, amount, datetime.now(timezone.utc).isoformat()),
         )
         conn.commit()
 
 
-def get_usage(user_id: str) -> dict:
-    """Get today's usage statistics for a user."""
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    with _get_db() as conn:
+# ---------------------------------------------------------------------------
+# 8. get_usage
+# ---------------------------------------------------------------------------
+
+def get_usage(user_id: str, db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Return today's usage counts for *user_id* plus plan limits.
+
+    Returns:
+        Dict with keys: ``plan``, ``limits``, ``used``, ``remaining``.
+    """
+    sub = get_or_create_subscription(user_id, db_path)
+    plan = _PLAN_BY_ID.get(sub["plan_id"], _PLAN_BY_ID[PlanId.FREE])
+    features = plan["features"]
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    with _db_connection(db_path) as conn:
         rows = conn.execute(
-            """SELECT resource, SUM(amount) as total
-               FROM usage_log
-               WHERE user_id = ? AND timestamp >= ?
-               GROUP BY resource""",
-            (user_id, today)
+            """
+            SELECT resource, COALESCE(SUM(amount), 0) as total
+            FROM usage_log
+            WHERE user_id = ? AND date(timestamp) = ?
+            GROUP BY resource
+            """,
+            (user_id, today),
         ).fetchall()
 
-    usage = {row["resource"]: row["total"] for row in rows}
-    sub = get_or_create_subscription(user_id)
-    plan = PLANS.get(sub["plan_id"], PLANS["free"])
+    used: Dict[str, int] = {r["resource"]: r["total"] for r in rows}
+    limits: Dict[str, Any] = {
+        "messages": features.get("messages_per_day", 0),
+        "projects": features.get("projects", 0),
+        "storage_mb": features.get("storage_mb", 0),
+    }
+    remaining: Dict[str, Any] = {}
+    for key, limit in limits.items():
+        if limit == -1:
+            remaining[key] = "unlimited"
+        else:
+            remaining[key] = max(0, limit - used.get(key, 0))
 
     return {
-        "user_id": user_id,
-        "plan_id": sub["plan_id"],
-        "messages_today": usage.get("messages", 0),
-        "messages_limit": plan.daily_messages if plan.daily_messages > 0 else "unlimited",
-        "remaining_messages": (
-            max(0, plan.daily_messages - usage.get("messages", 0))
-            if plan.daily_messages > 0 else "unlimited"
-        ),
-        "storage_used_mb": usage.get("storage", 0),
-        "storage_limit_mb": plan.max_storage_mb,
-        "projects_used": usage.get("projects", 0),
-        "projects_limit": plan.max_projects if plan.max_projects > 0 else "unlimited",
+        "plan": sub["plan_id"],
+        "limits": limits,
+        "used": used,
+        "remaining": remaining,
     }
 
 
 # ---------------------------------------------------------------------------
-# RATE LIMITING
+# 9. get_analytics
 # ---------------------------------------------------------------------------
 
-_lock = threading.Lock()
-_rate_buckets: Dict[str, List[float]] = {}
+def get_analytics(
+    user_id: Optional[str] = None, days: int = 7, db_path: Optional[str] = None
+) -> Dict[str, Any]:
+    """Aggregate usage and API analytics for the last *days* days.
 
+    Args:
+        user_id: If given, restrict to this user; otherwise workspace-wide.
+        days: Look-back window in days.
+
+    Returns:
+        Dict containing ``period_days``, ``total_requests``, ``total_api_calls``,
+        ``resource_breakdown``, ``status_breakdown``, ``top_endpoints``,
+        ``daily_counts``.
+    """
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    params: List[Any] = [since]
+    user_filter_usage = ""
+    user_filter_api = ""
+    if user_id:
+        params_user = [since, user_id]
+    else:
+        params_user = [since]
+
+    with _db_connection(db_path) as conn:
+        # Total usage events
+        q_usage = "SELECT COALESCE(SUM(amount), 0) as total FROM usage_log WHERE timestamp >= ?"
+        q_api = "SELECT COUNT(*) as total FROM api_log WHERE timestamp >= ?"
+        if user_id:
+            q_usage += " AND user_id = ?"
+            q_api += " AND user_id = ?"
+            total_requests = conn.execute(q_usage, [since, user_id]).fetchone()["total"]
+            total_api_calls = conn.execute(q_api, [since, user_id]).fetchone()["total"]
+        else:
+            total_requests = conn.execute(q_usage, [since]).fetchone()["total"]
+            total_api_calls = conn.execute(q_api, [since]).fetchone()["total"]
+
+        # Resource breakdown
+        q = """
+            SELECT resource, COALESCE(SUM(amount), 0) as total
+            FROM usage_log WHERE timestamp >= ?
+        """
+        p = [since]
+        if user_id:
+            q += " AND user_id = ?"
+            p.append(user_id)
+        q += " GROUP BY resource"
+        resource_breakdown = {r["resource"]: r["total"] for r in conn.execute(q, p).fetchall()}
+
+        # Status breakdown
+        q = """
+            SELECT status_code, COUNT(*) as total
+            FROM api_log WHERE timestamp >= ?
+        """
+        p = [since]
+        if user_id:
+            q += " AND user_id = ?"
+            p.append(user_id)
+        q += " GROUP BY status_code"
+        status_breakdown = {r["status_code"]: r["total"] for r in conn.execute(q, p).fetchall()}
+
+        # Top endpoints
+        q = """
+            SELECT endpoint, COUNT(*) as total
+            FROM api_log WHERE timestamp >= ?
+        """
+        p = [since]
+        if user_id:
+            q += " AND user_id = ?"
+            p.append(user_id)
+        q += " GROUP BY endpoint ORDER BY total DESC LIMIT 10"
+        top_endpoints = [
+            {"endpoint": r["endpoint"], "calls": r["total"]}
+            for r in conn.execute(q, p).fetchall()
+        ]
+
+        # Daily counts
+        q = """
+            SELECT date(timestamp) as day, COUNT(*) as total
+            FROM api_log WHERE timestamp >= ?
+        """
+        p = [since]
+        if user_id:
+            q += " AND user_id = ?"
+            p.append(user_id)
+        q += " GROUP BY day ORDER BY day"
+        daily_counts = [
+            {"date": r["day"], "calls": r["total"]}
+            for r in conn.execute(q, p).fetchall()
+        ]
+
+    return {
+        "period_days": days,
+        "total_requests": total_requests,
+        "total_api_calls": total_api_calls,
+        "resource_breakdown": resource_breakdown,
+        "status_breakdown": status_breakdown,
+        "top_endpoints": top_endpoints,
+        "daily_counts": daily_counts,
+    }
+
+
+# ---------------------------------------------------------------------------
+# 10. log_api_call
+# ---------------------------------------------------------------------------
+
+def log_api_call(
+    user_id: str,
+    endpoint: str,
+    method: str,
+    duration_ms: float,
+    status_code: int,
+    db_path: Optional[str] = None,
+) -> None:
+    """Persist a single API request telemetry row.
+
+    Args:
+        user_id: Caller identifier.
+        endpoint: Request path, e.g. ``/v1/chat``.
+        method: HTTP method upper-cased.
+        duration_ms: Wall-clock latency in milliseconds.
+        status_code: HTTP response status code.
+    """
+    with _db_connection(db_path) as conn:
+        conn.execute(
+            """
+            INSERT INTO api_log (user_id, endpoint, method, duration_ms, status_code, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                endpoint,
+                method.upper(),
+                round(duration_ms, 3),
+                status_code,
+                datetime.now(timezone.utc).isoformat(),
+            ),
+        )
+        conn.commit()
+
+
+# ---------------------------------------------------------------------------
+# 11. require_plan — decorator factory
+# ---------------------------------------------------------------------------
+
+def require_plan(min_plan: str):
+    """Return a decorator that blocks access unless the caller is on *min_plan*
+    or higher.
+
+    Plan ordering: ``free`` < ``pro`` < ``enterprise``.
+
+    Usage::
+
+        @router.get("/premium")
+        @require_plan("pro")
+        async def premium_endpoint(user_id: str = Header(...)):
+            ...
+
+    Args:
+        min_plan: Minimum acceptable plan identifier.
+
+    Returns:
+        A decorator function.
+    """
+    _order = {"free": 0, "pro": 1, "enterprise": 2}
+    min_level = _order.get(min_plan, 0)
+
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            user_id = kwargs.get("user_id") or kwargs.get("x_user_id")
+            if not user_id:
+                raise PermissionError("user_id required for plan-gated endpoint.")
+            sub = get_or_create_subscription(user_id)
+            user_level = _order.get(sub["plan_id"], 0)
+            if user_level < min_level:
+                raise PermissionError(
+                    f"Plan '{sub['plan_id']}' insufficient — requires '{min_plan}'."
+                )
+            return await func(*args, **kwargs)
+
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            user_id = kwargs.get("user_id") or kwargs.get("x_user_id")
+            if not user_id:
+                raise PermissionError("user_id required for plan-gated endpoint.")
+            sub = get_or_create_subscription(user_id)
+            user_level = _order.get(sub["plan_id"], 0)
+            if user_level < min_level:
+                raise PermissionError(
+                    f"Plan '{sub['plan_id']}' insufficient — requires '{min_plan}'."
+                )
+            return func(*args, **kwargs)
+
+        # Heuristic: if the wrapped function is a coroutine, expose the async wrapper
+        import asyncio
+
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        return sync_wrapper
+
+    return decorator
+
+
+# ---------------------------------------------------------------------------
+# 12. rate_limit_check
+# ---------------------------------------------------------------------------
 
 def rate_limit_check(user_id: str, endpoint: str) -> bool:
-    """Sliding-window rate limit. Free: 30/min, Pro: 120/min, Enterprise: 600/min."""
-    sub = get_or_create_subscription(user_id)
-    plan = PLANS.get(sub["plan_id"], PLANS["free"])
+    """Sliding-window rate-limit check per *user_id*.
 
-    limits = {"free": 30, "pro": 120, "enterprise": 600}
-    limit = limits.get(plan.id, 30)
+    Limits are tier-based:
+        - Free: 30 req/min
+        - Pro: 120 req/min
+        - Enterprise: 600 req/min
+
+    Args:
+        user_id: Caller identifier.
+        endpoint: Request path (included in key for endpoint-level granularity).
+
+    Returns:
+        ``True`` if the request is within the limit.
+    """
+    sub = get_or_create_subscription(user_id)
+    plan_limits = {
+        PlanId.FREE: RATE_LIMIT_FREE,
+        PlanId.PRO: RATE_LIMIT_PRO,
+        PlanId.ENTERPRISE: RATE_LIMIT_ENTERPRISE,
+    }
+    limit = plan_limits.get(sub["plan_id"], RATE_LIMIT_FREE)
 
     key = f"{user_id}:{endpoint}"
     now = time.time()
-    window = 60.0  # 1 minute
 
     with _lock:
-        bucket = _rate_buckets.get(key, [])
-        # Remove old entries
-        bucket = [t for t in bucket if now - t < window]
+        bucket = _rate_limit_buckets.get(key, [])
+        # Evict stale entries outside the window
+        cutoff = now - RATE_LIMIT_WINDOW_SECONDS
+        bucket = [ts for ts in bucket if ts > cutoff]
         if len(bucket) >= limit:
+            _rate_limit_buckets[key] = bucket
+            logger.debug("Rate-limit exceeded for user=%s endpoint=%s", user_id, endpoint)
             return False
         bucket.append(now)
-        _rate_buckets[key] = bucket
-
-    return True
+        _rate_limit_buckets[key] = bucket
+        return True
 
 
 # ---------------------------------------------------------------------------
-# STRIPE INTEGRATION (with mock fallback)
+# 13. get_health_detailed
 # ---------------------------------------------------------------------------
 
-def _stripe_available() -> bool:
-    """Check if Stripe library is installed and configured."""
+def get_health_detailed(db_path: Optional[str] = None) -> Dict[str, Any]:
+    """Return extended health diagnostics for monitoring dashboards.
+
+    Checks:
+        - Database connectivity
+        - Row counts per table
+        - Stripe connectivity status
+        - In-memory cache sizes
+
+    Returns:
+        Dict with ``status``, ``checks``, ``timestamp``.
+    """
+    now = datetime.now(timezone.utc).isoformat()
+    checks: Dict[str, Any] = {}
+
+    # DB check
     try:
-        import stripe
-        return bool(stripe.api_key)
-    except ImportError:
-        return False
+        with _db_connection(db_path) as conn:
+            subs = conn.execute("SELECT COUNT(*) as c FROM subscriptions").fetchone()["c"]
+            usage = conn.execute("SELECT COUNT(*) as c FROM usage_log").fetchone()["c"]
+            api = conn.execute("SELECT COUNT(*) as c FROM api_log").fetchone()["c"]
+        checks["database"] = {
+            "reachable": True,
+            "subscriptions": subs,
+            "usage_rows": usage,
+            "api_rows": api,
+        }
+    except Exception as exc:
+        checks["database"] = {"reachable": False, "error": str(exc)}
+
+    # Stripe check
+    checks["stripe"] = {
+        "enabled": STRIPE_ENABLED,
+        "mode": "live" if (STRIPE_SECRET_KEY or "").startswith("sk_live_") else "test/mock",
+    }
+
+    # Memory
+    checks["memory"] = {
+        "user_cache_entries": len(_user_id_cache),
+        "rate_limit_buckets": len(_rate_limit_buckets),
+    }
+
+    overall = "ok" if checks["database"].get("reachable") else "degraded"
+    return {"status": overall, "checks": checks, "timestamp": now}
 
 
-def create_checkout_session(user_id: str, plan_id: str) -> dict:
-    """Create a Stripe Checkout session or return a mock URL."""
-    plan = PLANS.get(plan_id)
-    if not plan:
-        raise ValueError(f"Unknown plan: {plan_id}")
+# ---------------------------------------------------------------------------
+# 14. create_checkout_session
+# ---------------------------------------------------------------------------
 
-    if _stripe_available():
-        import stripe
+def create_checkout_session(
+    user_id: str, plan_id: str, base_url: str = "http://localhost:8000"
+) -> Dict[str, Any]:
+    """Create a Stripe Checkout session for *user_id* to subscribe to *plan_id*.
+
+    If Stripe is unavailable, returns a mock checkout URL for local development.
+
+    Args:
+        user_id: Target user.
+        plan_id: Plan to purchase.
+        base_url: Absolute base URL for success/cancel redirects.
+
+    Returns:
+        Dict with ``checkout_url`` and ``session_id`` (or mock equivalents).
+    """
+    plan = _PLAN_BY_ID.get(plan_id)
+    if plan is None:
+        raise ValueError(f"Unknown plan_id: {plan_id!r}")
+
+    if STRIPE_ENABLED and stripe_lib is not None:
         try:
-            # Create or get customer
-            sub = get_or_create_subscription(user_id)
-            customer_id = sub.get("stripe_customer_id")
+            # Upsert Stripe customer
+            with _db_connection() as conn:
+                row = conn.execute(
+                    "SELECT stripe_customer_id FROM subscriptions WHERE user_id = ?",
+                    (user_id,),
+                ).fetchone()
+                customer_id = row["stripe_customer_id"] if row else None
 
             if not customer_id:
-                customer = stripe.Customer.create(metadata={"user_id": user_id})
+                customer = stripe_lib.Customer.create(
+                    metadata={"luqi_user_id": user_id}
+                )
                 customer_id = customer.id
-                with _get_db() as conn:
+                with _db_connection() as conn:
                     conn.execute(
-                        "UPDATE subscriptions SET stripe_customer_id = ? WHERE user_id = ?",
-                        (customer_id, user_id)
+                        """
+                        UPDATE subscriptions
+                        SET stripe_customer_id = ?,
+                            updated_at = ?
+                        WHERE user_id = ?
+                        """,
+                        (customer_id, datetime.now(timezone.utc).isoformat(), user_id),
                     )
                     conn.commit()
 
-            # Create price if needed (in production, pre-create prices)
-            price_id = f"price_{plan_id}_monthly"
-
-            session = stripe.checkout.Session.create(
+            session = stripe_lib.checkout.Session.create(
                 customer=customer_id,
                 payment_method_types=["card"],
-                line_items=[{"price": price_id, "quantity": 1}],
+                line_items=[
+                    {
+                        "price": plan["price_id"],
+                        "quantity": 1,
+                    }
+                ],
                 mode="subscription",
-                success_url=f"https://luqi-ai.com/subscription?success=true",
-                cancel_url=f"https://luqi-ai.com/subscription?canceled=true",
+                success_url=f"{base_url}/v1/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
+                cancel_url=f"{base_url}/v1/billing/cancel",
+                metadata={"luqi_user_id": user_id, "luqi_plan_id": plan_id},
             )
-            return {"url": session.url, "session_id": session.id}
-        except Exception as e:
-            logger.warning("Stripe checkout failed, using mock: %s", e)
+            return {"checkout_url": session.url, "session_id": session.id}
+        except Exception as exc:
+            logger.error("Stripe checkout failed: %s", exc)
+            # Fall through to mock
 
-    # Mock fallback
+    # Mock fallback for development / testing
+    mock_session_id = f"mock_cs_{hashlib.sha256(user_id.encode()).hexdigest()[:16]}_{plan_id}"
+    logger.info("Mock checkout session created for user=%s plan=%s", user_id, plan_id)
     return {
-        "url": f"/subscription/mock-checkout?plan={plan_id}&user={user_id}",
-        "mock": True,
-        "plan": plan_id,
-        "price": f"${plan.price_monthly / 100:.2f}/mo",
-        "message": "Stripe not configured. In production, this would redirect to Stripe Checkout."
+        "checkout_url": f"{base_url}/v1/billing/mock-checkout?session_id={mock_session_id}",
+        "session_id": mock_session_id,
+        "note": "Stripe not configured — mock mode.",
     }
-
-
-def create_customer_portal(user_id: str) -> dict:
-    """Create Stripe Customer Portal session or mock."""
-    if _stripe_available():
-        import stripe
-        try:
-            sub = get_or_create_subscription(user_id)
-            customer_id = sub.get("stripe_customer_id")
-            if customer_id:
-                session = stripe.billing_portal.Session.create(
-                    customer=customer_id,
-                    return_url="https://luqi-ai.com/subscription",
-                )
-                return {"url": session.url}
-        except Exception as e:
-            logger.warning("Stripe portal failed: %s", e)
-
-    return {
-        "url": "/subscription",
-        "mock": True,
-        "message": "Billing portal not available in development mode."
-    }
-
-
-def handle_webhook(payload: dict, signature: str) -> dict:
-    """Process Stripe webhook events."""
-    if _stripe_available():
-        import stripe
-        try:
-            # Verify signature in production
-            event = payload
-            event_type = event.get("type", "")
-
-            if event_type == "checkout.session.completed":
-                session = event["data"]["object"]
-                user_id = session.get("metadata", {}).get("user_id", "")
-                plan_id = session.get("metadata", {}).get("plan_id", "pro")
-                upgrade_subscription(user_id, plan_id)
-
-            elif event_type == "customer.subscription.deleted":
-                sub = event["data"]["object"]
-                customer_id = sub.get("customer", "")
-                # Find user by customer ID and downgrade
-                with _get_db() as conn:
-                    conn.execute(
-                        "UPDATE subscriptions SET plan_id = 'free', status = 'active' WHERE stripe_customer_id = ?",
-                        (customer_id,)
-                    )
-                    conn.commit()
-
-            return {"status": "processed", "event": event_type}
-        except Exception as e:
-            logger.error("Webhook error: %s", e)
-
-    return {"status": "mock_processed", "message": "Stripe not configured"}
 
 
 # ---------------------------------------------------------------------------
-# USER ID & TRACKING
+# 15. create_customer_portal
+# ---------------------------------------------------------------------------
+
+def create_customer_portal(
+    user_id: str, base_url: str = "http://localhost:8000"
+) -> Dict[str, Any]:
+    """Create a Stripe Customer Portal session for *user_id*.
+
+    Args:
+        user_id: Target user.
+        base_url: Absolute base URL for the return redirect.
+
+    Returns:
+        Dict with ``portal_url`` and ``session_id``.
+    """
+    if STRIPE_ENABLED and stripe_lib is not None:
+        try:
+            with _db_connection() as conn:
+                row = conn.execute(
+                    "SELECT stripe_customer_id FROM subscriptions WHERE user_id = ?",
+                    (user_id,),
+                ).fetchone()
+                customer_id = row["stripe_customer_id"] if row else None
+
+            if customer_id:
+                session = stripe_lib.billing_portal.Session.create(
+                    customer=customer_id,
+                    return_url=f"{base_url}/v1/billing/portal-return",
+                )
+                return {"portal_url": session.url, "session_id": session.id}
+        except Exception as exc:
+            logger.error("Stripe portal failed: %s", exc)
+
+    mock_id = f"mock_portal_{hashlib.sha256(user_id.encode()).hexdigest()[:16]}"
+    return {
+        "portal_url": f"{base_url}/v1/billing/mock-portal?session_id={mock_id}",
+        "session_id": mock_id,
+        "note": "Stripe not configured — mock mode.",
+    }
+
+
+# ---------------------------------------------------------------------------
+# 16. handle_webhook
+# ---------------------------------------------------------------------------
+
+def handle_webhook(payload: dict, sig: str) -> Dict[str, Any]:
+    """Process a Stripe webhook payload.
+
+    Handles:
+        - ``checkout.session.completed``  → activate subscription
+        - ``invoice.payment_succeeded``   → extend period
+        - ``customer.subscription.deleted`` → downgrade to free
+
+    Args:
+        payload: Decoded JSON body from Stripe.
+        sig: Stripe-Signature header value.
+
+    Returns:
+        Dict with ``received``, ``event_type``, ``result``.
+    """
+    event_type = payload.get("type", "unknown")
+    data_obj = payload.get("data", {}).get("object", {})
+
+    result = "no-op"
+
+    if STRIPE_ENABLED and stripe_lib is not None:
+        try:
+            event = stripe_lib.Webhook.construct_event(
+                payload=json.dumps(payload),
+                sig_header=sig,
+                secret=STRIPE_WEBHOOK_SECRET,
+            )
+            event_type = event.type
+            data_obj = event.data.object
+        except Exception as exc:
+            logger.warning("Webhook signature verification failed: %s", exc)
+            # Still attempt best-effort processing below
+
+    # Unified event handling (works for both real and mock paths)
+    if event_type == "checkout.session.completed":
+        metadata = data_obj.get("metadata", {})
+        user_id = metadata.get("luqi_user_id")
+        plan_id = metadata.get("luqi_plan_id")
+        sub_id = data_obj.get("subscription")
+        if user_id and plan_id:
+            upgrade_subscription(user_id, plan_id, stripe_subscription_id=sub_id)
+            result = f"activated {plan_id} for {user_id}"
+
+    elif event_type == "invoice.payment_succeeded":
+        sub_id = data_obj.get("subscription")
+        if sub_id:
+            with _db_connection() as conn:
+                row = conn.execute(
+                    "SELECT user_id FROM subscriptions WHERE stripe_subscription_id = ?",
+                    (sub_id,),
+                ).fetchone()
+            if row:
+                period_end = (
+                    datetime.now(timezone.utc) + timedelta(days=30)
+                ).isoformat()
+                with _db_connection() as conn:
+                    conn.execute(
+                        """
+                        UPDATE subscriptions
+                        SET current_period_end = ?,
+                            status = 'active',
+                            updated_at = ?
+                        WHERE user_id = ?
+                        """,
+                        (period_end, datetime.now(timezone.utc).isoformat(), row["user_id"]),
+                    )
+                    conn.commit()
+                result = f"extended period for {row['user_id']}"
+
+    elif event_type == "customer.subscription.deleted":
+        sub_id = data_obj.get("id")
+        if sub_id:
+            with _db_connection() as conn:
+                row = conn.execute(
+                    "SELECT user_id FROM subscriptions WHERE stripe_subscription_id = ?",
+                    (sub_id,),
+                ).fetchone()
+            if row:
+                cancel_subscription(row["user_id"])
+                result = f"cancelled for {row['user_id']}"
+
+    logger.info("Webhook %s processed: %s", event_type, result)
+    return {"received": True, "event_type": event_type, "result": result}
+
+
+# ---------------------------------------------------------------------------
+# 17. get_user_id
 # ---------------------------------------------------------------------------
 
 def get_user_id(api_key: str) -> str:
-    """Hash API key to a stable user ID."""
-    return hashlib.sha256(api_key.encode()).hexdigest()[:16]
+    """Derive a stable, opaque *user_id* from *api_key* using SHA-256 hashing.
+
+    The original API key is never stored; only the hash is used as the
+    persistent user identifier in the subscription tables.
+
+    Args:
+        api_key: Raw API key string (e.g. ``Bearer luqi_abc123`` or just the key).
+
+    Returns:
+        Hex-encoded 64-character user identifier.
+    """
+    # Strip common prefix noise
+    cleaned = api_key.strip()
+    if " " in cleaned:
+        cleaned = cleaned.split()[-1]
+    if cleaned in _user_id_cache:
+        return _user_id_cache[cleaned]
+    digest = hashlib.sha256(cleaned.encode("utf-8")).hexdigest()
+    _user_id_cache[cleaned] = digest
+    return digest
 
 
-def log_api_call(user_id: str, endpoint: str, method: str, duration_ms: float, status_code: int):
-    """Log an API call for analytics."""
-    try:
-        with _get_db() as conn:
-            conn.execute(
-                "INSERT INTO api_log (user_id, endpoint, method, duration_ms, status_code) VALUES (?, ?, ?, ?, ?)",
-                (user_id, endpoint, method, duration_ms, status_code)
-            )
-            conn.commit()
-    except Exception as e:
-        logger.warning("API log error: %s", e)
+# ---------------------------------------------------------------------------
+# 18. track_request
+# ---------------------------------------------------------------------------
 
+def track_request(
+    api_key: str,
+    endpoint: str,
+    method: str,
+    duration_ms: float,
+    status_code: int,
+) -> str:
+    """Middleware helper: resolve *api_key* → *user_id*, log the request,
+    and increment usage for ``messages`` if the endpoint looks like a chat call.
 
-def track_request(api_key: str, endpoint: str, method: str, duration_ms: float, status_code: int) -> str:
-    """Middleware helper: resolve user, log call, count message."""
+    Args:
+        api_key: Raw API key.
+        endpoint: Request path.
+        method: HTTP method.
+        duration_ms: Request latency in milliseconds.
+        status_code: HTTP status.
+
+    Returns:
+        The resolved *user_id*.
+    """
     user_id = get_user_id(api_key)
     log_api_call(user_id, endpoint, method, duration_ms, status_code)
-    if "chat" in endpoint:
+
+    # Auto-count message-like endpoints toward daily quota
+    msg_endpoints = {"/v1/chat", "/v1/ask", "/v1/generate", "/chat", "/ask"}
+    if endpoint.rstrip("/") in msg_endpoints:
         increment_usage(user_id, "messages")
+
     return user_id
 
 
 # ---------------------------------------------------------------------------
-# ANALYTICS
+# Auto-init on import (development convenience)
 # ---------------------------------------------------------------------------
 
-def get_analytics(user_id: Optional[str] = None, days: int = 7) -> dict:
-    """Get API usage analytics."""
-    since = (datetime.utcnow() - timedelta(days=days)).isoformat()
-
-    with _get_db() as conn:
-        # Total calls
-        if user_id:
-            total_calls = conn.execute(
-                "SELECT COUNT(*) as c FROM api_log WHERE user_id = ? AND timestamp >= ?",
-                (user_id, since)
-            ).fetchone()["c"]
-            endpoint_breakdown = conn.execute(
-                """SELECT endpoint, COUNT(*) as c FROM api_log
-                   WHERE user_id = ? AND timestamp >= ?
-                   GROUP BY endpoint ORDER BY c DESC LIMIT 20""",
-                (user_id, since)
-            ).fetchall()
-            avg_latency = conn.execute(
-                "SELECT AVG(duration_ms) as avg FROM api_log WHERE user_id = ? AND timestamp >= ?",
-                (user_id, since)
-            ).fetchone()["avg"] or 0
-        else:
-            total_calls = conn.execute(
-                "SELECT COUNT(*) as c FROM api_log WHERE timestamp >= ?",
-                (since,)
-            ).fetchone()["c"]
-            endpoint_breakdown = conn.execute(
-                """SELECT endpoint, COUNT(*) as c FROM api_log
-                   WHERE timestamp >= ?
-                   GROUP BY endpoint ORDER BY c DESC LIMIT 20""",
-                (since,)
-            ).fetchall()
-            avg_latency = conn.execute(
-                "SELECT AVG(duration_ms) as avg FROM api_log WHERE timestamp >= ?",
-                (since,)
-            ).fetchone()["avg"] or 0
-
-    return {
-        "period_days": days,
-        "total_api_calls": total_calls,
-        "average_latency_ms": round(avg_latency, 2),
-        "endpoint_breakdown": [dict(r) for r in endpoint_breakdown],
-        "generated_at": datetime.utcnow().isoformat(),
-    }
-
-
-# ---------------------------------------------------------------------------
-# HEALTH
-# ---------------------------------------------------------------------------
-
-def get_health_detailed() -> dict:
-    """Extended health check with all subsystem status."""
-    import os
-    import psutil
-
-    db_ok = False
-    try:
-        with _get_db() as conn:
-            conn.execute("SELECT 1").fetchone()
-            db_ok = True
-    except Exception:
-        pass
-
-    memory = psutil.virtual_memory()
-    disk = psutil.disk_usage(".")
-
-    # Count records
-    with _get_db() as conn:
-        total_subs = conn.execute("SELECT COUNT(*) FROM subscriptions").fetchone()[0]
-        total_api_calls = conn.execute("SELECT COUNT(*) FROM api_log").fetchone()[0]
-
-    return {
-        "status": "healthy" if db_ok else "degraded",
-        "version": "14.0.0",
-        "database": "connected" if db_ok else "error",
-        "subscriptions": {
-            "total_users": total_subs,
-            "plans": {p: conn.execute("SELECT COUNT(*) FROM subscriptions WHERE plan_id = ?", (p,)).fetchone()[0]
-                      for p in PLANS.keys()},
-        },
-        "api_calls_total": total_api_calls,
-        "stripe_configured": _stripe_available(),
-        "system": {
-            "cpu_percent": psutil.cpu_percent(interval=0.1),
-            "memory_used_percent": memory.percent,
-            "memory_available_mb": memory.available // (1024 * 1024),
-            "disk_used_percent": disk.percent,
-            "disk_free_gb": disk.free // (1024 * 1024 * 1024),
-        },
-        "timestamp": datetime.utcnow().isoformat(),
-    }
-
-
-# ---------------------------------------------------------------------------
-# PLAN GUARD DECORATOR
-# ---------------------------------------------------------------------------
-
-def require_plan(min_plan: str):
-    """Decorator factory to restrict endpoints by minimum plan tier.
-
-    Usage:
-        @app.get("/api/pro-feature")
-        async def pro_feature(request: Request):
-            guard = require_plan("pro")
-            if not guard(request.headers.get("X-API-Key", "")):
-                raise HTTPException(status_code=403, detail="Pro plan required")
-            ...
-    """
-    min_level = PLAN_HIERARCHY.get(min_plan, 0)
-
-    def check(api_key: str) -> bool:
-        user_id = get_user_id(api_key)
-        sub = get_or_create_subscription(user_id)
-        plan_level = PLAN_HIERARCHY.get(sub.get("plan_id", "free"), 0)
-        return plan_level >= min_level
-
-    return check
-
-
-# Auto-init on import
-init_db()
-logger.info("Subscription system loaded: Free / Pro / Enterprise")
+if __name__ == "__main__":
+    # Quick self-test when run directly
+    init_db()
+    print("Plans:", json.dumps(get_plans(), indent=2))
+    uid = "test-user-1"
+    print("Sub:", get_or_create_subscription(uid))
+    print("Quota messages:", check_quota(uid, "messages"))
+    increment_usage(uid, "messages", 5)
+    print("Usage:", json.dumps(get_usage(uid), indent=2))
+    print("Health:", json.dumps(get_health_detailed(), indent=2))
