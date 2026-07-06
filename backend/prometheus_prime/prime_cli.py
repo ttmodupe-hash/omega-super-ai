@@ -34,12 +34,12 @@ from pathlib import Path
 # Ensure the parent package is importable
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from prometheus_prime.orchestrator_prime import PrometheusPrime
-from prometheus_prime.code_generator import CodeGenerator
-from prometheus_prime.safe_experiment import SafeExperiment
-from prometheus_prime.test_harness import TestHarness
-from prometheus_prime.deployment_manager import DeploymentManager
-from prometheus_prime.self_repair import SelfRepair
+from backend.prometheus_prime.orchestrator_prime import PrometheusPrime
+from backend.prometheus_prime.code_generator import CodeGenerator
+from backend.prometheus_prime.safe_experiment import SafeExperiment
+from backend.prometheus_prime.test_harness import TestHarness
+from backend.prometheus_prime.deployment_manager import DeploymentManager
+from backend.prometheus_prime.self_repair import SelfRepair
 
 logger = logging.getLogger("prometheus_prime.cli")
 
