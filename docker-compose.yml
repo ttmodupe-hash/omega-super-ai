@@ -1,7 +1,6 @@
 # Luqi AI v13 — Docker Compose
 # Usage: docker-compose up -d
-#        docker-compose logs -f
-#        docker-compose down
+# Stop:  docker-compose down
 
 version: "3.8"
 
@@ -13,19 +12,28 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    environment:
-      - PYTHONUNBUFFERED=1
     volumes:
-      - ./data:/app/data
+      - ./chroma_db:/app/chroma_db
       - ./uploads:/app/uploads
-      - ./memory:/app/memory
+      - ./generated_images:/app/generated_images
+      - ./luqi_memory.db:/app/luqi_memory.db
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
-    labels:
-      - "luqi-ai.version=13.0.0"
-      - "luqi-ai.description=Africa's AI Platform"
+      start_period: 10s
+
+  # Optional: Nginx reverse proxy for HTTPS
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf
+  #     - ./ssl:/etc/nginx/ssl
+  #   depends_on:
+  #     - luqi-ai
+  #   restart: unless-stopped

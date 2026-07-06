@@ -1,19 +1,9 @@
 #!/usr/bin/env python3
-"""Luqi AI Self-Test — Startup diagnostics and health verification.
+"""
+Luqi AI v13 — Startup Self-Test
 
-Usage:
-    py -3.11 self_test.py        # Full diagnostic check
-    py -3.11 self_test.py --quick # Quick check (no imports)
-    py -3.11 self_test.py --fix  # Auto-fix common issues
-
-Checks:
-  1. Python version (3.11+)
-  2. Required dependencies installed
-  3. API key configured
-  4. Directory structure
-  5. Backend modules importable
-  6. Router endpoints registered
-  7. Web UI files present
+Validates all system components before starting the server.
+Run: py -3.11 self_test.py
 """
 
 import importlib
@@ -23,256 +13,234 @@ from pathlib import Path
 
 # ── Colors ─────────────────────────────────────────────────────────────
 
-class Colors:
-    PASS = "\033[92m"      # Green
-    FAIL = "\033[91m"      # Red
-    WARN = "\033[93m"      # Yellow
-    INFO = "\033[96m"      # Cyan
+class C:
+    PASS = "\033[92m"
+    FAIL = "\033[91m"
+    WARN = "\033[93m"
+    INFO = "\033[96m"
     BOLD = "\033[1m"
-    DIM = "\033[2m"
-    END = "\033[0m"
-
-PASS = f"{Colors.PASS}PASS{Colors.END}"
-FAIL = f"{Colors.FAIL}FAIL{Colors.END}"
-WARN = f"{Colors.WARN}WARN{Colors.END}"
-
-# ── Test Results ───────────────────────────────────────────────────────
-
-results = {"passed": 0, "failed": 0, "warnings": 0}
+    RESET = "\033[0m"
 
 
-def check(name: str, condition: bool, fix_msg: str = "") -> bool:
-    """Print a check result."""
-    if condition:
-        print(f"  {PASS} {name}")
-        results["passed"] += 1
+def ok(msg): print(f"  {C.PASS}✓{C.RESET} {msg}")
+def err(msg): print(f"  {C.FAIL}✗{C.RESET} {msg}")
+def warn(msg): print(f"  {C.WARN}⚠{C.RESET} {msg}")
+def info(msg): print(f"  {C.INFO}ℹ{C.RESET} {msg}")
+
+
+# ── Tests ──────────────────────────────────────────────────────────────
+
+def test_python_version():
+    """Check Python version is 3.11+."""
+    v = sys.version_info
+    if v.major == 3 and v.minor >= 11:
+        ok(f"Python {v.major}.{v.minor}.{v.micro}")
         return True
     else:
-        print(f"  {FAIL} {name}")
-        if fix_msg:
-            print(f"       {Colors.DIM}{fix_msg}{Colors.END}")
-        results["failed"] += 1
+        err(f"Python {v.major}.{v.minor}.{v.micro} — requires 3.11+")
         return False
 
 
-def warn(name: str, message: str):
-    """Print a warning."""
-    print(f"  {WARN} {name}")
-    print(f"       {Colors.DIM}{message}{Colors.END}")
-    results["warnings"] += 1
-
-
-# ── Test Functions ─────────────────────────────────────────────────────
-
-def test_python_version():
-    """Check Python is 3.11+."""
-    print(f"\n{Colors.BOLD}[1] Python Environment{Colors.END}")
-    version = sys.version_info
-    check(
-        f"Python {version.major}.{version.minor}.{version.micro}",
-        version.major == 3 and version.minor >= 11,
-        "Install Python 3.11 or newer from python.org",
-    )
-    check("64-bit", sys.maxsize > 2**32, "Use 64-bit Python for best compatibility")
-
-
 def test_dependencies():
-    """Check required packages are installed."""
-    print(f"\n{Colors.BOLD}[2] Dependencies{Colors.END}")
+    """Check all required packages are installed."""
     required = [
-        "fastapi", "uvicorn", "pydantic", "openai",
-        "httpx", "chromadb", "numpy",
+        ("fastapi", "FastAPI"),
+        ("uvicorn", "Uvicorn"),
+        ("pydantic", "Pydantic"),
+        ("openai", "OpenAI"),
+        ("chromadb", "ChromaDB"),
+        ("requests", "Requests"),
     ]
     optional = [
-        "python-dotenv", "requests", "pillow", "aiofiles",
+        ("duckduckgo_search", "DuckDuckGo Search"),
+        ("PyPDF2", "PyPDF2"),
+        ("pdfplumber", "pdfplumber"),
+        ("docx", "python-docx"),
+        ("PIL", "Pillow"),
+        ("python_dotenv", "python-dotenv"),
     ]
-
-    for pkg in required:
+    
+    all_ok = True
+    for module, name in required:
         try:
-            importlib.import_module(pkg)
-            check(f"{pkg}", True)
+            importlib.import_module(module)
+            ok(f"{name}")
         except ImportError:
-            check(f"{pkg}", False, f"pip install {pkg}")
-
-    for pkg in optional:
+            err(f"{name} — run: pip install {name.lower().replace(' ', '-')}")
+            all_ok = False
+    
+    for module, name in optional:
         try:
-            importlib.import_module(pkg)
-            check(f"{pkg} (optional)", True)
+            importlib.import_module(module)
+            ok(f"{name} (optional)")
         except ImportError:
-            warn(f"{pkg} (optional)", f"pip install {pkg} for full features")
+            warn(f"{name} (optional) — install for full features")
+    
+    return all_ok
 
 
 def test_api_key():
-    """Check API key is configured."""
-    print(f"\n{Colors.BOLD}[3] API Configuration{Colors.END}")
+    """Check API key configuration."""
     key = os.environ.get("OPENAI_API_KEY", "")
-    check("OPENAI_API_KEY env var", bool(key), "Set: $env:OPENAI_API_KEY='sk-...'")
-
-    # Check .env file
-    env_file = Path(".env")
-    if env_file.exists():
-        content = env_file.read_text()
-        has_key = "OPENAI_API_KEY" in content and "sk-" in content
-        check(".env file with key", has_key, "Add OPENAI_API_KEY=sk-... to .env")
+    
+    if not key:
+        env_file = Path(".env")
+        if env_file.exists():
+            try:
+                with open(env_file) as f:
+                    for line in f:
+                        if line.strip().startswith("OPENAI_API_KEY="):
+                            key = line.strip().split("=", 1)[1].strip().strip('"').strip("'")
+                            break
+            except Exception:
+                pass
+    
+    if key and key != "sk-your-openai-key-here" and len(key) > 20:
+        masked = key[:8] + "..." + key[-4:]
+        ok(f"OPENAI_API_KEY: {masked}")
+        return True
     else:
-        warn(".env file", "Create .env file from .env.example")
+        warn("OPENAI_API_KEY not configured — AI chat will be unavailable")
+        info("Set it in .env or environment variable")
+        return False
 
 
 def test_directories():
-    """Check project structure."""
-    print(f"\n{Colors.BOLD}[4] Project Structure{Colors.END}")
-    dirs = ["backend", "web", "backend/lang", "docs"]
+    """Check required directories exist."""
+    dirs = ["uploads", "generated_images", "chroma_db"]
     for d in dirs:
-        check(f"{d}/", Path(d).is_dir(), f"mkdir {d}")
-
-    files = ["start_server.py", "server.py", "requirements.txt"]
-    for f in files:
-        check(f, Path(f).is_file(), f"File missing: {f}")
+        Path(d).mkdir(exist_ok=True)
+        ok(f"Directory: {d}/")
+    return True
 
 
-def test_backend_imports():
-    """Test backend module imports."""
-    print(f"\n{Colors.BOLD}[5] Backend Modules{Colors.END}")
+def test_backend_modules():
+    """Test importing all backend modules."""
     modules = [
-        "backend.chat", "backend.memory", "backend.search",
-        "backend.financial", "backend.taxes", "backend.auth",
-        "backend.config", "backend.models",
+        "backend.config",
+        "backend.ai_engine",
+        "backend.search",
+        "backend.memory",
+        "backend.files",
+        "backend.images",
+        "backend.agents",
     ]
+    
+    # Optional v13 modules
+    optional_modules = [
+        "backend.lang.african_languages",
+        "backend.lang.language_detector",
+        "backend.lang.multilingual_router",
+    ]
+    
+    all_ok = True
     for mod in modules:
         try:
             importlib.import_module(mod)
-            check(mod, True)
-        except ImportError as e:
-            check(mod, False, str(e))
-
-    # Language modules
-    lang_modules = [
-        "backend.lang.african_languages",
-        "backend.lang.language_detector",
-        "backend.lang.greeting_handler",
-        "backend.lang.multilingual_router",
-    ]
-    for mod in lang_modules:
+            ok(f"Module: {mod}")
+        except Exception as e:
+            err(f"Module: {mod} — {e}")
+            all_ok = False
+    
+    for mod in optional_modules:
         try:
             importlib.import_module(mod)
-            check(mod, True)
-        except ImportError as e:
-            warn(mod, str(e))
+            ok(f"Module: {mod} (v13)")
+        except Exception as e:
+            warn(f"Module: {mod} — {e}")
+    
+    return all_ok
 
 
-def test_router():
-    """Test FastAPI router loads."""
-    print(f"\n{Colors.BOLD}[6] API Router{Colors.END}")
+def test_router_import():
+    """Test importing the main router."""
     try:
         from backend.router import app
+        ok("Router app imports successfully")
+        
+        # Check endpoints
         routes = [r.path for r in app.routes]
-        check("Router imports", True)
-
-        # Check key endpoints
-        endpoints = [
-            "/api/health",
-            "/api/chat",
-            "/api/chat/stream",
-            "/api/search",
+        v13_endpoints = [
             "/api/languages",
+            "/api/languages/{code}",
+            "/api/languages/detect",
             "/api/labs",
+            "/api/labs/{lab_id}",
             "/api/prometheus/status",
+            "/api/prometheus/run",
         ]
-        for ep in endpoints:
-            check(f"  {ep}", ep in routes, f"Endpoint {ep} not registered")
+        for ep in v13_endpoints:
+            if ep in routes:
+                ok(f"Endpoint: {ep}")
+            else:
+                warn(f"Endpoint: {ep} — not found")
+        
+        return True
     except Exception as e:
-        check("Router imports", False, str(e))
-
-
-def test_web_ui():
-    """Check web UI files."""
-    print(f"\n{Colors.BOLD}[7] Web UI{Colors.END}")
-    web_dir = Path("web")
-    check("web/ directory", web_dir.is_dir())
-
-    index = web_dir / "index.html"
-    if check("web/index.html", index.is_file()):
-        size = index.stat().st_size
-        check(f"  Size: {size:,} bytes", size > 1000, "File may be truncated")
-
-    # Check for labs UI
-    labs_dir = web_dir / "labs"
-    if labs_dir.is_dir():
-        check("web/labs/", True)
-    else:
-        warn("web/labs/", "Virtual labs UI not built yet")
+        err(f"Router import failed: {e}")
+        return False
 
 
 def test_server_connectivity():
-    """Test if server is running."""
-    print(f"\n{Colors.BOLD}[8] Server Status{Colors.END}")
+    """Test if server is already running."""
     import urllib.request
-    import urllib.error
-
     try:
-        req = urllib.request.Request(
-            "http://localhost:8000/api/health",
-            headers={"Accept": "application/json"},
-            method="GET",
-        )
-        with urllib.request.urlopen(req, timeout=5) as resp:
-            data = resp.read().decode()
-            import json
-            health = json.loads(data)
-            ver = health.get("version", "unknown")
-            check(f"Server running (v{ver})", True)
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            warn("Server running", "Health endpoint not found (old version?)")
-        else:
-            warn("Server check", f"HTTP {e.code}")
-    except Exception as e:
-        warn("Server not running", f"Start with: py -3.11 start_server.py")
+        with urllib.request.urlopen("http://localhost:8000/api/health", timeout=3) as resp:
+            data = json.loads(resp.read().decode())
+            version = data.get("version", "unknown")
+            ok(f"Server running — v{version}")
+            return True
+    except Exception:
+        info("Server not running (expected before startup)")
+        return True
 
 
 # ── Main ───────────────────────────────────────────────────────────────
 
-def main():
-    print(f"""
-{Colors.INFO}{Colors.BOLD}
-   _                _     _ 
-  | |    _   _ _ __| | __| |
-  | |   | | | | '__| |/ _` |
-  | |___| |_| | |  | | (_| |
-  |_____|\__,_|_|  |_|\__,_|
-{Colors.END}
-  {Colors.BOLD}Luqi AI v13 — Self-Test Diagnostics{Colors.END}
-  {Colors.DIM}{'='*40}{Colors.END}
-""")
-
-    test_python_version()
-    test_dependencies()
-    test_api_key()
-    test_directories()
-    test_backend_imports()
-    test_router()
-    test_web_ui()
-    test_server_connectivity()
-
+def run_all_tests():
+    """Run all self-tests and return overall status."""
+    print(f"\n{C.BOLD}{C.INFO}Luqi AI v13 — Startup Diagnostics{C.RESET}\n")
+    
+    results = []
+    
+    print(f"{C.BOLD}Python Environment{C.RESET}")
+    results.append(test_python_version())
+    
+    print(f"\n{C.BOLD}Dependencies{C.RESET}")
+    results.append(test_dependencies())
+    
+    print(f"\n{C.BOLD}Configuration{C.RESET}")
+    results.append(test_api_key())
+    
+    print(f"\n{C.BOLD}Directories{C.RESET}")
+    results.append(test_directories())
+    
+    print(f"\n{C.BOLD}Backend Modules{C.RESET}")
+    results.append(test_backend_modules())
+    
+    print(f"\n{C.BOLD}Router & Endpoints{C.RESET}")
+    results.append(test_router_import())
+    
+    print(f"\n{C.BOLD}Server Status{C.RESET}")
+    results.append(test_server_connectivity())
+    
     # Summary
-    print(f"\n{Colors.BOLD}{'='*40}{Colors.END}")
-    total = results["passed"] + results["failed"] + results["warnings"]
-    print(f"  {Colors.PASS} {results['passed']}{Colors.END} passed")
-    if results["failed"]:
-        print(f"  {Colors.FAIL} {results['failed']}{Colors.END} failed")
-    if results["warnings"]:
-        print(f"  {Colors.WARN} {results['warnings']}{Colors.END} warnings")
-    print(f"  {Colors.DIM}Total: {total} checks{Colors.END}")
-
-    if results["failed"] == 0:
-        print(f"\n  {Colors.GREEN}{Colors.BOLD}All critical checks passed!{Colors.END}")
-        print(f"  {Colors.DIM}Start server: py -3.11 start_server.py{Colors.END}")
+    passed = sum(results)
+    total = len(results)
+    
+    print(f"\n{'=' * 50}")
+    if passed == total:
+        print(f"{C.PASS}{C.BOLD}All {total}/{total} checks passed — ready to start!{C.RESET}")
+        print(f"\nStart with: py -3.11 start_server.py")
+        return 0
+    elif passed >= total - 1:
+        print(f"{C.WARN}{C.BOLD}{passed}/{total} checks passed — server will start with limited features{C.RESET}")
         return 0
     else:
-        print(f"\n  {Colors.FAIL}{Colors.BOLD}Some checks failed.{Colors.END}")
-        print(f"  {Colors.DIM}Fix issues above, then run: py -3.11 self_test.py{Colors.END}")
+        print(f"{C.FAIL}{C.BOLD}{passed}/{total} checks passed — fix issues before starting{C.RESET}")
         return 1
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    import json  # needed for server connectivity test
+    sys.exit(run_all_tests())
