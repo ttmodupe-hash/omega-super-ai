@@ -44,30 +44,30 @@ __version__ = "1.0.0"
 __author__ = "Luqi AI Engineering"
 
 # Re-export primary public APIs for convenience
-from prometheus_prime.code_generator import (
+from backend.prometheus_prime.code_generator import (
     CodeGenerator,
     CodeReviewResult,
     FeatureSpec,
     IntegrationResult,
     quick_generate,
 )
-from prometheus_prime.safe_experiment import (
+from backend.prometheus_prime.safe_experiment import (
     SafeExperiment,
     ExperimentResults,
     CanaryStatus,
     Sandbox,
 )
-from prometheus_prime.test_harness import (
+from backend.prometheus_prime.test_harness import (
     TestHarness,
     TestResults,
     BenchmarkMetrics,
 )
-from prometheus_prime.deployment_manager import (
+from backend.prometheus_prime.deployment_manager import (
     DeploymentManager,
     DeploymentStatus,
     DeploymentRecord,
 )
-from prometheus_prime.self_repair import (
+from backend.prometheus_prime.self_repair import (
     SelfRepair,
     HealthStatus,
     Anomaly,
