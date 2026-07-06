@@ -346,7 +346,7 @@ SYMPTOM_DATABASE: Dict[str, Dict[str, Any]] = {
                 {"name": "Warped brake rotors", "probability": 0.90, "cost": "low", "severity": "medium", "inspection": "Pedal pulses/vibrates during braking; most common cause"},
                 {"name": "ABS false activation", "probability": 0.25, "cost": "medium", "severity": "medium", "inspection": "Pulsing at low speed on dry pavement; scan for ABS codes"},
                 {"name": "Uneven brake pad deposit on rotor", "probability": 0.40, "cost": "low", "severity": "low", "inspection": "Rotors have blue discoloration spots; perform bed-in procedure"},
-                {"name": "Rear drum brake out of round", "probability": 0.20, "cost": "low", "severity": "medium", "inspection": "Pulsing felt in brake pedal but not steering wheel; check rear drums"},
+                {"name": "Rear drum brake out of round", "probability": 0.20, "cost": "low", "severity": "medium", "inspection": "Pulsing felt in pedal not steering wheel; check rear drums"},
                 {"name": "Loose wheel bearings causing rotor wobble", "probability": 0.15, "cost": "medium", "severity": "high", "inspection": "Check wheel bearings for play with wheel off ground"},
             ],
             "safety_note": "Severely warped rotors reduce braking effectiveness and increase stopping distance. Replace before emergency braking is needed.",
