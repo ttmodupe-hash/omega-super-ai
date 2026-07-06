@@ -681,6 +681,8 @@ async def api_health() -> JSONResponse:
             "github_integration": "enabled",
             "notifications": "enabled",
             "data_portability": "enabled",
+            "captainship": "enabled",
+            "companionship": "enabled",
         }
     )
 
@@ -1291,3 +1293,10 @@ try:
     logger.info("v16 endpoints activated successfully")
 except Exception as exc:
     logger.warning("v16 endpoints not available: %s", exc)
+
+# -- v17: Activate captainship & companionship endpoints --
+try:
+    import backend.v17_endpoints
+    logger.info("v17 endpoints activated successfully")
+except Exception as exc:
+    logger.warning("v17 endpoints not available: %s", exc)
