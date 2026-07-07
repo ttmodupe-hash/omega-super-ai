@@ -1,4 +1,4 @@
-"""Luqi AI v12 - Backend Package
+"""Luqi AI v19 - Backend Package
 
 A world-class AI system with multi-agent orchestration,
 vector memory, real-time streaming, and advanced file processing.
@@ -12,11 +12,13 @@ Modules:
     images: AI image generation with DALL-E 3
     agents: Multi-agent orchestration system
     router: FastAPI endpoints
+    law_studies: Legal AI assistant with case law, contracts, bar prep
+    companionship: Emotionally intelligent AI companion
 """
 
-__version__ = "18.0.0"
+__version__ = "19.0.0"
 __author__ = "Luqi AI"
-__description__ = "World-class AI system with multi-agent orchestration"
+__description__ = "World-class AI system with multi-agent orchestration, Law Studies, and emotional companionship"
 
 from backend.config import load_backend_config
 
