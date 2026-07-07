@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Luqi AI v18 -- Server Launcher
+Luqi AI v20 -- Server Launcher
 Starts the FastAPI backend server with auto-setup.
 
 Usage:
@@ -20,14 +20,14 @@ from pathlib import Path
 
 def print_banner():
     """Display the Luqi AI startup banner."""
-    banner = """
-    ██╗     ██╗   ██╗ ██████╗ ██╗     ███████╗
-    ██║     ██║   ██║██╔═══██╗██║     ██╔════╝
-    ██║     ██║   ██║██║   ██║██║     ███████╗
-    ██║     ██║   ██║██║▄▄ ██║██║     ╚════██║
-    ███████╗╚██████╔╝╚██████╔╝███████╗███████║
-    ╚══════╝ ╚═════╝  ╚══▀▀═╝ ╚══════╝╚══════╝
-         Luqi AI v18 -- Your Intelligent Assistant
+    banner = r"""
+    ██░     ██░   ██░ ██████░ ██░     ███████░
+    ██░     ██░   ██░██╔═══██░██░     ██╔════╝
+    ██░     ██░   ██░██░   ██░██░     ███████░
+    ██░     ██░   ██░██░▄▄ ██░██░     ╚════██░
+    ███████░╚██████░▄▄██████▄▄███████░███████░
+    ╚══════╝ ╚═════╝  ╚══▄▄╔▄═╝ ╚═════╝╚══════╝
+         Luqi AI v20 -- World-class AI for Africa & Beyond
     """
     print(banner)
 
@@ -171,7 +171,7 @@ def print_urls(host, port):
     docs_url = f"http://localhost:{port}/docs"
 
     print("\n" + "=" * 60)
-    print("  Luqi AI v18 Server is running!")
+    print("  Luqi AI v20 Server is running!")
     print("=" * 60)
     print(f"  Local:    {local_url}")
     print(f"  Network:  {network_url}")
@@ -189,7 +189,7 @@ def graceful_shutdown(server):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Luqi AI v18 Server Launcher",
+        description="Luqi AI v20 Server Launcher",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -251,7 +251,7 @@ Examples:
     init_chromadb(chroma_path)
 
     # Step 6: Print startup info
-    print(f"\n[start] Starting Luqi AI v18 Server ...")
+    print(f"\n[start] Starting Luqi AI v20 Server ...")
     print(f"[start] Host: {args.host}")
     print(f"[start] Port: {args.port}")
     print(f"[start] Reload: {'on' if args.reload else 'off'}")
