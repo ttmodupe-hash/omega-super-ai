@@ -1,1 +1,1 @@
-[Content will be inserted - attempting push via Python script instead]
+# File content too large for direct push. Will handle separately.
