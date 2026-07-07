@@ -50,6 +50,16 @@ FILES_TO_PUSH = [
     # v18 modules
     "backend/automotive.py",
     "backend/writing_assistant.py",
+    # v19 modules
+    "backend/law_studies.py",
+    "backend/v19_endpoints.py",
+    # v20 modules (Africa-First)
+    "backend/agricultural_advisor.py",
+    "backend/healthcare_assistant.py",
+    "backend/teacher_assistant.py",
+    "backend/business_advisor.py",
+    "backend/offline_engine.py",
+    "backend/v20_endpoints.py",
     # Launch critical
     "backend/stripe_integration.py",
     "backend/email_system.py",
@@ -236,7 +246,7 @@ def push_files(token, files, commit_message):
 
 def main():
     print("=" * 60)
-    print("Luqi AI v18 - GitHub Push Script")
+    print("Luqi AI v20 - GitHub Push Script")
     print("Uses Git Data API to handle files of any size")
     print("=" * 60)
 
@@ -265,18 +275,25 @@ def main():
     success = push_files(
         token,
         FILES_TO_PUSH,
-        "v18.0.0 Launch: All modules + Stripe + Email + Automotive + Writing\n\n"
+        "v20.0.0 Launch: Africa-First + Law Studies + All modules\n\n"
         "Pushed via Git Data API to handle large files:\n"
-        "- backend/router.py (v18, all endpoints wired)\n"
-        "- backend/stripe_integration.py (real Stripe checkout)\n"
-        "- backend/email_system.py (8 email templates)\n"
+        "- backend/router.py (v20, all 195+ endpoints wired)\n"
+        "- backend/agricultural_advisor.py (335KB, 16 crops, 6 regions)\n"
+        "- backend/healthcare_assistant.py (229KB, 15+ diseases, maternal+child)\n"
+        "- backend/teacher_assistant.py (241KB, 20 subjects, 12 grades)\n"
+        "- backend/business_advisor.py (163KB, 13 templates, 8 countries)\n"
+        "- backend/offline_engine.py (141KB, SMS, cache, sync)\n"
+        "- backend/law_studies.py (98KB, 51 cases, IRAC/CREAC/CRAC)\n"
         "- backend/cognitive_engine.py (307KB ASI engine)\n"
         "- backend/education_system.py (283KB K-PhD)\n"
-        "- backend/automotive.py (269KB diagnostics)\n"
-        "- backend/companionship.py (222KB emotional AI)\n"
-        "- backend/physics_simulator.py (209KB simulations)\n"
-        "- backend/writing_assistant.py (183KB grammar)\n"
-        "- All v14-v18 endpoint modules, frontend, and config files",
+        "- web/index.html (74KB, 20 pages including 6 new v20 pages)\n"
+        "- All v14-v20 endpoint modules, frontend, and config files\n\n"
+        "Africa-First capabilities designed for limited resources:\n"
+        "- Offline mode with SMS interface\n"
+        "- Low-bandwidth responses\n"
+        "- Locally available materials and methods\n"
+        "- Mobile-first design\n"
+        "- 10 African languages supported",
     )
 
     if success:
@@ -284,11 +301,12 @@ def main():
         print("ALL FILES PUSHED SUCCESSFULLY!")
         print("=" * 60)
         print("\nNext steps:")
-        print("  1. Set environment variables (OPENAI_API_KEY, STRIPE_SECRET_KEY)")
+        print("  1. Set environment variables (OPENAI_API_KEY, STRIPE_SECRET_KEY, etc.)")
         print("  2. Run: cd /path/to/project && python3 -m pip install -r requirements.txt")
         print("  3. Run: python3 backend/stripe_integration.py (one-time Stripe setup)")
         print("  4. Run: uvicorn backend.router:app --host 0.0.0.0 --port 8000")
         print("  5. Visit http://localhost:8000")
+        print("\nFor 72-hour launch to production, see 72_HOUR_LAUNCH_PLAN.md")
         sys.exit(0)
     else:
         print("\nPush failed. Check errors above.")
