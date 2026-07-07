@@ -60,9 +60,9 @@ CONFIG = load_backend_config()
 # ── FastAPI App ────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="Luqi AI v18",
-    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, and 135+ endpoints",
-    version="18.0.0",
+    title="Luqi AI v19",
+    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, Law Studies, and 155+ endpoints",
+    version="19.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -556,7 +556,7 @@ async def api_health() -> JSONResponse:
     return JSONResponse(
         content={
             "status": "healthy",
-            "version": "18.0.0",
+            "version": "19.0.0",
             "model": CONFIG.get("model", "unknown"),
             "search_available": bool(CONFIG.get("serper_api_key")),
         }
@@ -586,7 +586,7 @@ async def api_models() -> JSONResponse:
                 "learn",
                 "opps",
             ],
-            "version": "18.0.0",
+            "version": "19.0.0",
         }
     )
 
@@ -627,7 +627,7 @@ async def serve_static(request: Request, path: str) -> FileResponse:
     raise HTTPException(status_code=404, detail="File not found")
 
 
-# ── v14-v18 Endpoint Module Imports ────────────────────────────────────
+# ── v14-v19 Endpoint Module Imports ────────────────────────────────────
 # Importing these modules registers their endpoints on the shared `app`.
 # Each module imports `app` from backend.router and uses @app decorators.
 # The imports happen HERE (after app is fully defined) to avoid circular imports.
@@ -656,3 +656,8 @@ try:
     import backend.v18_endpoints   # Automotive & Writing Assistant
 except Exception as _e:
     logger.warning("v18 endpoints not loaded: %s", _e)
+
+try:
+    import backend.v19_endpoints   # Law Studies & Legal AI Assistant
+except Exception as _e:
+    logger.warning("v19 endpoints not loaded: %s", _e)
