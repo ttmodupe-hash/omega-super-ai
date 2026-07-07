@@ -3,6 +3,16 @@
 Main FastAPI application serving the web UI and all API endpoints.
 v13-v20 endpoint modules are auto-imported at the bottom to register
 their routes on the shared `app` instance.
+
+Production Hardening:
+    - Rate limiting (30/min default, 10/min auth, 5/min upload)
+    - Security headers (X-Frame-Options, HSTS, CSP)
+    - Request logging with request IDs
+    - Error handling with safe JSON responses
+    - Module health monitoring
+
+Endpoints: 195+ across 8 versions (v13-v20)
+Modules: 41 Python files, 82,000+ lines
 """
 
 import asyncio
@@ -14,6 +24,8 @@ import subprocess
 import sys
 import time
 import traceback
+import uuid
+import platform
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
@@ -76,6 +88,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Production Middleware ────────────────────────────────────────────
+try:
+    from backend.middleware import setup_all_middleware
+    setup_all_middleware(app)
+    logger.info("Production middleware enabled: rate limiting, security headers, request logging")
+except Exception as _middleware_err:
+    logger.warning("Production middleware not available: %s", _middleware_err)
+    logger.warning("Running without rate limiting -- NOT recommended for production")
+
 
 # ═══════════════════════════════════════════════════════════════════
 # v13 Core Endpoints
@@ -101,13 +122,37 @@ async def admin_page():
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint."""
+    """Health check endpoint with module status monitoring."""
     import backend
-    return {
+    health_data = {
         "status": "healthy",
         "version": backend.__version__,
         "timestamp": datetime.utcnow().isoformat(),
+        "system": {
+            "python": platform.python_version(),
+            "platform": platform.platform(),
+        },
+        "features": {
+            "payments": bool(os.getenv("STRIPE_SECRET_KEY")),
+            "email": bool(os.getenv("SENDGRID_API_KEY")),
+            "voice": True,
+            "streaming": True,
+        },
     }
+    # Enhanced module health check
+    try:
+        from backend.middleware import check_module_health_sync
+        module_health = check_module_health_sync()
+        health_data["modules"] = module_health
+        loaded = sum(1 for m in module_health.values() if m.get("loaded"))
+        total = len(module_health)
+        health_data["module_summary"] = f"{loaded}/{total} loaded"
+        if loaded < total:
+            health_data["status"] = "degraded"
+    except Exception as e:
+        health_data["modules"] = {"error": str(e)}
+        health_data["module_summary"] = "unknown"
+    return health_data
 
 
 # ── Chat Endpoints ───────────────────────────────────────────────────
