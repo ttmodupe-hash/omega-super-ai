@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Luqi AI v12 -- Server Launcher
+Luqi AI v18 -- Server Launcher
 Starts the FastAPI backend server with auto-setup.
 
 Usage:
@@ -27,7 +27,7 @@ def print_banner():
     ██║     ██║   ██║██║▄▄ ██║██║     ╚════██║
     ███████╗╚██████╔╝╚██████╔╝███████╗███████║
     ╚══════╝ ╚═════╝  ╚══▀▀═╝ ╚══════╝╚══════╝
-         Luqi AI v12 -- Your Intelligent Assistant
+         Luqi AI v18 -- Your Intelligent Assistant
     """
     print(banner)
 
@@ -49,7 +49,8 @@ def check_env_file():
         print("[setup] .env.example also missing. Creating a minimal .env ...")
         env_path.write_text(
             'OPENAI_API_KEY=sk-your-openai-key-here\n'
-            'SERPER_API_KEY=your-serper-key-here\n',
+            'STRIPE_SECRET_KEY=sk-test-your-key-here\n'
+            'STRIPE_PUBLISHABLE_KEY=pk-test-your-key-here\n',
             encoding="utf-8"
         )
         print("[setup] Minimal .env created. Please edit it and add your API keys.")
@@ -94,7 +95,6 @@ def init_chromadb(chroma_path):
     try:
         import chromadb
         client = chromadb.PersistentClient(path=chroma_path)
-        # Attempt to get or create the default collection to verify connectivity
         client.get_or_create_collection("luqi_memory")
         print(f"[setup] ChromaDB initialized at: {chroma_path}")
         return True
@@ -119,6 +119,7 @@ def check_dependencies():
         "PIL": "Pillow>=10.0.0",
         "requests": "requests>=2.31.0",
         "python_multipart": "python-multipart>=0.0.9",
+        "stripe": "stripe>=9.0.0",
     }
 
     missing = []
@@ -170,7 +171,7 @@ def print_urls(host, port):
     docs_url = f"http://localhost:{port}/docs"
 
     print("\n" + "=" * 60)
-    print("  Luqi AI v12 Server is running!")
+    print("  Luqi AI v18 Server is running!")
     print("=" * 60)
     print(f"  Local:    {local_url}")
     print(f"  Network:  {network_url}")
@@ -188,7 +189,7 @@ def graceful_shutdown(server):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Luqi AI v12 Server Launcher",
+        description="Luqi AI v18 Server Launcher",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -250,7 +251,7 @@ Examples:
     init_chromadb(chroma_path)
 
     # Step 6: Print startup info
-    print(f"\n[start] Starting Luqi AI v12 Server ...")
+    print(f"\n[start] Starting Luqi AI v18 Server ...")
     print(f"[start] Host: {args.host}")
     print(f"[start] Port: {args.port}")
     print(f"[start] Reload: {'on' if args.reload else 'off'}")
@@ -261,7 +262,7 @@ Examples:
     print_urls(args.host, args.port)
 
     config = uvicorn.Config(
-        "server:app",
+        "backend.router:app",
         host=args.host,
         port=args.port,
         reload=args.reload,

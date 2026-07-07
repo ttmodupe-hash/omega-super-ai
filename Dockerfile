@@ -1,12 +1,12 @@
-# Luqi AI v13 — Docker Container
+# Luqi AI v18 — Docker Container
 # Build: docker build -t luqi-ai .
 # Run:   docker run -p 8000:8000 --env-file .env luqi-ai
 #
 FROM python:3.11-slim
 
 LABEL maintainer="Luqi AI"
-LABEL version="13.0.0"
-LABEL description="Luqi AI — World-class AI for Africa & Beyond"
+LABEL version="18.0.0"
+LABEL description="Luqi AI v18 — World-class AI for Africa & Beyond"
 
 # Prevent Python from writing .pyc files and buffering stdout
 ENV PYTHONDONTWRITEBYTECODE=1
