@@ -1,0 +1,77 @@
+{
+  "backend/whatsapp_bot.py": {
+    "size": 146522,
+    "chunks": 2,
+    "chunk_files": [
+      "chunks_to_push/backend_whatsapp_bot.py.part000",
+      "chunks_to_push/backend_whatsapp_bot.py.part001"
+    ]
+  },
+  "backend/jobs_skills.py": {
+    "size": 197680,
+    "chunks": 3,
+    "chunk_files": [
+      "chunks_to_push/backend_jobs_skills.py.part000",
+      "chunks_to_push/backend_jobs_skills.py.part001",
+      "chunks_to_push/backend_jobs_skills.py.part002"
+    ]
+  },
+  "backend/netai_training.py": {
+    "size": 244494,
+    "chunks": 4,
+    "chunk_files": [
+      "chunks_to_push/backend_netai_training.py.part000",
+      "chunks_to_push/backend_netai_training.py.part001",
+      "chunks_to_push/backend_netai_training.py.part002",
+      "chunks_to_push/backend_netai_training.py.part003"
+    ]
+  },
+  "backend/project_management.py": {
+    "size": 204226,
+    "chunks": 3,
+    "chunk_files": [
+      "chunks_to_push/backend_project_management.py.part000",
+      "chunks_to_push/backend_project_management.py.part001",
+      "chunks_to_push/backend_project_management.py.part002"
+    ]
+  },
+  "backend/digital_workspace.py": {
+    "size": 293217,
+    "chunks": 4,
+    "chunk_files": [
+      "chunks_to_push/backend_digital_workspace.py.part000",
+      "chunks_to_push/backend_digital_workspace.py.part001",
+      "chunks_to_push/backend_digital_workspace.py.part002",
+      "chunks_to_push/backend_digital_workspace.py.part003"
+    ]
+  },
+  "backend/knowledge_academy.py": {
+    "size": 299302,
+    "chunks": 4,
+    "chunk_files": [
+      "chunks_to_push/backend_knowledge_academy.py.part000",
+      "chunks_to_push/backend_knowledge_academy.py.part001",
+      "chunks_to_push/backend_knowledge_academy.py.part002",
+      "chunks_to_push/backend_knowledge_academy.py.part003"
+    ]
+  },
+  "backend/government_services.py": {
+    "size": 337761,
+    "chunks": 5,
+    "chunk_files": [
+      "chunks_to_push/backend_government_services.py.part000",
+      "chunks_to_push/backend_government_services.py.part001",
+      "chunks_to_push/backend_government_services.py.part002",
+      "chunks_to_push/backend_government_services.py.part003",
+      "chunks_to_push/backend_government_services.py.part004"
+    ]
+  },
+  "web/index.html": {
+    "size": 138682,
+    "chunks": 2,
+    "chunk_files": [
+      "chunks_to_push/web_index.html.part000",
+      "chunks_to_push/web_index.html.part001"
+    ]
+  }
+}
