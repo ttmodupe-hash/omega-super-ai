@@ -73,5 +73,22 @@
       "chunks_to_push/web_index.html.part000",
       "chunks_to_push/web_index.html.part001"
     ]
+  },
+  "backend/digital_wellness.py": {
+    "size": 175897,
+    "chunks": 3,
+    "chunk_files": [
+      "chunks_to_push/backend_digital_wellness.py.part000",
+      "chunks_to_push/backend_digital_wellness.py.part001",
+      "chunks_to_push/backend_digital_wellness.py.part002"
+    ]
+  },
+  "web/wellness.html": {
+    "size": 80736,
+    "chunks": 2,
+    "chunk_files": [
+      "chunks_to_push/web_wellness.html.part000",
+      "chunks_to_push/web_wellness.html.part001"
+    ]
   }
 }
