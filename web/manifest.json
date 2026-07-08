@@ -1,90 +1,33 @@
 {
-  "name": "Luqi AI",
-  "short_name": "Luqi",
-  "description": "World-class AI for Africa and the world -- 85 languages, developer workspace, education, and more.",
+  "name": "Luqi AI — Limitless Telecoms",
+  "short_name": "Luqi AI",
+  "description": "World-class AI SaaS platform — Powered by Limitless Telecoms. Chat, learn, collaborate, and stay well.",
+  "version": "24.3.0",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#4f46e5",
+  "background_color": "#F7F9F4",
+  "theme_color": "#2D7D46",
   "orientation": "any",
   "scope": "/",
-  "icons": [
-    {"src": "/icons/icon-72.png", "sizes": "72x72", "type": "image/png"},
-    {"src": "/icons/icon-96.png", "sizes": "96x96", "type": "image/png"},
-    {"src": "/icons/icon-128.png", "sizes": "128x128", "type": "image/png"},
-    {"src": "/icons/icon-144.png", "sizes": "144x144", "type": "image/png"},
-    {"src": "/icons/icon-152.png", "sizes": "152x152", "type": "image/png"},
-    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "/icons/icon-384.png", "sizes": "384x384", "type": "image/png"},
-    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
-  ],
-  "categories": ["productivity", "education", "developer"],
   "lang": "en",
   "dir": "ltr",
-  "screenshots": [
-    {
-      "src": "/screenshots/chat-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Luqi AI Chat Interface"
-    },
-    {
-      "src": "/screenshots/developer-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Developer Workspace"
-    },
-    {
-      "src": "/screenshots/education-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Education Hub"
-    },
-    {
-      "src": "/screenshots/dashboard-mobile.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Dashboard on Mobile"
-    },
-    {
-      "src": "/screenshots/chat-mobile.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Chat on Mobile"
-    }
+  "categories": ["productivity", "education", "ai", "utilities"],
+  "icons": [
+    {"src": "/web/icons/icon-48x48.png", "sizes": "48x48", "type": "image/png", "purpose": "any"},
+    {"src": "/web/icons/icon-72x72.png", "sizes": "72x72", "type": "image/png", "purpose": "any"},
+    {"src": "/web/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png", "purpose": "any maskable"},
+    {"src": "/web/icons/icon-128x128.png", "sizes": "128x128", "type": "image/png", "purpose": "any"},
+    {"src": "/web/icons/icon-144x144.png", "sizes": "144x144", "type": "image/png", "purpose": "any"},
+    {"src": "/web/icons/icon-152x152.png", "sizes": "152x152", "type": "image/png", "purpose": "any"},
+    {"src": "/web/icons/icon-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "/web/icons/icon-384x384.png", "sizes": "384x384", "type": "image/png", "purpose": "any"},
+    {"src": "/web/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
   ],
   "shortcuts": [
-    {
-      "name": "Chat",
-      "short_name": "Chat",
-      "description": "Start a chat",
-      "url": "/?page=chat",
-      "icons": [
-        {"src": "/icons/shortcut-chat-96.png", "sizes": "96x96", "type": "image/png"}
-      ]
-    },
-    {
-      "name": "Developer",
-      "short_name": "Dev",
-      "description": "Developer workspace",
-      "url": "/?page=developer",
-      "icons": [
-        {"src": "/icons/shortcut-dev-96.png", "sizes": "96x96", "type": "image/png"}
-      ]
-    },
-    {
-      "name": "Education",
-      "short_name": "Learn",
-      "description": "Education hub",
-      "url": "/?page=education",
-      "icons": [
-        {"src": "/icons/shortcut-edu-96.png", "sizes": "96x96", "type": "image/png"}
-      ]
-    }
-  ]
+    {"name": "AI Chat", "short_name": "Chat", "description": "Chat with Luqi AI", "url": "/#chat", "icons": [{"src": "/web/icons/icon-96x96.png", "sizes": "96x96"}]},
+    {"name": "Wellness", "short_name": "Wellness", "description": "Digital wellness dashboard", "url": "/web/wellness.html", "icons": [{"src": "/web/icons/icon-96x96.png", "sizes": "96x96"}]},
+    {"name": "Academy", "short_name": "Academy", "description": "Knowledge Academy", "url": "/#academy", "icons": [{"src": "/web/icons/icon-96x96.png", "sizes": "96x96"}]}
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
