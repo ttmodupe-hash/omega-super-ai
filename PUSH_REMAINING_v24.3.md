@@ -11,37 +11,14 @@ Prevents digital fatigue and promotes healthy screen habits:
 | `backend/digital_wellness.py` | 175 KB | **3,629 lines** - Core wellness engine with 200+ tips |
 | `web/wellness.html` | 80 KB | **1,609 lines** - Beautiful wellness dashboard |
 
-### Wellness Features
-- **Digital Fatigue Score** (0-100): Smart calculation based on screen time, cognitive load, session length, time of day, and interaction frequency
-- **Smart Break Engine**: Micro (30s), Short (3-5min), Long (15-30min) break suggestions with science-backed explanations
-- **20-20-20 Eye Rule**: Track eye break compliance with streaks
-- **200+ Wellness Tips**: Across 8 categories (eye health, posture, mental clarity, sleep, hydration, movement, stress, social)
-- **Focus Mode**: Pomodoro timer (25/5), distraction-free, session goals
-- **Wind-Down Mode**: Evening mode with sleep hygiene, warm screen reminders
-- **Usage Analytics**: Daily/weekly trends, peak hours, break compliance
-- **Screen Time Goals**: User-defined limits with gentle warnings at 50%/80%/100%
+### Corporate Branding — Limitless Telecoms (NEW)
 
-### Wellness API Endpoints (18 total)
-```
-POST /api/wellness/track              - Track activity
-GET  /api/wellness/status             - Fatigue score & status
-GET  /api/wellness/break              - Break suggestion
-POST /api/wellness/break/record       - Record break taken
-GET  /api/wellness/tip                - Contextual wellness tip
-GET  /api/wellness/tips/all           - All tip categories
-GET  /api/wellness/usage              - Usage analytics
-POST /api/wellness/goals              - Set screen time goals
-GET  /api/wellness/goals              - Get goals
-POST /api/wellness/focus              - Toggle focus mode
-GET  /api/wellness/focus              - Focus status
-POST /api/wellness/focus/pomodoro     - Pomodoro control
-POST /api/wellness/preferences        - Update preferences
-GET  /api/wellness/preferences        - Get preferences
-GET  /api/wellness/insights           - Personalized insights
-GET  /api/wellness/wind-down          - Wind-down status
-POST /api/wellness/eye-break/record   - Record 20-20-20
-GET  /api/wellness/self-test          - Run validation
-```
+| File | Size | Purpose |
+|------|------|---------|
+| `backend/branding.py` | 20 KB | Corporate identity module (colors, logos, company info) |
+| `backend/v24_branding_endpoints.py` | 4 KB | **7 branding API endpoints** |
+| `web/manifest.json` | 1.5 KB | PWA manifest with Limitless Telecoms branding |
+| `web/icons/*` | 1-184 KB | **15 logo variants** (favicon, PWA icons, OG image) |
 
 ---
 
@@ -61,8 +38,11 @@ GET  /api/wellness/self-test          - Run validation
 - `backend/lifecycle_manager.py` (1,006 lines)
 - `backend/secrets_manager.py` (2,151 lines)
 
-### v24.3.0 Wellness
+### v24.3.0 Wellness + Branding
 - `backend/v24_wellness_endpoints.py` (1,530 lines, 18 endpoints)
+- `backend/branding.py` (20 KB, corporate identity module)
+- `backend/v24_branding_endpoints.py` (4 KB, 7 branding endpoints)
+- `web/manifest.json` (PWA manifest with Limitless Telecoms branding)
 - `chunks_to_push/merge_files.py` (merge script)
 - `chunks_to_push/manifest.json` (updated with wellness chunks)
 
@@ -87,6 +67,20 @@ GET  /api/wellness/self-test          - Run validation
 
 **Total: 10 files, 32 chunks, ~2.1 MB**
 
+### Binary Assets (must push via git — cannot use chunk system)
+
+| File | Size | Purpose |
+|------|------|---------|
+| `web/icons/luqi-logo.jpeg` | 5 KB | Original Limitless Telecoms logo |
+| `web/icons/luqi-logo.png` | 14 KB | Logo PNG version |
+| `web/icons/favicon-16x16.png` | 1 KB | Favicon 16x16 |
+| `web/icons/favicon-32x32.png` | 3 KB | Favicon 32x32 |
+| `web/icons/icon-48x48.png` to `icon-192x192.png` | 5-46 KB | PWA icons (9 sizes) |
+| `web/icons/apple-touch-icon.png` | 42 KB | Apple touch icon |
+| `web/icons/icon-384x384.png` | 123 KB | Large PWA icon |
+| `web/icons/icon-512x512.png` | 184 KB | Large PWA icon |
+| `web/icons/luqi-logo-og.png` | 156 KB | Social sharing image |
+
 ---
 
 ## How to Push
@@ -98,59 +92,34 @@ When back on your machine:
 ```bash
 cd /path/to/omega-super-ai
 
-# Merge chunks into original files
+# Step 1: Merge chunks into original files (10 large Python/HTML files)
 python3 chunks_to_push/merge_files.py
 
-# This reconstructs all 10 large files from 32 chunks
-# Then push everything:
-git add -A
-git commit -m "v24.3.0 WELLNESS: Digital fatigue prevention + wellness dashboard
+# Step 2: Copy icon assets (binary files — must use git, not MCP)
+cp -r /mnt/agents/output/omega-super-ai/web/icons web/
 
-- Digital Wellness engine (3,629 lines, 200+ tips)
+# Step 3: Verify all files are in place
+ls web/icons/          # Should show 15+ icon files
+ls backend/digital_wellness.py  # Should exist
+ls web/wellness.html   # Should exist
+
+# Step 4: Commit and push everything
+git add -A
+git commit -m "v24.3.0: Digital Wellness + Limitless Telecoms Branding
+
+- Digital Wellness engine (3,629 lines, 200+ tips, fatigue scoring)
 - 18 wellness REST API endpoints
-- Wellness dashboard with fatigue score, break suggestions
+- Wellness dashboard with break suggestions, Pomodoro, wind-down
 - 20-20-20 eye rule tracker with streaks
-- Focus mode with Pomodoro timer
-- Wind-down mode for sleep hygiene
-- Usage analytics and screen time goals
+- Corporate branding: Limitless Telecoms as parent company
+- 14 logo variants (favicon, PWA icons, OG image)
+- Branding API (7 endpoints: colors, logos, company info)
+- PWA manifest with Limitless Telecoms branding
 - v24.1 infrastructure: middleware, cache, tasks, CI/CD
 - v24.2 systems: health checks, config, lifecycle, secrets
 - Updated README for v24 (1,160 lines)"
 git push origin main
 ```
-
-### Option 2: Copy from Source
-
-```bash
-cd /path/to/omega-super-ai
-
-# Copy files from the omega-super-ai source directory
-cp /mnt/agents/output/omega-super-ai/backend/digital_wellness.py backend/
-cp /mnt/agents/output/omega-super-ai/web/wellness.html web/
-cp /mnt/agents/output/omega-super-ai/backend/v24_wellness_endpoints.py backend/
-
-# And the other 8 large files...
-git add -A
-git commit -m "v24.3.0 - Complete wellness system + all modules"
-git push origin main
-```
-
----
-
-## Access the Wellness Dashboard
-
-After deploying:
-1. Open `http://localhost:8000/web/wellness.html`
-2. Or integrate the wellness widget into the main app at `/wellness`
-
-The dashboard shows:
-- Real-time fatigue score ring
-- Session timer with break reminders
-- Personalized break suggestions
-- Focus mode with Pomodoro
-- Daily usage analytics
-- Weekly wellness trends
-- Wind-down mode for evenings
 
 ---
 
