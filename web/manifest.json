@@ -1,8 +1,8 @@
 {
   "name": "Luqi AI — Limitless Telecoms",
   "short_name": "Luqi AI",
-  "description": "World-class AI SaaS platform — Powered by Limitless Telecoms. Chat, learn, collaborate, and stay well.",
-  "version": "24.3.0",
+  "description": "World-class AI SaaS platform — Built by Limitless Telecoms. Chat, learn, collaborate, code, train, and secure. Africa-first.",
+  "version": "24.4.0",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F7F9F4",
@@ -26,7 +26,7 @@
   "shortcuts": [
     {"name": "AI Chat", "short_name": "Chat", "description": "Chat with Luqi AI", "url": "/#chat", "icons": [{"src": "/web/icons/icon-96x96.png", "sizes": "96x96"}]},
     {"name": "Wellness", "short_name": "Wellness", "description": "Digital wellness dashboard", "url": "/web/wellness.html", "icons": [{"src": "/web/icons/icon-96x96.png", "sizes": "96x96"}]},
-    {"name": "Academy", "short_name": "Academy", "description": "Knowledge Academy", "url": "/#academy", "icons": [{"src": "/web/icons/icon-96x96.png", "sizes": "96x96"}]}
+    {"name": "Academy", "short_name": "Academy", "description": "Knowledge Academy", "url": "/#academy", "icons": [{"src": "/web/icons/icon-96x96.png", "sizes": "96x96"}]}  
   ],
   "related_applications": [],
   "prefer_related_applications": false
