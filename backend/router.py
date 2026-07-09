@@ -1,7 +1,7 @@
-"""Luqi AI v20 — FastAPI Router
+"""Luqi AI v24.4.0 — FastAPI Router
 
 Main FastAPI application serving the web UI and all API endpoints.
-v13-v20 endpoint modules are auto-imported at the bottom to register
+v14-v24.4 endpoint modules are auto-imported at the bottom to register
 their routes on the shared `app` instance.
 """
 
@@ -58,9 +58,9 @@ GENERATED_DIR.mkdir(exist_ok=True)
 # ═══════════════════════════════════════════════════════════════════
 
 app = FastAPI(
-    title="Luqi AI v24",
-    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, Law Studies, Africa-First capabilities, Jobs & Skills, WhatsApp Bot, Government Services, Real-time Collaborative Workspaces, Network & AI Engineering Training Academy, Global Knowledge Academy, Project Management Training, Digital Workspace Training, Digital Wellness, and 320+ endpoints",
-    version="24.3.0",
+    title="Luqi AI v24.4.0",
+    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, Law Studies, Africa-First capabilities, Jobs & Skills, WhatsApp Bot, Government Services, Real-time Collaborative Workspaces, Network & AI Engineering Training Academy, Global Knowledge Academy, Project Management Training, Digital Workspace Training, Digital Wellness, IT Security Training Academy, and 350+ endpoints. Built by Limitless Telecoms.",
+    version="24.4.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -125,7 +125,7 @@ async def manifest():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "version": "24.3.0", "timestamp": datetime.utcnow().isoformat()}
+    return {"status": "ok", "version": "24.4.0", "timestamp": datetime.utcnow().isoformat()}
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -237,7 +237,7 @@ if analyze_financials:
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Import all endpoint modules (v14 through v24)
+# Import all endpoint modules (v14 through v24.4)
 # Each module registers its own routes on the shared `app` instance
 # ═══════════════════════════════════════════════════════════════════
 
@@ -310,3 +310,8 @@ try:
     import backend.v24_branding_endpoints   # v24.3: Limitless Telecoms branding API
 except Exception as _e:
     logger.warning("v24 branding endpoints not loaded: %s", _e)
+
+try:
+    import backend.v24_security_endpoints   # v24.4: IT Security Training Academy - 15 courses, CTF challenges
+except Exception as _e:
+    logger.warning("v24 security endpoints not loaded: %s", _e)
