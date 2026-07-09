@@ -1,0 +1,14 @@
+{
+  "file": "backend/it_security_training.py",
+  "total_chunks": 5,
+  "total_size_bytes": 294343,
+  "encoding": "base64",
+  "reconstruct_script": "reconstruct_security.py",
+  "chunks": [
+    "it_security_training.py.b64.part000",
+    "it_security_training.py.b64.part001",
+    "it_security_training.py.b64.part002",
+    "it_security_training.py.b64.part003",
+    "it_security_training.py.b64.part004"
+  ]
+}
