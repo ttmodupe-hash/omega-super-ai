@@ -145,5 +145,167 @@ class SessionTracker:
         Args:
             user_id: The user to query.
 
-        Return
+        Returns:
+            Current session length in minutes, or 0 if no active session.
+        """
+        with self._lock:
+            start = self._current_session_start.get(user_id)
+            if start is None:
+                return 0
+            return int((datetime.utcnow() - start).total_seconds() / 60.0)
+
+    def get_average_cognitive_load(
+        self,
+        user_id: str,
+        window_minutes: int = 60,
+    ) -> float:
+        """Get the average cognitive load multiplier for recent activities.
+
+        Args:
+            user_id: The user to query.
+            window_minutes: Lookback window in minutes.
+
+        Returns:
+            Average cognitive load multiplier (1.0-2.5).
+        """
+        activities = self.get_activities(user_id, window_minutes)
+        if not activities:
+            return 1.0
+        total = sum(
+            COGNITIVE_LOAD_MULTIPLIERS.get(a.cognitive_load, 1.5)
+            for a in activities
+        )
+        return total / len(activities)
+
+    def get_interaction_frequency(
+        self,
+        user_id: str,
+        window_minutes: int = 30,
+    ) -> float:
+        """Get interaction frequency (activities per hour).
+
+        Args:
+            user_id: The user to query.
+            window_minutes: Lookback window in minutes.
+
+        Returns:
+            Average activities per hour.
+        """
+        activities = self.get_activities(user_id, window_minutes)
+        if not activities or window_minutes <= 0:
+            return 0.0
+        return len(activities) / (window_minutes / 60.0)
+
+    def get_peak_hours(
+        self,
+        user_id: str,
+        window_minutes: int = 1440,
+    ) -> List[int]:
+        """Get the hours with highest usage.
+
+        Args:
+            user_id: The user to query.
+            window_minutes: Lookback window in minutes.
+
+        Returns:
+            List of hour integers (0-23) sorted by usage, top 5.
+        """
+        activities = self.get_activities(user_id, window_minutes)
+        hour_usage: Dict[int, int] = defaultdict(int)
+        for a in activities:
+            hour = a.timestamp.hour
+            hour_usage[hour] += a.duration_ms
+
+        sorted_hours = sorted(
+            hour_usage.items(), key=lambda x: x[1], reverse=True
+        )
+        return [h for h, _ in sorted_hours[:5]]
+
+    def record_break_taken(self, user_id: str) -> None:
+        """Record that the user took a break.
+
+        Args:
+            user_id: The user who took a break.
+        """
+        with self._lock:
+            self._breaks_taken[user_id] += 1
+            self._last_break_time[user_id] = datetime.utcnow()
+
+    def record_break_suggested(self, user_id: str) -> None:
+        """Record that a break was suggested to the user.
+
+        Args:
+            user_id: The user who received the suggestion.
+        """
+        with self._lock:
+            self._breaks_suggested[user_id] += 1
+
+    def get_break_compliance_rate(self, user_id: str) -> float:
+        """Get the break compliance rate.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            Float between 0.0 and 1.0 representing compliance.
+        """
+        with self._lock:
+            suggested = max(self._breaks_suggested.get(user_id, 0), 1)
+            taken = self._breaks_taken.get(user_id, 0)
+            return min(taken / suggested, 1.0)
+
+    def get_last_break_minutes_ago(self, user_id: str) -> int:
+        """Get minutes since the user's last break.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            Minutes since last break, or a large number if never.
+        """
+        with self._lock:
+            last = self._last_break_time.get(user_id)
+            if last is None:
+                return 9999
+            return int((datetime.utcnow() - last).total_seconds() / 60.0)
+
+    def get_average_session_minutes(
+        self,
+        user_id: str,
+        window_minutes: int = 1440,
+    ) -> float:
+        """Get the average session length in minutes.
+
+        Args:
+            user_id: The user to query.
+            window_minutes: Lookback window in minutes.
+
+        Returns:
+            Average session length in minutes.
+        """
+        activities = self.get_activities(user_id, window_minutes)
+        if not activities:
+            return 0.0
+
+        # Group activities into sessions (gaps > 10 minutes)
+        sessions: List[int] = []
+        current_session_ms = 0
+        prev_time: Optional[datetime] = None
+
+        for a in activities:
+            if prev_time is not None:
+                gap = (a.timestamp - prev_time).total_seconds()
+                if gap > 600:  # 10 minutes
+                    sessions.append(current_session_ms)
+                    current_session_ms = 0
+            current_session_ms += a.duration_ms
+            prev_time = a.timestamp
+
+        if current_session_ms > 0:
+            sessions.append(current_session_ms)
+
+        if not sessions:
+            return 0.0
+
+        avg_ms = statistics.mean
 # ___END_OF_FILE___
