@@ -367,4 +367,60 @@ rk speed tests", "VM detection: checking registry keys, MAC addresses, processes
                     "Cryptographic hashes verify evidence hasn't changed and identify known good/bad files via NSRL.", DifficultyLevel.BEGINNER),
                 QuizQuestion("dfq13", "In memory forensics, what does malfind detect?",
                     ["Malic
+ious network traffic", "Injected code and hooked DLLs", "Bad hard drives", "Virus definitions"], 1,
+                    "malfind detects injected code by identifying memory regions with execute permissions and unusual characteristics.", DifficultyLevel.ADVANCED),
+                QuizQuestion("dfq14", "What is the purpose of Zeek (formerly Bro) in network forensics?",
+                    ["Packet capture only", "High-level network traffic analysis and event generation", "Disk imaging", "Registry analysis"], 1,
+                    "Zeek extracts high-level events and metadata from network traffic beyond raw packet capture.", DifficultyLevel.INTERMEDIATE),
+                QuizQuestion("dfq15", "What is LSB steganography?",
+                    ["A file system", "Hiding data in the least significant bits of image pixels", "A network protocol", "A compression method"], 1,
+                    "LSB steganography hides data by modifying the least significant bits of pixel values in images.", DifficultyLevel.ADVANCED),
+            ],
+        ),
+    )
+
+
+    # ========================================================================
+    # COURSE 9: COMPLIANCE & GOVERNANCE
+    # ========================================================================
+    mod9 = SecurityModule(
+        id="comp_001",
+        course_id="compliance_governance",
+        title="Security Compliance & Governance",
+        description="Navigate the complex landscape of security compliance frameworks, risk management, and governance programs.",
+        category=CourseCategory.COMPLIANCE,
+        difficulty=DifficultyLevel.INTERMEDIATE,
+        duration_hours=11.0,
+        prerequisites=[],
+        order=9,
+        lessons=[
+            SecurityLesson(
+                id="comp_l1", module_id="comp_001", title="Security Governance Fundamentals",
+                content="Information security governance: aligning security with business objectives. Governance frameworks: COBIT, ISO 27014, NIST CSF. Roles and responsibilities: CISO, security steering committee, data owners. Policy hierarchy: policies, standards, procedures, guidelines. Measuring security program effectiveness through KPIs and KRIs.",
+                lesson_type=LessonType.TEXT, duration_min=45, order=1,
+            ),
+            SecurityLesson(
+                id="comp_l2", module_id="comp_001", title="Risk Management Framework",
+                content="Risk management lifecycle: identify, assess, treat, monitor. Risk assessment methodologies: qualitative (matrices), quantitative (ALE, SLE, ARO). Risk treatment options: avoid, mitigate, transfer, accept. NIST RMF (SP 800-37): prepare, categorize, select, implement, assess, authorize, monitor. Risk registers and heat maps.",
+                lesson_type=LessonType.TEXT, duration_min=50, order=2,
+            ),
+            SecurityLesson(
+                id="comp_l3", module_id="comp_001", title="ISO 27001/27002",
+                content="ISO 27001 ISMS requirements: context, leadership, planning, support, operation, evaluation, improvement. Annex A controls: 114 controls across 4 themes. ISO 27002 implementation guidance. Certification process: gap analysis, risk assessment, SoA, internal audit, stage 1/2 external audit, surveillance. ISMS documentation requirements.",
+                lesson_type=LessonType.TEXT, duration_min=55, order=3,
+            ),
+            SecurityLesson(
+                id="comp_l4", module_id="comp_001", title="NIST Cybersecurity Framework",
+                content="CSF 2.0 Core Functions: GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER. Categories and subcategories with implementation examples. Tiers: Partial, Risk Informed, Repeatable, Adaptive. Profile creation: current vs target. Integration with NIST SP 800-53 controls. CSF 2.0 changes: added Govern function, supply chain risk.",
+                lesson_type=LessonType.TEXT, duration_min=50, order=4,
+            ),
+            SecurityLesson(
+                id="comp_l5", module_id="comp_001", title="PCI DSS 4.0",
+                content="Payment Card Industry Data Security Standard v4.0: 12 requirements across 6 goals. Network segmentation, encryption, access controls, vulnerability management, monitoring, testing. SAQ types, ROC documentation, QSA assessments. New in 4.0: customized approach, targeted risk analysis, enhanced authentication requirements.",
+                lesson_type=LessonType.TEXT, duration_min=45, order=5,
+            ),
+            SecurityLesson(
+                id="comp_l6", module_id="comp_001", title="HIPAA & Healthcare Security",
+                content="Health Insurance Portability and Accountability Act: Privacy Rule, Security Rule, Breach Notification Rule. Administrative, physical, technical safeguards. ePHI protection, access controls, audit controls, integrity controls. Risk analysis requirements. Business Associate Agreements (BAAs). OCR audit protocol. Penalties and enforcement.",
+                lesson_type=LessonT
 # ___END_OF_FILE___
