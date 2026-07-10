@@ -1151,5 +1151,875 @@ class FocusModeManager:
         Args:
             user_id: The user who completed a break.
         """
-        wit
+        with self._lock:
+            self._pomodoro_phase[user_id] = PomodoroPhase.WORK.value
+            self._phase_start_time[user_id] = datetime.utcnow()
+
+    def is_focus_active(self, user_id: str) -> bool:
+        """Check if focus mode is currently active.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            True if focus mode is active.
+        """
+        with self._lock:
+            return (
+                self._focus_state.get(user_id)
+                == FocusModeState.ACTIVE.value
+            )
+
+
+# ---------------------------------------------------------------------------
+# Wind-Down Mode Manager
+# ---------------------------------------------------------------------------
+
+
+class WindDownManager:
+    """Manages wind-down mode for evening sleep hygiene.
+
+    Wind-down mode activates during configurable evening hours and provides
+    gentle nudges toward restful activities and away from stimulating screen use.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the wind-down manager."""
+        self._user_start_hours: Dict[str, int] = {}
+        self._user_enabled: Dict[str, bool] = {}
+
+    def is_active(
+        self,
+        user_id: str,
+        default_start_hour: int = Constants.WIND_DOWN_START_HOUR,
+    ) -> bool:
+        """Check if wind-down mode should be active.
+
+        Wind-down is active from the start hour until the end hour
+        (default 9 PM to 7 AM).
+
+        Args:
+            user_id: The user to check.
+            default_start_hour: Default start hour if user has not set one.
+
+        Returns:
+            True if wind-down mode is active.
+        """
+        enabled = self._user_enabled.get(user_id, True)
+        if not enabled:
+            return False
+
+        start_hour = self._user_start_hours.get(user_id, default_start_hour)
+        current_hour = datetime.utcnow().hour
+
+        # Wind-down is active from start_hour through midnight until end_hour
+        if start_hour <= current_hour or current_hour < Constants.WIND_DOWN_END_HOUR:
+            return True
+        return False
+
+    def set_start_hour(self, user_id: str, hour: int) -> None:
+        """Set the wind-down start hour for a user.
+
+        Args:
+            user_id: The user to configure.
+            hour: Start hour in 24-hour format (0-23).
+
+        Raises:
+            ValueError: If hour is not in valid range.
+        """
+        if not 0 <= hour <= 23:
+            raise ValueError("Hour must be between 0 and 23")
+        self._user_start_hours[user_id] = hour
+
+    def set_enabled(self, user_id: str, enabled: bool) -> None:
+        """Enable or disable wind-down mode.
+
+        Args:
+            user_id: The user to configure.
+            enabled: Whether wind-down mode is enabled.
+        """
+        self._user_enabled[user_id] = enabled
+
+    def get_suggestions(self) -> List[str]:
+        """Get wind-down activity suggestions.
+
+        Returns:
+            List of calming activity suggestions.
+        """
+        return [
+            "Read a physical book or e-ink device",
+            "Practice gentle stretching or yoga",
+            "Listen to calming music or a sleep podcast",
+            "Do a meditation or breathing exercise",
+            "Write in a journal",
+            "Take a warm bath or shower",
+            "Prepare for tomorrow to reduce morning stress",
+            "Dim the lights in your environment",
+            "Do a body scan relaxation exercise",
+            "Sip herbal tea like chamomile or peppermint",
+        ]
+
+    def get_tip(self) -> str:
+        """Get a wind-down specific tip.
+
+        Returns:
+            A sleep hygiene tip appropriate for wind-down hours.
+        """
+        tips = [
+            "The blue light from screens can delay melatonin production by up to 3 hours. Consider switching to non-screen activities.",
+            "A consistent bedtime routine signals your brain to prepare for sleep. Try to go to bed at the same time each night.",
+            "Your bedroom should be cool (60-67F), dark, and quiet for optimal sleep conditions.",
+            "Avoid caffeine for at least 6 hours before bedtime. It has a half-life of 5-6 hours.",
+            "A warm bath 1-2 hours before bed helps your body temperature drop, which signals sleepiness.",
+        ]
+        return random.choice(tips)
+
+
+# ---------------------------------------------------------------------------
+# Screen Time Goals Manager
+# ---------------------------------------------------------------------------
+
+
+class ScreenTimeGoalsManager:
+    """Manages user-defined screen time goals and tracks progress.
+
+    Provides gentle warnings when users approach their limits and
+    celebrates healthy habits.
+    """
+
+    def __init__(self, session_tracker: SessionTracker) -> None:
+        """Initialize the goals manager.
+
+        Args:
+            session_tracker: The session tracker for querying usage.
+        """
+        self._tracker = session_tracker
+        self._lock = threading.Lock()
+        self._goals: Dict[str, ScreenTimeGoals] = {}
+        self._warning_sent: Dict[str, Dict[str, bool]] = defaultdict(
+            lambda: {"50": False, "80": False, "100": False}
+        )
+
+    def set_goals(self, user_id: str, goals: ScreenTimeGoals) -> None:
+        """Set screen time goals for a user.
+
+        Args:
+            user_id: The user to set goals for.
+            goals: ScreenTimeGoals object with desired limits.
+        """
+        with self._lock:
+            self._goals[user_id] = goals
+            # Reset warning flags
+            self._warning_sent[user_id] = {
+                "50": False,
+                "80": False,
+                "100": False,
+            }
+
+    def get_goals(self, user_id: str) -> ScreenTimeGoals:
+        """Get current screen time goals for a user.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            ScreenTimeGoals object (returns defaults if not set).
+        """
+        with self._lock:
+            goals = self._goals.get(user_id)
+            if goals is None:
+                goals = ScreenTimeGoals()
+                self._goals[user_id] = goals
+            return goals
+
+    def check_progress(self, user_id: str) -> Dict[str, Any]:
+        """Check progress against screen time goals.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            Dictionary with progress information and any warnings.
+        """
+        goals = self.get_goals(user_id)
+        used_minutes = self._tracker.get_screen_time_minutes(
+            user_id, window_minutes=1440
+        )
+        limit = goals.daily_limit_minutes
+
+        if limit <= 0:
+            percentage = 0.0
+        else:
+            percentage = (used_minutes / limit) * 100.0
+
+        warnings: List[str] = []
+
+        with self._lock:
+            warning_flags = self._warning_sent.get(user_id, {})
+
+            if percentage >= 100 and not warning_flags.get("100"):
+                warnings.append(
+                    "You have reached your daily screen time goal. "
+                    "Great job being mindful of your usage today!"
+                )
+                warning_flags["100"] = True
+            elif percentage >= 80 and not warning_flags.get("80"):
+                warnings.append(
+                    "You are at 80% of your daily screen time goal. "
+                    "Consider taking a longer break or winding down soon."
+                )
+                warning_flags["80"] = True
+            elif percentage >= 50 and not warning_flags.get("50"):
+                warnings.append(
+                    "You are at 50% of your daily screen time goal. "
+                    "You are using your time mindfully. Keep it up!"
+                )
+                warning_flags["50"] = True
+
+        return {
+            "used_minutes": used_minutes,
+            "limit_minutes": limit,
+            "percentage": round(percentage, 1),
+            "remaining_minutes": max(limit - used_minutes, 0),
+            "warnings": warnings,
+        }
+
+    def reset_daily_warnings(self, user_id: str) -> None:
+        """Reset warning flags for a new day.
+
+        Args:
+            user_id: The user to reset.
+        """
+        with self._lock:
+            self._warning_sent[user_id] = {
+                "50": False,
+                "80": False,
+                "100": False,
+            }
+
+
+# ---------------------------------------------------------------------------
+# Wellness Tips Engine
+# ---------------------------------------------------------------------------
+
+
+class WellnessTipsEngine:
+    """Serves contextual wellness tips based on user state.
+
+    Uses the WellnessTipsDatabase to select tips that are relevant to the
+    user's current fatigue level, activity, and tip history.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the tips engine."""
+        self._lock = threading.Lock()
+        self._tip_history: Dict[str, Deque[str]] = defaultdict(
+            lambda: deque(maxlen=Constants.MAX_TIP_HISTORY)
+        )
+
+    def get_tip(
+        self,
+        user_id: str,
+        fatigue_score: int = 50,
+        current_activity: str = "",
+        category: Optional[str] = None,
+    ) -> WellnessTip:
+        """Get a contextual wellness tip.
+
+        Args:
+            user_id: The user to get a tip for.
+            fatigue_score: Current fatigue score.
+            current_activity: Current activity type.
+            category: Optional preferred category.
+
+        Returns:
+            A contextually selected WellnessTip.
+        """
+        with self._lock:
+            history = list(self._tip_history.get(user_id, deque()))
+
+        tip = WellnessTipsDatabase.select_contextual_tip(
+            fatigue_score=fatigue_score,
+            current_activity=current_activity,
+            tip_history=history,
+            preferred_category=category,
+        )
+
+        with self._lock:
+            self._tip_history[user_id].append(tip.title)
+
+        return tip
+
+    def get_categories(self) -> List[str]:
+        """Get all available tip categories.
+
+        Returns:
+            List of category name strings.
+        """
+        return WellnessTipsDatabase.get_categories()
+
+    def get_tips_by_category(self, category: str) -> List[WellnessTip]:
+        """Get all tips in a specific category.
+
+        Args:
+            category: Category to filter by.
+
+        Returns:
+            List of WellnessTip objects.
+        """
+        return WellnessTipsDatabase.get_tips_by_category(category)
+
+    def clear_history(self, user_id: str) -> None:
+        """Clear tip history for a user.
+
+        Args:
+            user_id: The user whose history to clear.
+        """
+        with self._lock:
+            self._tip_history.pop(user_id, None)
+
+
+# ---------------------------------------------------------------------------
+# Usage Analytics
+# ---------------------------------------------------------------------------
+
+
+class UsageAnalytics:
+    """Aggregates usage patterns and generates insights.
+
+    Provides daily, weekly, and monthly reports with personalized insights
+    based on usage patterns, fatigue trends, and break compliance.
+    """
+
+    def __init__(
+        self,
+        session_tracker: SessionTracker,
+        fatigue_calculator: FatigueCalculator,
+    ) -> None:
+        """Initialize usage analytics.
+
+        Args:
+            session_tracker: The session tracker for activity data.
+            fatigue_calculator: The fatigue calculator for scoring.
+        """
+        self._tracker = session_tracker
+        self._fatigue_calc = fatigue_calculator
+        self._fatigue_history: Dict[str, Deque[Tuple[datetime, int]]] = (
+            defaultdict(lambda: deque(maxlen=1000))
+        )
+
+    def record_fatigue_score(self, user_id: str, score: int) -> None:
+        """Record a fatigue score for trend analysis.
+
+        Args:
+            user_id: The user identifier.
+            score: The fatigue score (0-100).
+        """
+        self._fatigue_history[user_id].append((datetime.utcnow(), score))
+
+    def generate_report(
+        self,
+        user_id: str,
+        period: str = "today",
+    ) -> UsageReport:
+        """Generate a usage analytics report.
+
+        Args:
+            user_id: The user to generate the report for.
+            period: Report period (today, weekly, monthly).
+
+        Returns:
+            UsageReport with analytics and insights.
+
+        Raises:
+            ValueError: If period is not recognized.
+        """
+        if period == "today":
+            window_minutes = 1440
+        elif period == "weekly":
+            window_minutes = 10080
+        elif period == "monthly":
+            window_minutes = 43200
+        else:
+            raise ValueError(
+                f"Unknown period: {period}. Use 'today', 'weekly', or 'monthly'."
+            )
+
+        total_minutes = self._tracker.get_screen_time_minutes(
+            user_id, window_minutes
+        )
+        feature_breakdown = self._tracker.get_feature_breakdown(
+            user_id, window_minutes
+        )
+        peak_hours = self._tracker.get_peak_hours(user_id, window_minutes)
+        avg_session = self._tracker.get_average_session_minutes(
+            user_id, window_minutes
+        )
+        longest_session = self._tracker.get_longest_session_minutes(
+            user_id, window_minutes
+        )
+        breaks_taken = self._tracker._breaks_taken.get(user_id, 0)
+        breaks_suggested = self._tracker._breaks_suggested.get(user_id, 0)
+        compliance_rate = self._tracker.get_break_compliance_rate(user_id)
+        avg_fatigue = self._get_average_fatigue(user_id, window_minutes)
+        fatigue_trend = self._analyze_fatigue_trend(user_id)
+        insights = self._generate_insights(
+            user_id,
+            total_minutes,
+            avg_session,
+            compliance_rate,
+            avg_fatigue,
+            feature_breakdown,
+        )
+
+        return UsageReport(
+            period=period,
+            total_screen_time_minutes=total_minutes,
+            feature_breakdown=feature_breakdown,
+            peak_hours=peak_hours,
+            average_session_minutes=round(avg_session, 1),
+            longest_session_minutes=longest_session,
+            breaks_taken=breaks_taken,
+            breaks_suggested=breaks_suggested,
+            break_compliance_rate=round(compliance_rate, 2),
+            average_fatigue_score=round(avg_fatigue, 1),
+            fatigue_trend=fatigue_trend,
+            insights=insights,
+        )
+
+    def _get_average_fatigue(
+        self, user_id: str, window_minutes: int
+    ) -> float:
+        """Get average fatigue score over a time window.
+
+        Args:
+            user_id: The user to query.
+            window_minutes: Lookback window in minutes.
+
+        Returns:
+            Average fatigue score.
+        """
+        cutoff = datetime.utcnow() - timedelta(minutes=window_minutes)
+        scores = [
+            s for t, s in self._fatigue_history.get(user_id, deque())
+            if t >= cutoff
+        ]
+        if not scores:
+            return 25.0
+        return statistics.mean(scores)
+
+    def _analyze_fatigue_trend(self, user_id: str) -> str:
+        """Analyze fatigue score trend.
+
+        Args:
+            user_id: The user to analyze.
+
+        Returns:
+            Human-readable trend description.
+        """
+        history = list(self._fatigue_history.get(user_id, deque()))
+        if len(history) < 5:
+            return "insufficient_data"
+
+        # Compare first half vs second half
+        mid = len(history) // 2
+        first_half = [s for _, s in history[:mid]]
+        second_half = [s for _, s in history[mid:]]
+
+        first_avg = statistics.mean(first_half)
+        second_avg = statistics.mean(second_half)
+
+        diff = second_avg - first_avg
+        if diff < -10:
+            return "improving"
+        elif diff < -5:
+            return "slightly_improving"
+        elif diff > 10:
+            return "worsening"
+        elif diff > 5:
+            return "slightly_worsening"
+        else:
+            return "stable"
+
+    def _generate_insights(
+        self,
+        user_id: str,
+        total_minutes: int,
+        avg_session: float,
+        compliance_rate: float,
+        avg_fatigue: float,
+        feature_breakdown: Dict[str, int],
+    ) -> List[str]:
+        """Generate personalized insights based on usage patterns.
+
+        Args:
+            user_id: The user to generate insights for.
+            total_minutes: Total screen time in minutes.
+            avg_session: Average session length in minutes.
+            compliance_rate: Break compliance rate.
+            avg_fatigue: Average fatigue score.
+            feature_breakdown: Screen time by feature.
+
+        Returns:
+            List of insight strings.
+        """
+        insights: List[str] = []
+
+        # Screen time insights
+        hours = total_minutes / 60.0
+        if hours > 10:
+            insights.append(
+                f"Your screen time is {hours:.1f} hours. Consider setting a daily limit and scheduling more offline activities."
+            )
+        elif hours > 6:
+            insights.append(
+                f"Your screen time is {hours:.1f} hours, which is within a typical range. Keep listening to your body's signals."
+            )
+        elif hours > 0:
+            insights.append(
+                f"Your screen time is {hours:.1f} hours. Great balance between digital engagement and rest!"
+            )
+
+        # Session length insights
+        if avg_session > 90:
+            insights.append(
+                f"Your average session length is {avg_session:.0f} minutes. Try taking breaks every 60 minutes to maintain focus and reduce fatigue."
+            )
+        elif avg_session > 45:
+            insights.append(
+                f"Your average session length is {avg_session:.0f} minutes. You are doing well at maintaining focused work periods."
+            )
+        elif avg_session > 0:
+            insights.append(
+                f"Your average session length is {avg_session:.0f} minutes. Great job taking regular breaks!"
+            )
+
+        # Break compliance insights
+        if compliance_rate < 0.3:
+            insights.append(
+                f"Your break compliance is {compliance_rate:.0%}. Taking even short breaks can significantly improve your well-being and productivity."
+            )
+        elif compliance_rate < 0.6:
+            insights.append(
+                f"Your break compliance is {compliance_rate:.0%}. You are doing okay, but there is room for improvement. Your future self will thank you!"
+            )
+        elif compliance_rate >= 0.6:
+            insights.append(
+                f"Your break compliance is {compliance_rate:.0%}. Excellent job prioritizing your well-being!"
+            )
+
+        # Fatigue insights
+        if avg_fatigue > 60:
+            insights.append(
+                f"Your average fatigue score is {avg_fatigue:.0f}. Consider incorporating more breaks, hydration, and movement into your routine."
+            )
+        elif avg_fatigue > 40:
+            insights.append(
+                f"Your average fatigue score is {avg_fatigue:.0f}. You are managing well, but watch for signs of increasing fatigue."
+            )
+        else:
+            insights.append(
+                f"Your average fatigue score is {avg_fatigue:.0f}. You are maintaining excellent energy levels!"
+            )
+
+        # Feature insights
+        if feature_breakdown:
+            top_feature = max(feature_breakdown, key=feature_breakdown.get)
+            top_minutes = feature_breakdown[top_feature]
+            insights.append(
+                f"Your most-used feature is '{top_feature}' ({top_minutes} minutes). Make sure you are balancing this with other activities."
+            )
+
+        return insights
+
+
+# ---------------------------------------------------------------------------
+# User Preferences Manager
+# ---------------------------------------------------------------------------
+
+
+class UserPreferencesManager:
+    """Manages per-user wellness preferences.
+
+    Stores and retrieves user preferences for wellness feature customization.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the preferences manager."""
+        self._lock = threading.Lock()
+        self._preferences: Dict[str, WellnessPreferences] = {}
+
+    def get_preferences(self, user_id: str) -> WellnessPreferences:
+        """Get wellness preferences for a user.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            WellnessPreferences object (returns defaults if not set).
+        """
+        with self._lock:
+            prefs = self._preferences.get(user_id)
+            if prefs is None:
+                prefs = WellnessPreferences()
+                self._preferences[user_id] = prefs
+            return prefs
+
+    def update_preferences(
+        self, user_id: str, updates: Dict[str, Any]
+    ) -> WellnessPreferences:
+        """Update wellness preferences for a user.
+
+        Args:
+            user_id: The user to update.
+            updates: Dictionary of preference fields to update.
+
+        Returns:
+            Updated WellnessPreferences object.
+        """
+        with self._lock:
+            prefs = self._preferences.get(user_id, WellnessPreferences())
+            for key, value in updates.items():
+                if hasattr(prefs, key):
+                    setattr(prefs, key, value)
+            self._preferences[user_id] = prefs
+            return prefs
+
+    def reset_preferences(self, user_id: str) -> None:
+        """Reset preferences to defaults.
+
+        Args:
+            user_id: The user whose preferences to reset.
+        """
+        with self._lock:
+            self._preferences[user_id] = WellnessPreferences()
+
+
+# ---------------------------------------------------------------------------
+# Main Wellness Engine
+# ---------------------------------------------------------------------------
+
+
+class WellnessEngine:
+    """Central wellness engine that orchestrates all subsystems.
+
+    The WellnessEngine is the primary interface for the digital wellness
+    system. It coordinates the session tracker, fatigue calculator, break
+    engine, eye strain tracker, focus mode, wind-down mode, usage analytics,
+    screen time goals, and wellness tips engine.
+
+    This class is designed to be used as a singleton via the
+    ``wellness_engine`` module-level instance.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the wellness engine and all subsystems."""
+        logger.info("Initializing WellnessEngine...")
+
+        self._session_tracker = SessionTracker()
+        self._fatigue_calculator = FatigueCalculator()
+        self._break_engine = BreakEngine()
+        self._eye_tracker = EyeStrainTracker()
+        self._focus_manager = FocusModeManager()
+        self._wind_down_manager = WindDownManager()
+        self._goals_manager = ScreenTimeGoalsManager(self._session_tracker)
+        self._tips_engine = WellnessTipsEngine()
+        self._usage_analytics = UsageAnalytics(
+            self._session_tracker, self._fatigue_calculator
+        )
+        self._preferences_manager = UserPreferencesManager()
+
+        # Ensure tips database is initialized
+        WellnessTipsDatabase._initialize()
+
+        logger.info("WellnessEngine initialized successfully")
+
+    # =====================================================================
+    # Public API
+    # =====================================================================
+
+    def track_activity(
+        self,
+        user_id: str,
+        feature: str,
+        duration_ms: int,
+        cognitive_load: Optional[str] = None,
+    ) -> None:
+        """Track user activity for wellness analysis.
+
+        Args:
+            user_id: Unique identifier for the user.
+            feature: The feature or page the user was interacting with.
+            duration_ms: Duration of the activity in milliseconds.
+            cognitive_load: Optional cognitive load override (low, medium, high).
+
+        Raises:
+            ValueError: If duration_ms is negative or feature is empty.
+        """
+        self._session_tracker.track(
+            user_id, feature, duration_ms, cognitive_load
+        )
+        # Check if eye break is due
+        self._eye_tracker.record_screen_time(user_id, duration_ms)
+
+        logger.debug(
+            "Activity tracked: user=%s feature=%s duration=%dms",
+            user_id,
+            feature,
+            duration_ms,
+        )
+
+    def get_status(self, user_id: str) -> WellnessStatus:
+        """Get current wellness status including fatigue score.
+
+        Args:
+            user_id: The user to get status for.
+
+        Returns:
+            WellnessStatus with current state information.
+        """
+        # Gather metrics
+        screen_time_4h = self._session_tracker.get_screen_time_minutes(
+            user_id, window_minutes=Constants.ROLLING_WINDOW_LONG
+        )
+        screen_time_today = self._session_tracker.get_screen_time_minutes(
+            user_id, window_minutes=1440
+        )
+        current_session = self._session_tracker.get_current_session_minutes(
+            user_id
+        )
+        last_break = self._session_tracker.get_last_break_minutes_ago(user_id)
+        avg_cognitive_load = (
+            self._session_tracker.get_average_cognitive_load(user_id)
+        )
+        interaction_freq = (
+            self._session_tracker.get_interaction_frequency(user_id)
+        )
+        eye_compliance = self._eye_tracker.get_compliance_rate(user_id)
+
+        # Calculate fatigue score
+        fatigue_score = self._fatigue_calculator.calculate(
+            screen_time_minutes=screen_time_4h,
+            avg_cognitive_load=avg_cognitive_load,
+            current_session_minutes=current_session,
+            last_break_minutes_ago=last_break,
+            interaction_frequency=interaction_freq,
+        )
+
+        # Record for trend analysis
+        self._usage_analytics.record_fatigue_score(user_id, fatigue_score)
+
+        # Determine fatigue level and messages
+        fatigue_level = self._fatigue_calculator.interpret_score(fatigue_score)
+        message = self._fatigue_calculator.get_status_message(fatigue_score)
+
+        # Determine break urgency
+        break_suggested = fatigue_score >= Constants.FATIGUE_FRESH
+        if fatigue_score >= Constants.FATIGUE_HIGH:
+            break_urgency = 3
+        elif fatigue_score >= Constants.FATIGUE_MODERATE:
+            break_urgency = 2
+        elif fatigue_score >= Constants.FATIGUE_FRESH:
+            break_urgency = 1
+        else:
+            break_urgency = 0
+
+        # Estimate next break
+        if fatigue_score >= Constants.FATIGUE_HIGH:
+            next_break_estimate = 0
+        elif fatigue_score >= Constants.FATIGUE_MODERATE:
+            next_break_estimate = max(
+                0, Constants.MICRO_BREAK_INTERVAL - (current_session % Constants.MICRO_BREAK_INTERVAL)
+           )
+        else:
+            next_break_estimate = max(
+                0, Constants.SHORT_BREAK_INTERVAL - current_session
+            )
+
+        # Check wind-down and focus
+        wind_down = self._wind_down_manager.is_active(user_id)
+        focus_active = self._focus_manager.is_focus_active(user_id)
+
+        return WellnessStatus(
+            fatigue_score=fatigue_score,
+            fatigue_level=fatigue_level,
+            screen_time_minutes=screen_time_today,
+            current_session_minutes=current_session,
+            last_break_minutes_ago=last_break,
+            eye_strain_compliance=round(eye_compliance, 2),
+            break_suggested=break_suggested,
+            break_urgency=break_urgency,
+            message=message,
+            next_break_estimate_minutes=next_break_estimate,
+            wind_down_active=wind_down,
+            focus_mode_active=focus_active,
+        )
+
+    def get_break_suggestion(self, user_id: str) -> BreakSuggestion:
+        """Get personalized break suggestion.
+
+        Args:
+            user_id: The user to get a suggestion for.
+
+        Returns:
+            BreakSuggestion tailored to the user's current state.
+        """
+        status = self.get_status(user_id)
+        suggestion = self._break_engine.get_suggestion(
+            fatigue_score=status.fatigue_score,
+            current_session_minutes=status.current_session_minutes,
+            last_break_minutes_ago=status.last_break_minutes_ago,
+            wind_down_active=status.wind_down_active,
+        )
+        self._session_tracker.record_break_suggested(user_id)
+        return suggestion
+
+    def record_break_taken(self, user_id: str) -> None:
+        """Record that a user took a break.
+
+        Args:
+            user_id: The user who took a break.
+        """
+        self._session_tracker.record_break_taken(user_id)
+
+    def get_wellness_tip(
+        self,
+        user_id: str,
+        category: Optional[str] = None,
+    ) -> WellnessTip:
+        """Get a contextual wellness tip.
+
+        Args:
+            user_id: The user to get a tip for.
+            category: Optional preferred tip category.
+
+        Returns:
+            A contextually selected WellnessTip.
+        """
+        status = self.get_status(user_id)
+        return self._tips_engine.get_tip(
+            user_id=user_id,
+            fatigue_score=status.fatigue_score,
+            category=category,
+        )
+
+    def get_usage_report(
+        self, user_id: str, period: str = "today"
+    ) -> UsageReport:
+        """Get usage analytics for a time period.
+
+        Args:
+            user_id: The user to get the report for.
+            period: Report period (today, weekly, monthly).
+
+        Returns:
+            UsageReport with analytics and insights.
+        """
+        return self._usage_analytics.generate_report(user_id, period)
+
+    def set_goals(self, user_id: str, goals: ScreenTimeGoals) -> None:
+        """Set screen time goals.
+
+        Args:
+            user_id: The user t
 # ___END_OF_FILE___
