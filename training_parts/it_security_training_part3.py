@@ -423,4 +423,77 @@ ious network traffic", "Injected code and hooked DLLs", "Bad hard drives", "Viru
                 id="comp_l6", module_id="comp_001", title="HIPAA & Healthcare Security",
                 content="Health Insurance Portability and Accountability Act: Privacy Rule, Security Rule, Breach Notification Rule. Administrative, physical, technical safeguards. ePHI protection, access controls, audit controls, integrity controls. Risk analysis requirements. Business Associate Agreements (BAAs). OCR audit protocol. Penalties and enforcement.",
                 lesson_type=LessonT
+ype.TEXT, duration_min=40, order=6,
+            ),
+            SecurityLesson(
+                id="comp_l7", module_id="comp_001", title="GDPR & Data Privacy",
+                content="General Data Protection Regulation: principles, rights, obligations. Lawful basis for processing: consent, contract, legal obligation, vital interests, public task, legitimate interests. Data subject rights: access, rectification, erasure, portability, restriction, objection. DPO requirements, DPIA, cross-border transfers. Fines: up to 4% global turnover or €20M.",
+                lesson_type=LessonType.TEXT, duration_min=55, order=7,
+            ),
+            SecurityLesson(
+                id="comp_l8", module_id="comp_001", title="SOX, SOC 2 & IT Auditing",
+                content="Sarbanes-Oxley Act: IT controls for financial reporting. SOC 2 Trust Services Criteria: security, availability, confidentiality, processing integrity, privacy. SOC 2 Type 1 vs Type 2. IT audit process: planning, fieldwork, reporting, follow-up. Continuous auditing and monitoring. Audit evidence: design vs operating effectiveness.",
+                lesson_type=LessonType.TEXT, duration_min=45, order=8,
+            ),
+        ],
+        labs=[
+            SecurityLab(
+                id="comp_lab1", module_id="comp_001",
+                title="Risk Assessment Workshop",
+                description="Conduct a comprehensive risk assessment for a fictional organization.",
+                environment="Risk assessment templates, NIST RMF toolkit, spreadsheet software.",
+                tasks=[
+                    "Identify organizational assets and their values",
+                    "Identify threats and vulnerabilities",
+                    "Assess likelihood and impact for each risk",
+                    "Calculate risk scores and create risk heat map",
+                    "Prioritize risks and select treatment strategies",
+                    "Create risk register with owners and timelines",
+                    "Present findings to mock steering committee",
+                ],
+                hints=[
+                    "Use qualitative scales: likelihood 1-5, impact 1-5",
+                    "Consider likelihood × impact for risk score",
+                    "Document risk appetite statement",
+                ],
+                solution="Asset inventory with values; Threat catalog (internal, external, environmental); Risk register with likelihood/impact scores; Heat map with high-priority quadrant; Treatment plan: mitigate critical, transfer acceptable, accept low; Risk owner assigned for each",
+                duration_min=75, points=125,
+            ),
+            SecurityLab(
+                id="comp_lab2", module_id="comp_001",
+                title="ISO 27001 Gap Analysis",
+                description="Perform a gap analysis against ISO 27001 Annex A controls for a sample organization.",
+                environment="ISO 27001:2022 checklist, organizational documentation, spreadsheet.",
+                tasks=[
+                    "Review all 93 Annex A controls (2022 version)",
+                    "Assess implementation status for each control",
+                    "Document evidence of implementation where present",
+                    "Identify gaps and missing controls",
+                    "Create remediation plan with priorities",
+                    "Estimate timeline and resources for closure",
+                    "Generate gap analysis report",
+                ],
+                hints=[
+                    "Group controls by theme: organizational, people, physical, technological",
+                    "Score: Fully Met, Partially Met, Not Met, Not Applicable",
+                    "Prioritize gaps by risk and certification requirements",
+                ],
+                solution="Review 93 controls across 4 themes; Score: 45 Fully Met, 28 Partially Met, 15 Not Met, 5 N/A; Critical gaps: A.5.7 Threat intelligence, A.5.18 Access rights, A.8.1 User endpoint devices; Remediation: 6-month plan with quarterly milestones",
+                duration_min=90, points=175,
+            ),
+            SecurityLab(
+                id="comp_lab3", module_id="comp_001",
+                title="GDPR Data Mapping Exercise",
+                description="Create a comprehensive data mapping and processing register for GDPR compliance.",
+                environment="GDPR templates, data flow diagram tools, organizational data inventory.",
+                tasks=[
+                    "Identify all personal data processing activities",
+                    "Map data flows: collection, use, storage, transfer, deletion",
+                    "Document lawful basis for each processing activity",
+                    "Identify data retention periods",
+                    "Map cross-border data transfers",
+                    "Assess need for DPIA",
+                    "Create Records of Processing Activities (ROPA)",
+                ],
+                hints=[
 # ___END_OF_FILE___
