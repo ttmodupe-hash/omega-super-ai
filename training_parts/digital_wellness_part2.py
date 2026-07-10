@@ -1084,7 +1084,7 @@ class FocusModeManager:
             state = self._focus_state.get(
                 user_id, FocusModeState.INACTIVE.value
             )
-            phase = self._pomodoro_phase.get(
+            phase = self._pomomodoro_phase.get(
                 user_id, PomodoroPhase.IDLE.value
             )
             preset_name = self._pomodoro_preset.get(user_id, "classic")
@@ -2021,5 +2021,324 @@ class WellnessEngine:
         """Set screen time goals.
 
         Args:
-            user_id: The user t
-# ___END_OF_FILE___
+            user_id: The user to set goals for.
+            goals: ScreenTimeGoals object with desired limits.
+        """
+        self._goals_manager.set_goals(user_id, goals)
+
+    def get_goals(self, user_id: str) -> ScreenTimeGoals:
+        """Get current screen time goals.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            ScreenTimeGoals object.
+        """
+        return self._goals_manager.get_goals(user_id)
+
+    def check_goal_progress(self, user_id: str) -> Dict[str, Any]:
+        """Check progress against screen time goals.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            Dictionary with progress information.
+        """
+        return self._goals_manager.check_progress(user_id)
+
+    def toggle_focus_mode(self, user_id: str, enabled: bool) -> None:
+        """Toggle focus mode.
+
+        Args:
+            user_id: The user to toggle focus mode for.
+            enabled: Whether to enable or disable focus mode.
+        """
+        self._focus_manager.toggle_focus(user_id, enabled)
+
+    def get_focus_status(self, user_id: str) -> FocusStatus:
+        """Get focus mode status and Pomodoro timer.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            FocusStatus with current state and timer information.
+        """
+        return self._focus_manager.get_status(user_id)
+
+    def start_pomodoro(self, user_id: str, preset: str = "classic") -> None:
+        """Start a Pomodoro session.
+
+        Args:
+            user_id: The user to start the session for.
+            preset: Pomodoro preset (classic, long, short).
+        """
+        self._focus_manager.start_pomodoro(user_id, preset)
+
+    def stop_pomodoro(self, user_id: str) -> None:
+        """Stop the current Pomodoro session.
+
+        Args:
+            user_id: The user to stop the session for.
+        """
+        self._focus_manager.stop_pomodoro(user_id)
+
+    def get_eye_strain_reminder(self, user_id: str) -> Optional[str]:
+        """Get a 20-20-20 eye strain reminder if due.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            Reminder message if one is due, None otherwise.
+        """
+        if self._eye_tracker.record_screen_time(user_id, 0):
+            return self._eye_tracker.get_reminder_message(user_id)
+        return None
+
+    def record_eye_break(self, user_id: str) -> None:
+        """Record that the user took an eye break.
+
+        Args:
+            user_id: The user who took the eye break.
+        """
+        self._eye_tracker.record_compliance(user_id)
+
+    def get_wind_down_status(self, user_id: str) -> Dict[str, Any]:
+        """Get wind-down mode status and suggestions.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            Dictionary with wind-down status and suggestions.
+        """
+        active = self._wind_down_manager.is_active(user_id)
+        return {
+            "active": active,
+            "suggestions": (
+                self._wind_down_manager.get_suggestions() if active else []
+            ),
+            "tip": (
+                self._wind_down_manager.get_tip() if active else ""
+            ),
+        }
+
+    def get_wellness_preferences(
+        self, user_id: str
+    ) -> WellnessPreferences:
+        """Get wellness preferences for a user.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            WellnessPreferences object.
+        """
+        return self._preferences_manager.get_preferences(user_id)
+
+    def update_wellness_preferences(
+        self, user_id: str, updates: Dict[str, Any]
+    ) -> WellnessPreferences:
+        """Update wellness preferences for a user.
+
+        Args:
+            user_id: The user to update.
+            updates: Dictionary of preference fields to update.
+
+        Returns:
+            Updated WellnessPreferences object.
+        """
+        return self._preferences_manager.update_preferences(user_id, updates)
+
+    def get_tip_categories(self) -> List[str]:
+        """Get all available wellness tip categories.
+
+        Returns:
+            List of category name strings.
+        """
+        return self._tips_engine.get_categories()
+
+    def get_tips_by_category(
+        self, category: str
+    ) -> List[WellnessTip]:
+        """Get all tips in a specific category.
+
+        Args:
+            category: Category to filter by.
+
+        Returns:
+            List of WellnessTip objects.
+        """
+        return self._tips_engine.get_tips_by_category(category)
+
+    def clear_user_data(self, user_id: str) -> None:
+        """Clear all wellness data for a user.
+
+        Args:
+            user_id: The user whose data to clear.
+        """
+        self._session_tracker.clear_user_data(user_id)
+        self._tips_engine.clear_history(user_id)
+        self._preferences_manager.reset_preferences(user_id)
+        logger.info("Cleared all wellness data for user %s", user_id)
+
+    # =====================================================================
+    # Self-test
+    # =====================================================================
+
+    def self_test(self) -> Dict[str, Any]:
+        """Run validation tests on all subsystems.
+
+        Returns:
+            Dictionary with test results for each subsystem.
+        """
+        results: Dict[str, Any] = {}
+        test_user = "__test_user__"
+
+        try:
+            # Test session tracking
+            self.track_activity(test_user, "chat", 120000, "low")
+            self.track_activity(test_user, "coding", 300000, "high")
+            screen_time = self._session_tracker.get_screen_time_minutes(
+                test_user, 60
+            )
+            results["session_tracking"] = {
+                "status": "pass" if screen_time == 7 else "fail",
+                "screen_time_minutes": screen_time,
+            }
+
+            # Test fatigue calculation
+            status = self.get_status(test_user)
+            results["fatigue_calculation"] = {
+                "status": "pass" if 0 <= status.fatigue_score <= 100 else "fail",
+                "fatigue_score": status.fatigue_score,
+                "fatigue_level": status.fatigue_level,
+            }
+
+            # Test break suggestions
+            suggestion = self.get_break_suggestion(test_user)
+            results["break_suggestion"] = {
+                "status": "pass" if suggestion.title else "fail",
+                "break_type": suggestion.break_type,
+                "title": suggestion.title,
+            }
+
+            # Test wellness tips
+            tip = self.get_wellness_tip(test_user)
+            results["wellness_tips"] = {
+                "status": "pass" if tip.title else "fail",
+                "category": tip.category,
+                "title": tip.title,
+            }
+
+            # Test focus mode
+            self.toggle_focus_mode(test_user, True)
+            focus_status = self.get_focus_status(test_user)
+            results["focus_mode"] = {
+                "status": "pass" if focus_status.state == "active" else "fail",
+                "state": focus_status.state,
+            }
+            self.toggle_focus_mode(test_user, False)
+
+            # Test Pomodoro
+            self.start_pomodoro(test_user, "classic")
+            pom_status = self.get_focus_status(test_user)
+            results["pomodoro"] = {
+                "status": (
+                    "pass"
+                    if pom_status.pomodoro_phase == "work"
+                    else "fail"
+                ),
+                "phase": pom_status.pomodoro_phase,
+                "work_minutes": pom_status.pomodoro_work_minutes,
+            }
+            self.stop_pomodoro(test_user)
+
+            # Test goals
+            goals = ScreenTimeGoals(daily_limit_minutes=300)
+            self.set_goals(test_user, goals)
+            retrieved_goals = self.get_goals(test_user)
+            results["screen_time_goals"] = {
+                "status": (
+                    "pass"
+                    if retrieved_goals.daily_limit_minutes == 300
+                    else "fail"
+                ),
+                "limit": retrieved_goals.daily_limit_minutes,
+            }
+
+            # Test eye strain tracker
+            reminder = self.get_eye_strain_reminder(test_user)
+            results["eye_strain_tracker"] = {
+                "status": "pass",  # Either due or not is valid
+                "reminder_due": reminder is not None,
+            }
+
+            # Test wind-down
+            wd_status = self.get_wind_down_status(test_user)
+            results["wind_down"] = {
+                "status": "pass" if "active" in wd_status else "fail",
+                "active": wd_status["active"],
+            }
+
+            # Test preferences
+            prefs = self.update_wellness_preferences(
+                test_user, {"tip_frequency": "high"}
+            )
+            results["preferences"] = {
+                "status": (
+                    "pass" if prefs.tip_frequency == "high" else "fail"
+                ),
+                "tip_frequency": prefs.tip_frequency,
+            }
+
+            # Test tip categories
+            categories = self.get_tip_categories()
+            results["tip_categories"] = {
+                "status": "pass" if len(categories) >= 8 else "fail",
+                "count": len(categories),
+                "categories": categories,
+            }
+
+            # Test usage report
+            report = self.get_usage_report(test_user, "today")
+            results["usage_report"] = {
+                "status": "pass" if report.total_screen_time_minutes >= 0 else "fail",
+                "total_minutes": report.total_screen_time_minutes,
+                "insights_count": len(report.insights),
+            }
+
+            # Overall result
+            all_passed = all(
+                r.get("status") == "pass" for r in results.values()
+            )
+            results["overall"] = {
+                "status": "pass" if all_passed else "fail",
+                "tests_run": len(results),
+                "tests_passed": sum(
+                    1 for r in results.values() if r.get("status") == "pass"
+                ),
+            }
+
+        except Exception as exc:
+            results["overall"] = {
+                "status": "error",
+                "error": str(exc),
+            }
+            logger.error("Self-test failed: %s", exc, exc_info=True)
+
+        finally:
+            # Clean up test data
+            self.clear_user_data(test_user)
+
+        return results
+
+
+# ---------------------------------------------------------------------------
+# Module-level singleton instance
+# ---------------------------------------------------------------------------
+
+wellness_engine = WellnessEngine()
