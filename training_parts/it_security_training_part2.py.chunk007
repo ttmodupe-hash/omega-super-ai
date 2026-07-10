@@ -1,0 +1,26 @@
+          ["Cold start", "Overprivileged functions", "Scaling limits", "Language restrictions"], 1,
+                    "Overprivileged functions with broad IAM permissions can be exploited for lateral movement.", DifficultyLevel.INTERMEDIATE),
+                QuizQuestion("clq10", "What is Falco used for in Kubernetes?",
+                    ["Container image building", "Runtime security monitoring", "Network routing", "Load balancing"], 1,
+                    "Falco detects anomalous activity at runtime in containers and Kubernetes.", DifficultyLevel.INTERMEDIATE),
+                QuizQuestion("clq11", "Which encryption type does AWS KMS provide for S3?",
+                    ["Client-side only", "Server-side encryption with customer-managed keys", "No encryption", "Network encryption only"], 1,
+                    "SSE-KMS uses AWS KMS customer-managed keys for server-side S3 encryption.", DifficultyLevel.INTERMEDIATE),
+                QuizQuestion("clq12", "What is the purpose of OPA Gatekeeper in Kubernetes?",
+                    ["Load balancing", "Admission control and policy enforcement", "Container networking", "Log aggregation"], 1,
+                    "OPA Gatekeeper enforces policies at the Kubernetes admission controller level.", DifficultyLevel.ADVANCED),
+                QuizQuestion("clq13", "What is cloud forensics primarily challenged by?",
+                    ["Slow network speeds", "Ephemeral resources and multi-tenancy", "Lack of data", "Too many tools"], 1,
+                    "Cloud forensics faces challenges from ephemeral containers, multi-tenancy, and jurisdictional issues.", DifficultyLevel.ADVANCED),
+                QuizQuestion("clq14", "What does 'shift-left security' mean in cloud DevSecOps?",
+                    ["Move security to the left side of the data center", "Integrate security early in the development lifecycle", "Use left-handed security tools", "Reduce security checks"], 1,
+                    "Shift-left means integrating security testing early in the CI/CD pipeline.", DifficultyLevel.INTERMEDIATE),
+                QuizQuestion("clq15", "Which Azure service provides cloud-native SIEM and SOAR?",
+                    ["Azure AD", "Azure Sentinel", "Azure DevOps", "Azure Storage"], 1,
+                    "Azure Sentinel is Microsoft's cloud-native SIEM and SOAR solution.", DifficultyLevel.BEGINNER),
+            ],
+        ),
+    )
+
+
+    # ========================================================================
