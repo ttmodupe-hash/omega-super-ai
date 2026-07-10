@@ -604,7 +604,9 @@ class FatigueCalculator:
 class BreakEngine:
     """Generates personalized break suggestions based on user state.
 
-    The BreakEngine anal
+    The BreakEngine analyzes the user's current fatigue score, recent activity
+    patterns, and break history to recommend the most appropriate type of
+    break with a gentle, positive message.
     """
 
     MICRO_BREAK_ACTIVITIES: ClassVar[List[Dict[str, str]]] = [
@@ -679,5 +681,179 @@ class BreakEngine:
         {
             "title": "Look at Nature",
             "description": "Find a window and look at natural scenery for a few minutes. If no window is available, look at images of nature.",
-            "benefit": "Viewing nature reduces mental fatigue and restores directed attention capacit
+            "benefit": "Viewing nature reduces mental fatigue and restores directed attention capacity, a phenomenon known as Attention Restoration Theory.",
+        },
+        {
+            "title": "Quick Tidy",
+            "description": "Spend a few minutes tidying your immediate workspace. Clear away clutter, organize papers, and wipe down your desk.",
+            "benefit": "A clean workspace reduces cognitive overload and creates a sense of calm and control.",
+        },
+        {
+            "title": "Snack Smart",
+            "description": "Have a healthy snack like a handful of nuts, a piece of fruit, or some dark chocolate. Eat mindfully, savoring each bite.",
+            "benefit": "Nutrient-dense snacks stabilize blood sugar and provide sustained energy without the crash of sugary options.",
+        },
+        {
+            "title": "Connect with Someone",
+            "description": "Send a quick message, make a brief call, or have a short chat with a colleague, friend, or family member.",
+            "benefit": "Social connection releases oxytocin, which reduces stress and boosts mood and motivation.",
+        },
+        {
+            "title": "Eye Exercise Routine",
+            "description": "Practice the 20-20-20 rule: look at something 20 feet away for 20 seconds. Then do 10 slow eye rolls in each direction.",
+            "benefit": "These exercises relax the ciliary muscles responsible for focusing and reduce eye strain significantly.",
+        },
+        {
+            "title": "Listen to Music",
+            "description": "Put on a favorite song and listen actively. If you feel like it, move or dance to the music.",
+            "benefit": "Music activates multiple brain regions associated with pleasure and can reduce stress hormones within minutes.",
+        },
+        {
+            "title": "Gratitude Pause",
+            "description": "Write down or mentally list three things you are grateful for right now. They can be big or small.",
+            "benefit": "Gratitude practice has been shown to increase happiness, reduce stress, and improve overall well-being.",
+        },
+    ]
+
+    LONG_BREAK_ACTIVITIES: ClassVar[List[Dict[str, str]]] = [
+        {
+            "title": "Go for a Real Walk",
+            "description": "Leave your workspace and go for a 15-30 minute walk outside. Leave your phone behind or in your pocket.",
+            "benefit": "Walking in nature reduces cortisol, improves mood, and provides cardiovascular benefits. It also gives your brain space for creative insights.",
+        },
+        {
+            "title": "Have a Proper Meal",
+            "description": "Step away from all screens and enjoy a nutritious meal. Eat slowly, savoring each bite without distractions.",
+            "benefit": "Mindful eating improves digestion, nutrient absorption, and satisfaction. The break from screens allows your brain to rest.",
+        },
+        {
+            "title": "Power Nap",
+            "description": "Lie down in a quiet, dark space and set an alarm for 10-20 minutes. Close your eyes and relax.",
+            "benefit": "NASA research found that a 10-20 minute nap improves alertness and performance by 34% without causing grogginess.",
+        },
+        {
+            "title": "Physical Exercise",
+            "description": "Do a workout: yoga, stretching, bodyweight exercises, or whatever movement you enjoy. Even 15 minutes makes a difference.",
+            "benefit": "Exercise releases endorphins, reduces stress, and improves cognitive function. The benefits last for hours afterward.",
+        },
+        {
+            "title": "Meditation Session",
+            "description": "Sit comfortably, close your eyes, and practice meditation for 15-20 minutes. Focus on your breath or use a guided meditation app.",
+            "benefit": "Regular meditation reduces anxiety, improves focus, and actually changes brain structure in positive ways (neuroplasticity).",
+        },
+        {
+            "title": "Social Connection",
+            "description": "Meet a friend for coffee, have a meal with family, or call someone you care about for a real conversation.",
+            "benefit": "Meaningful social interaction is one of the strongest predictors of happiness and longevity.",
+        },
+        {
+            "title": "Creative Activity",
+            "description": "Engage in a creative hobby: drawing, playing music, writing, crafting, cooking, or anything that lets you express yourself.",
+            "benefit": "Creative activities engage different brain networks than analytical work, providing genuine cognitive rest and renewal.",
+        },
+        {
+            "title": "Take a Shower",
+            "description": "A warm shower relaxes tense muscles and provides a mental reset. Many people have their best ideas in the shower.",
+            "benefit": "The warm water increases blood flow, relaxes muscles, and the sensory deprivation allows your default mode network to generate creative insights.",
+        },
+    ]
+
+    SESSION_END_ACTIVITIES: ClassVar[List[Dict[str, str]]] = [
+        {
+            "title": "Wind-Down Routine",
+            "description": "Begin your evening wind-down: dim the lights, put away screens, and engage in calming activities like reading or gentle stretching.",
+            "benefit": "A consistent wind-down routine signals to your brain that it is time to sleep, improving both sleep quality and how quickly you fall asleep.",
+        },
+        {
+            "title": "Gentle Evening Stretch",
+            "description": "Do a series of gentle stretches focusing on areas that feel tense. Move slowly and breathe deeply into each stretch.",
+            "benefit": "Gentle stretching in the evening releases physical tension accumulated during the day and promotes relaxation.",
+        },
+        {
+            "title": "Journal Reflection",
+            "description": "Spend 10 minutes writing about your day: what went well, what you learned, and what you are looking forward to tomorrow.",
+            "benefit": "Evening journaling processes the day's experiences, reduces rumination, and creates mental closure for better sleep.",
+        },
+        {
+            "title": "Reading Time",
+            "description": "Read a physical book or e-ink device for pleasure. Choose something light and enjoyable, not work-related.",
+            "benefit": "Reading fiction or light non-fiction reduces stress by 68% (more than listening to music or taking a walk) and prepares the mind for sleep.",
+        },
+    ]
+
+    GENTLE_MESSAGES: ClassVar[Dict[str, List[str]]] = {
+        BreakType.MICRO.value: [
+            "A tiny reset for a big refresh. Take 20 seconds just for you.",
+            "Your eyes will thank you for this quick pause.",
+            "A little stretch goes a long way. Care to try?",
+            "Quick pause, big difference. You have earned 20 seconds.",
+        ],
+        BreakType.SHORT.value: [
+            "You have been doing amazing work. A short break will help you keep that momentum.",
+            "Your brain has been working hard. It deserves a few minutes of rest.",
+            "A quick break now means better focus when you return. Want to give it a try?",
+            "Step away for just a few minutes. You will come back even stronger.",
+        ],
+        BreakType.LONG.value: [
+            "You have put in serious work today. Your mind and body will thank you for a proper break.",
+            "Rest is not a reward for finishing work; it is part of the process. Time to recharge.",
+            "A longer break now will make the rest of your day more productive and enjoyable.",
+            "You have earned this. Step away, recharge, and return when you are ready.",
+        ],
+        BreakType.SESSION_END.value: [
+            "The day is winding down. Your well-being is the top priority now.",
+            "Rest is productive too. Time to let your mind and body recover.",
+            "You have done enough for today. Let yourself relax and prepare for restful sleep.",
+        ],
+    }
+
+    @classmethod
+    def get_suggestion(
+        cls,
+        fatigue_score: int,
+        current_session_minutes: int,
+        last_break_minutes_ago: int,
+        wind_down_active: bool = False,
+    ) -> BreakSuggestion:
+        """Generate a personalized break suggestion.
+
+        Args:
+            fatigue_score: Current fatigue score (0-100).
+            current_session_minutes: Current session length in minutes.
+            last_break_minutes_ago: Minutes since last break.
+            wind_down_active: Whether wind-down mode is active.
+
+        Returns:
+            A BreakSuggestion tailored to the user's current state.
+        """
+        if wind_down_active:
+            break_type = BreakType.SESSION_END.value
+            activity = random.choice(cls.SESSION_END_ACTIVITIES)
+            duration = random.choice([300, 600, 900])
+        elif fatigue_score >= Constants.FATIGUE_HIGH:
+            break_type = BreakType.LONG.value
+            activity = random.choice(cls.LONG_BREAK_ACTIVITIES)
+            duration = random.choice([600, 900, 1200, 1800])
+        elif fatigue_score >= Constants.FATIGUE_MODERATE:
+            break_type = BreakType.SHORT.value
+            activity = random.choice(cls.SHORT_BREAK_ACTIVITIES)
+            duration = random.choice([180, 240, 300, 360])
+        elif current_session_minutes >= Constants.MICRO_BREAK_INTERVAL:
+            break_type = BreakType.MICRO.value
+            activity = random.choice(cls.MICRO_BREAK_ACTIVITIES)
+            duration = random.choice([20, 30])
+        else:
+            break_type = BreakType.MICRO.value
+            activity = random.choice(cls.MICRO_BREAK_ACTIVITIES)
+            duration = 20
+
+        message = random.choice(
+            cls.GENTLE_MESSAGES.get(break_type, cls.GENTLE_MESSAGES[BreakType.MICRO.value])
+        )
+
+        return BreakSuggestion(
+            break_type=break_type,
+            duration_seconds=duration,
+            title=activity["title"],
+            description=activity["description"]
 # ___END_OF_FILE___
