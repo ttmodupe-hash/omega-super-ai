@@ -159,14 +159,12 @@ async def api_upload(file: UploadFile = File(...)):
         file_path = UPLOAD_DIR / file.filename
         with open(file_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
-        # Try to process with file processor if available
         try:
             from backend.files import FileProcessor
             processor = FileProcessor()
             result = processor.process(str(file_path))
             return JSONResponse({"status": "processed", "result": result, "file": file.filename})
         except ImportError:
-            # File processor not available, return upload confirmation
             return JSONResponse({
                 "status": "uploaded",
                 "message": "File uploaded successfully. File processing module not available.",
@@ -191,7 +189,6 @@ async def api_generate_image(request: Request):
         prompt = data.get("prompt", "")
         if not prompt:
             raise HTTPException(status_code=422, detail="Prompt is required")
-        # Try OpenAI DALL-E if available
         try:
             import openai
             client = openai.AsyncOpenAI()
@@ -231,14 +228,12 @@ async def api_search(request: Request):
         query = data.get("query", "")
         if not query:
             raise HTTPException(status_code=422, detail="Query is required")
-        # Try search engine module if available
         try:
             from backend.search import SearchEngine
             engine = SearchEngine()
             results = engine.search(query)
             return JSONResponse({"status": "success", "query": query, "results": results})
         except ImportError:
-            # Fallback: return helpful message
             return JSONResponse({
                 "status": "fallback",
                 "query": query,
@@ -268,7 +263,6 @@ async def api_memory_save(request: Request):
             memory_id = memory.add(text, data.get("metadata", {}))
             return JSONResponse({"status": "saved", "id": memory_id})
         except ImportError:
-            # Memory module not available, save to simple JSON file
             mem_file = UPLOAD_DIR / "memory_fallback.json"
             memories = []
             if mem_file.exists():
@@ -303,7 +297,6 @@ async def api_memory_search(request: Request):
             results = memory.query(query, data.get("limit", 5))
             return JSONResponse({"status": "success", "query": query, "results": results})
         except ImportError:
-            # Fallback: search in JSON file
             mem_file = UPLOAD_DIR / "memory_fallback.json"
             if not mem_file.exists():
                 return JSONResponse({"status": "fallback", "query": query, "results": []})
@@ -349,81 +342,87 @@ async def serve_web_file(filename: str):
 # endpoints using @app decorators.
 
 try:
-    import backend.v14_endpoints   # SaaS: subscriptions, developer, website, dashboard
+    import backend.v14_endpoints
 except Exception as _e:
     logger.warning("v14 endpoints not loaded: %s", _e)
 
 try:
-    import backend.v15_endpoints   # ASI: cognitive, education, voice, safety, physics
+    import backend.v15_endpoints
 except Exception as _e:
     logger.warning("v15 endpoints not loaded: %s", _e)
 
 try:
-    import backend.v16_endpoints   # Production: github, notifications, data_portability
+    import backend.v16_endpoints
 except Exception as _e:
     logger.warning("v16 endpoints not loaded: %s", _e)
 
 try:
-    import backend.v17_endpoints   # Captainship & Companionship
+    import backend.v17_endpoints
 except Exception as _e:
     logger.warning("v17 endpoints not loaded: %s", _e)
 
 try:
-    import backend.v18_endpoints   # Automotive & Writing Assistant
+    import backend.v18_endpoints
 except Exception as _e:
     logger.warning("v18 endpoints not loaded: %s", _e)
 
 try:
-    import backend.v19_endpoints   # Law Studies & Legal AI Assistant
+    import backend.v19_endpoints
 except Exception as _e:
     logger.warning("v19 endpoints not loaded: %s", _e)
 
 try:
-    import backend.v20_endpoints   # Africa-First: Agriculture, Health, Education, Business, Offline
+    import backend.v20_endpoints
 except Exception as _e:
     logger.warning("v20 endpoints not loaded: %s", _e)
 
 try:
-    import backend.v21_endpoints   # v21: Jobs & Skills, WhatsApp Bot, Government Services
+    import backend.v21_endpoints
 except Exception as _e:
     logger.warning("v21 endpoints not loaded: %s", _e)
 
 try:
-    import backend.workspace_collab   # Workspace Collaboration: CRUD, messaging, files, video, presence
+    import backend.workspace_collab
 except Exception as _e:
     logger.warning("Workspace collaboration endpoints not loaded: %s", _e)
 
 try:
-    import backend.workspace_agent    # Workspace AI Agent Worker: @ai mentions, context-aware responses
+    import backend.workspace_agent
 except Exception as _e:
     logger.warning("Workspace AI agent not loaded: %s", _e)
 
 try:
-    import backend.v23_endpoints      # v23: Network & AI Engineering Training Platform
+    import backend.v23_endpoints
 except Exception as _e:
     logger.warning("v23 NetAI training endpoints not loaded: %s", _e)
 
 try:
-    import backend.v24_endpoints      # v24: Global Knowledge Academy, PM Training, Digital Workspace
+    import backend.v24_endpoints
 except Exception as _e:
     logger.warning("v24 endpoints not loaded: %s", _e)
 
 
 try:
-    import backend.v24_wellness_endpoints   # v24.3: Digital Wellness - fatigue prevention, Pomodoro, break suggestions
+    import backend.v24_wellness_endpoints
 except Exception as _e:
     logger.warning("v24 wellness endpoints not loaded: %s", _e)
 
 try:
-    import backend.v24_branding_endpoints   # v24.3: Limitless Telecoms branding API
+    import backend.v24_branding_endpoints
 except Exception as _e:
     logger.warning("v24 branding endpoints not loaded: %s", _e)
 
 
 try:
-    import backend.v24_security_endpoints  # v24.4: IT Security Training Academy - 15 courses, CTF challenges
+    import backend.v24_security_endpoints
 except Exception as _e:
     logger.warning("v24 security endpoints not loaded: %s", _e)
+
+
+try:
+    import backend.v24_autonomous_endpoints  # v24.5: Autonomous Multi-Agent System
+except Exception as _e:
+    logger.warning("v24 autonomous endpoints not loaded: %s", _e)
 
 # ═══════════════════════════════════════════════════════════════════
 # Exception Handlers & Health Monitor
@@ -442,7 +441,6 @@ try:
     from backend.health_monitor import register_health_endpoints, ModuleHealthChecker
     register_health_endpoints(app)
     logger.info("Health monitoring endpoints registered")
-    # Print startup banner with module status
     try:
         from backend.health_monitor import print_startup_banner
         checker = ModuleHealthChecker()
@@ -457,6 +455,11 @@ try:
             "backend.digital_wellness",
             "backend.health_monitor",
             "backend.v24_security_endpoints",
+            "backend.autonomous_system",
+            "backend.alert_system",
+            "backend.sandbox_validator",
+            "backend.research_engine",
+            "backend.dead_mans_switch",
         ])
         print_startup_banner(status)
     except Exception as banner_err:
