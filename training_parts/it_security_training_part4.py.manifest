@@ -1,0 +1,24 @@
+# it_security_training_part4.py - Chunk Manifest
+# Luqi AI v24.4.0 — Part 4 (92KB, Courses 14-15 + utilities)
+# Total original size: 91,504 bytes
+# Split into 12 chunks of ~8,000 bytes each
+#
+# CHUNK MAP:
+#   chunk000  8000 bytes  - Course 14: DevSecOps (lessons + labs start)
+#   chunk001  8000 bytes  - Course 14: DevSecOps (labs continue + quiz)
+#   chunk002  8000 bytes  - Course 14: DevSecOps (quiz end) + Course 15: Threat Intel start
+#   chunk003  8000 bytes  - Course 15: Threat Intel (lessons + labs)
+#   chunk004  8000 bytes  - Course 15: Threat Intel (labs end + quiz)
+#   chunk005  8000 bytes  - Course 15: Threat Intel (quiz end) + Utility functions start
+#   chunk006  8000 bytes  - Utility functions: getters, search, learning paths
+#   chunk007  8000 bytes  - Utility functions: progress, study guides, reports
+#   chunk008  8000 bytes  - Utility functions: dashboard, certs, study plans
+#   chunk009  8000 bytes  - Utility functions: CSV export, spaced repetition
+#   chunk010  8000 bytes  - Utility functions: Pomodoro, gamification, achievements
+#   chunk011  3504 bytes  - Final utility functions + class close
+#
+# RECONSTRUCTION:
+#   cat it_security_training_part4.py.chunk{000..011} > it_security_training_part4.py
+#
+# CHUNKS: 12
+# TOTAL SIZE: 91,504 bytes
