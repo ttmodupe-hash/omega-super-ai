@@ -855,5 +855,301 @@ class BreakEngine:
             break_type=break_type,
             duration_seconds=duration,
             title=activity["title"],
-            description=activity["description"]
+            description=activity["description"],
+            benefit=activity["benefit"],
+            message=message,
+            fatigue_score=fatigue_score,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Eye Strain Tracker (20-20-20 Rule)
+# ---------------------------------------------------------------------------
+
+
+class EyeStrainTracker:
+    """Tracks compliance with the 20-20-20 rule for eye strain prevention.
+
+    Every 20 minutes of screen time, users should look at something 20 feet
+    away for 20 seconds. This class tracks reminders and compliance.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the eye strain tracker."""
+        self._lock = threading.Lock()
+        self._last_eye_break: Dict[str, datetime] = {}
+        self._compliance_streak: Dict[str, int] = defaultdict(int)
+        self._total_reminders: Dict[str, int] = defaultdict(int)
+        self._compliance_count: Dict[str, int] = defaultdict(int)
+
+    def record_screen_time(
+        self, user_id: str, duration_ms: int
+    ) -> bool:
+        """Record screen time and check if an eye break is due.
+
+        Args:
+            user_id: The user identifier.
+            duration_ms: Screen time duration in milliseconds.
+
+        Returns:
+            True if an eye break reminder should be shown.
+        """
+        with self._lock:
+            now = datetime.utcnow()
+            last = self._last_eye_break.get(user_id)
+
+            if last is None:
+                self._last_eye_break[user_id] = now
+                return False
+
+            minutes_since = (now - last).total_seconds() / 60.0
+
+            if minutes_since >= Constants.EYE_BREAK_INTERVAL_MINUTES:
+                self._total_reminders[user_id] += 1
+                return True
+
+            return False
+
+    def record_compliance(self, user_id: str) -> None:
+        """Record that the user took an eye break.
+
+        Args:
+            user_id: The user who took the break.
+        """
+        with self._lock:
+            self._last_eye_break[user_id] = datetime.utcnow()
+            self._compliance_streak[user_id] += 1
+            self._compliance_count[user_id] += 1
+
+    def get_compliance_rate(self, user_id: str) -> float:
+        """Get the eye break compliance rate.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            Float between 0.0 and 1.0.
+        """
+        with self._lock:
+            total = max(self._total_reminders.get(user_id, 0), 1)
+            compliant = self._compliance_count.get(user_id, 0)
+            return min(compliant / total, 1.0)
+
+    def get_streak(self, user_id: str) -> int:
+        """Get the current eye break compliance streak.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            Number of consecutive compliant breaks.
+        """
+        with self._lock:
+            return self._compliance_streak.get(user_id, 0)
+
+    def reset_streak(self, user_id: str) -> None:
+        """Reset the compliance streak (called when user misses a break).
+
+        Args:
+            user_id: The user whose streak to reset.
+        """
+        with self._lock:
+            self._compliance_streak[user_id] = 0
+
+    def get_reminder_message(self, user_id: str) -> str:
+        """Get a gentle reminder message for the 20-20-20 rule.
+
+        Args:
+            user_id: The user to address.
+
+        Returns:
+            Gentle, encouraging reminder message.
+        """
+        streak = self.get_streak(user_id)
+        if streak >= 5:
+            return (
+                f"Amazing! You have a {streak}-break streak. "
+                "Time for another 20-20-20: look 20 feet away for 20 seconds!"
+            )
+        elif streak >= 3:
+            return (
+                f"Great job! {streak} breaks in a row. "
+                "Look at something 20 feet away for 20 seconds."
+            )
+        else:
+            return (
+                "Friendly reminder: look at something about 20 feet away "
+                "for 20 seconds. Your eyes will thank you!"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Focus Mode Manager
+# ---------------------------------------------------------------------------
+
+
+class FocusModeManager:
+    """Manages focus mode and Pomodoro timer functionality.
+
+    Focus mode provides a distraction-free environment with integrated
+    Pomodoro timing. Users can select from preset work/break intervals
+    or customize their own.
+    """
+
+    PRESETS: ClassVar[Dict[str, Tuple[int, int]]] = {
+        "classic": Constants.POMODORO_CLASSIC,
+        "long": Constants.POMODORO_LONG,
+        "short": Constants.POMODORO_SHORT,
+    }
+
+    def __init__(self) -> None:
+        """Initialize the focus mode manager."""
+        self._lock = threading.Lock()
+        self._focus_state: Dict[str, str] = {}
+        self._pomodoro_phase: Dict[str, str] = {}
+        self._pomodoro_preset: Dict[str, str] = {}
+        self._phase_start_time: Dict[str, datetime] = {}
+        self._sessions_completed: Dict[str, int] = defaultdict(int)
+        self._daily_goal: Dict[str, int] = defaultdict(lambda: 8)
+
+    def toggle_focus(self, user_id: str, enabled: bool) -> None:
+        """Toggle focus mode for a user.
+
+        Args:
+            user_id: The user to toggle focus mode for.
+            enabled: Whether to enable or disable focus mode.
+        """
+        with self._lock:
+            if enabled:
+                self._focus_state[user_id] = FocusModeState.ACTIVE.value
+                self._pomodoro_phase[user_id] = PomodoroPhase.IDLE.value
+                self._phase_start_time[user_id] = datetime.utcnow()
+            else:
+                self._focus_state[user_id] = FocusModeState.INACTIVE.value
+                self._pomodoro_phase[user_id] = PomodoroPhase.IDLE.value
+
+        logger.info(
+            "Focus mode %s for user %s",
+            "enabled" if enabled else "disabled",
+            user_id,
+        )
+
+    def start_pomodoro(
+        self, user_id: str, preset: str = "classic"
+    ) -> None:
+        """Start a Pomodoro session.
+
+        Args:
+            user_id: The user to start the session for.
+            preset: Pomodoro preset name (classic, long, short).
+
+        Raises:
+            ValueError: If the preset is not recognized.
+        """
+        if preset not in self.PRESETS:
+            raise ValueError(
+                f"Unknown preset: {preset}. Available: {list(self.PRESETS.keys())}"
+            )
+
+        with self._lock:
+            self._focus_state[user_id] = FocusModeState.ACTIVE.value
+            self._pomodoro_phase[user_id] = PomodoroPhase.WORK.value
+            self._pomodoro_preset[user_id] = preset
+            self._phase_start_time[user_id] = datetime.utcnow()
+
+        logger.info(
+            "Pomodoro started for user %s with preset %s", user_id, preset
+        )
+
+    def stop_pomodoro(self, user_id: str) -> None:
+        """Stop the current Pomodoro session.
+
+        Args:
+            user_id: The user to stop the session for.
+        """
+        with self._lock:
+            self._pomodoro_phase[user_id] = PomodoroPhase.IDLE.value
+            self._focus_state[user_id] = FocusModeState.INACTIVE.value
+
+    def get_status(self, user_id: str) -> FocusStatus:
+        """Get the current focus mode status.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            FocusStatus with current state and timer information.
+        """
+        with self._lock:
+            state = self._focus_state.get(
+                user_id, FocusModeState.INACTIVE.value
+            )
+            phase = self._pomodoro_phase.get(
+                user_id, PomodoroPhase.IDLE.value
+            )
+            preset_name = self._pomodoro_preset.get(user_id, "classic")
+            work_min, break_min = self.PRESETS.get(
+                preset_name, Constants.POMODORO_CLASSIC
+            )
+            start_time = self._phase_start_time.get(user_id)
+            sessions = self._sessions_completed.get(user_id, 0)
+            goal = self._daily_goal.get(user_id, 8)
+
+        if start_time is not None and phase != PomodoroPhase.IDLE.value:
+            elapsed = int(
+                (datetime.utcnow() - start_time).total_seconds()
+            )
+            if phase == PomodoroPhase.WORK.value:
+                remaining = max(work_min * 60 - elapsed, 0)
+            else:
+                remaining = max(break_min * 60 - elapsed, 0)
+        else:
+            elapsed = 0
+            remaining = work_min * 60 if phase == PomodoroPhase.IDLE.value else 0
+
+        return FocusStatus(
+            state=state,
+            pomodoro_phase=phase,
+            pomodoro_work_minutes=work_min,
+            pomodoro_break_minutes=break_min,
+            elapsed_seconds=elapsed,
+            remaining_seconds=remaining,
+            sessions_completed=sessions,
+            daily_goal=goal,
+        )
+
+    def set_daily_goal(self, user_id: str, goal: int) -> None:
+        """Set the daily Pomodoro session goal.
+
+        Args:
+            user_id: The user to set the goal for.
+            goal: Number of sessions per day.
+
+        Raises:
+            ValueError: If goal is not positive.
+        """
+        if goal < 1:
+            raise ValueError("Daily goal must be at least 1")
+        with self._lock:
+            self._daily_goal[user_id] = goal
+
+    def complete_session(self, user_id: str) -> None:
+        """Record a completed Pomodoro session.
+
+        Args:
+            user_id: The user who completed a session.
+        """
+        with self._lock:
+            self._sessions_completed[user_id] += 1
+            # Switch to break phase
+            self._pomodoro_phase[user_id] = PomodoroPhase.BREAK.value
+            self._phase_start_time[user_id] = datetime.utcnow()
+
+    def complete_break(self, user_id: str) -> None:
+        """Record a completed break and return to work.
+
+        Args:
+            user_id: The user who completed a break.
+        """
+        wit
 # ___END_OF_FILE___
