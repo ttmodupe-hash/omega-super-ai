@@ -1,0 +1,21 @@
+# Digital Wellness Part 2 — Chunk Manifest
+# Luqi AI v24.4.0
+# Original file: digital_wellness_part2.py
+# Total size: 85,720 characters
+# Chunk size: 8,000 characters
+# Chunks: 11 (000-010)
+
+FILE: training_parts/digital_wellness_part2.py.chunk000 SIZE: 8000
+FILE: training_parts/digital_wellness_part2.py.chunk001 SIZE: 8000
+FILE: training_parts/digital_wellness_part2.py.chunk002 SIZE: 8000
+FILE: training_parts/digital_wellness_part2.py.chunk003 SIZE: 8000
+FILE: training_parts/digital_wellness_part2.py.chunk004 SIZE: 8000
+FILE: training_parts/digital_wellness_part2.py.chunk005 SIZE: 7997
+FILE: training_parts/digital_wellness_part2.py.chunk006 SIZE: 8000
+FILE: training_parts/digital_wellness_part2.py.chunk007 SIZE: 8000
+FILE: training_parts/digital_wellness_part2.py.chunk008 SIZE: 7999
+FILE: training_parts/digital_wellness_part2.py.chunk009 SIZE: 8000
+FILE: training_parts/digital_wellness_part2.py.chunk010 SIZE: 5720
+
+# Reassembly instruction:
+# cat training_parts/digital_wellness_part2.py.chunk{000..010} > digital_wellness_part2.py
