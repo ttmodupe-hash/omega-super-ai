@@ -307,5 +307,302 @@ class SessionTracker:
         if not sessions:
             return 0.0
 
-        avg_ms = statistics.mean
+        avg_ms = statistics.mean(sessions)
+        return avg_ms / 60000.0
+
+    def get_longest_session_minutes(
+        self,
+        user_id: str,
+        window_minutes: int = 1440,
+    ) -> int:
+        """Get the longest single session in minutes.
+
+        Args:
+            user_id: The user to query.
+            window_minutes: Lookback window in minutes.
+
+        Returns:
+            Longest session length in minutes.
+        """
+        activities = self.get_activities(user_id, window_minutes)
+        if not activities:
+            return 0
+
+        longest_ms = 0
+        current_session_ms = 0
+        prev_time: Optional[datetime] = None
+
+        for a in activities:
+            if prev_time is not None:
+                gap = (a.timestamp - prev_time).total_seconds()
+                if gap > 600:
+                    longest_ms = max(longest_ms, current_session_ms)
+                    current_session_ms = 0
+            current_session_ms += a.duration_ms
+            prev_time = a.timestamp
+
+        longest_ms = max(longest_ms, current_session_ms)
+        return int(longest_ms / 60000)
+
+    def clear_user_data(self, user_id: str) -> None:
+        """Clear all data for a user.
+
+        Args:
+            user_id: The user whose data to clear.
+        """
+        with self._lock:
+            self._activities.pop(user_id, None)
+            self._last_activity_time.pop(user_id, None)
+            self._current_session_start.pop(user_id, None)
+            self._breaks_taken.pop(user_id, None)
+            self._breaks_suggested.pop(user_id, None)
+            self._last_break_time.pop(user_id, None)
+
+
+# ---------------------------------------------------------------------------
+# Fatigue Calculator
+# ---------------------------------------------------------------------------
+
+
+class FatigueCalculator:
+    """Calculates a composite digital fatigue score (0-100).
+
+    The fatigue score is a weighted combination of:
+    - Screen time (30%): Longer screen time = higher fatigue
+    - Cognitive load (25%): More intense tasks = faster fatigue
+    - Session length (20%): Longer without breaks = higher fatigue
+    - Time of day (15%): Late night = fatigue accumulates faster
+    - Interaction frequency (10%): Rapid switching = cognitive drain
+    """
+
+    # Score thresholds for interpretation
+    THRESHOLDS: ClassVar[Dict[str, Tuple[int, int]]] = {
+        FatigueLevel.FRESH.value: (0, Constants.FATIGUE_FRESH),
+        FatigueLevel.MILD.value: (
+            Constants.FATIGUE_FRESH + 1,
+            Constants.FATIGUE_MILD,
+        ),
+        FatigueLevel.MODERATE.value: (
+            Constants.FATIGUE_MILD + 1,
+            Constants.FATIGUE_MODERATE,
+        ),
+        FatigueLevel.HIGH.value: (
+            Constants.FATIGUE_MODERATE + 1,
+            Constants.FATIGUE_HIGH,
+        ),
+        FatigueLevel.CRITICAL.value: (
+            Constants.FATIGUE_HIGH + 1,
+            Constants.FATIGUE_CRITICAL,
+        ),
+    }
+
+    @classmethod
+    def calculate(
+        cls,
+        screen_time_minutes: int,
+        avg_cognitive_load: float,
+        current_session_minutes: int,
+        last_break_minutes_ago: int,
+        interaction_frequency: float,
+    ) -> int:
+        """Calculate the composite fatigue score.
+
+        Args:
+            screen_time_minutes: Total screen time in recent period.
+            avg_cognitive_load: Average cognitive load multiplier (1.0-2.5).
+            current_session_minutes: Current continuous session length.
+            last_break_minutes_ago: Minutes since last break.
+            interaction_frequency: Activities per hour.
+
+        Returns:
+            Integer fatigue score between 0 and 100.
+        """
+        # 1. Screen time component (0-100)
+        screen_component = cls._screen_time_score(screen_time_minutes)
+
+        # 2. Cognitive load component (0-100)
+        cognitive_component = cls._cognitive_load_score(avg_cognitive_load)
+
+        # 3. Session length component (0-100)
+        session_component = cls._session_length_score(
+            current_session_minutes, last_break_minutes_ago
+        )
+
+        # 4. Time of day component (0-100)
+        time_component = cls._time_of_day_score()
+
+        # 5. Interaction frequency component (0-100)
+        freq_component = cls._interaction_frequency_score(interaction_frequency)
+
+        # Weighted composite
+        score = (
+            screen_component * Constants.WEIGHT_SCREEN_TIME
+            + cognitive_component * Constants.WEIGHT_COGNITIVE_LOAD
+            + session_component * Constants.WEIGHT_SESSION_LENGTH
+            + time_component * Constants.WEIGHT_TIME_OF_DAY
+            + freq_component * Constants.WEIGHT_INTERACTION_FREQ
+        )
+
+        return int(round(max(0.0, min(100.0, score))))
+
+    @classmethod
+    def _screen_time_score(cls, minutes: int) -> float:
+        """Calculate screen time fatigue component.
+
+        Score increases non-linearly with screen time:
+        - 0-60 min: minimal fatigue
+        - 60-240 min: moderate increase
+        - 240+ min: steep increase
+
+        Args:
+            minutes: Screen time in minutes.
+
+        Returns:
+            Score between 0 and 100.
+        """
+        if minutes <= 60:
+            return minutes * 0.2  # 0-12
+        elif minutes <= 240:
+            return 12 + (minutes - 60) * 0.35  # 12-75
+        else:
+            return min(75 + (minutes - 240) * 0.25, 100.0)
+
+    @classmethod
+    def _cognitive_load_score(cls, avg_load: float) -> float:
+        """Calculate cognitive load fatigue component.
+
+        Args:
+            avg_load: Average cognitive load multiplier (1.0-2.5).
+
+        Returns:
+            Score between 0 and 100.
+        """
+        # Map 1.0-2.5 to 0-100
+        normalized = (avg_load - 1.0) / 1.5
+        return min(normalized * 100.0, 100.0)
+
+    @classmethod
+    def _session_length_score(
+        cls, session_minutes: int, last_break_minutes_ago: int
+    ) -> float:
+        """Calculate session length fatigue component.
+
+        Args:
+            session_minutes: Current session length in minutes.
+            last_break_minutes_ago: Minutes since last break.
+
+        Returns:
+            Score between 0 and 100.
+        """
+        # Score based on the longer of current session or time since break
+        effective_minutes = max(session_minutes, last_break_minutes_ago)
+
+        if effective_minutes <= 30:
+            return effective_minutes * 0.5  # 0-15
+        elif effective_minutes <= 120:
+            return 15 + (effective_minutes - 30) * 0.5  # 15-60
+        else:
+            return min(60 + (effective_minutes - 120) * 0.5, 100.0)
+
+    @classmethod
+    def _time_of_day_score(cls) -> float:
+        """Calculate time-of-day fatigue component.
+
+        Fatigue accumulates faster late at night. Score peaks between
+        2 AM and 4 AM, and is lowest mid-morning.
+
+        Returns:
+            Score between 0 and 100.
+        """
+        hour = datetime.utcnow().hour
+
+        # Lowest fatigue at 10 AM (hour 10), highest at 3 AM (hour 3)
+        # Use a sinusoidal model shifted to peak at 3 AM
+        # Convert hour to angle (0-23 mapped to 0-2pi)
+        angle = (hour / 24.0) * 2 * math.pi
+        # Shift so peak is at 3 AM (3/24 * 2pi = pi/4)
+        shift = (3 / 24.0) * 2 * math.pi
+        # Cosine peaks at 0, so shift to make it peak at 3 AM
+        score = 50 + 50 * math.cos(angle - shift)
+
+        return max(0.0, min(100.0, score))
+
+    @classmethod
+    def _interaction_frequency_score(cls, freq_per_hour: float) -> float:
+        """Calculate interaction frequency fatigue component.
+
+        Rapid context switching is cognitively draining.
+
+        Args:
+            freq_per_hour: Number of activities per hour.
+
+        Returns:
+            Score between 0 and 100.
+        """
+        # 0-20 activities/hour is normal, 20-60 is elevated, 60+ is extreme
+        if freq_per_hour <= 20:
+            return freq_per_hour * 1.5  # 0-30
+        elif freq_per_hour <= 60:
+            return 30 + (freq_per_hour - 20) * 1.75  # 30-100
+        else:
+            return 100.0
+
+    @classmethod
+    def interpret_score(cls, score: int) -> str:
+        """Convert a numeric fatigue score to a human-readable level.
+
+        Args:
+            score: Fatigue score (0-100).
+
+        Returns:
+            Human-readable fatigue level string.
+        """
+        for level, (low, high) in cls.THRESHOLDS.items():
+            if low <= score <= high:
+                return level
+        return FatigueLevel.CRITICAL.value
+
+    @classmethod
+    def get_status_message(cls, score: int) -> str:
+        """Get a gentle, positive status message for a fatigue score.
+
+        Args:
+            score: Fatigue score (0-100).
+
+        Returns:
+            Gentle, encouraging message.
+        """
+        messages = {
+            FatigueLevel.FRESH.value: (
+                "You are feeling great! Your energy is optimal for focused work."
+            ),
+            FatigueLevel.MILD.value: (
+                "You are doing well. A micro-break soon would help you stay refreshed."
+            ),
+            FatigueLevel.MODERATE.value: (
+                "You have been working hard. A short break would do wonders for your focus."
+            ),
+            FatigueLevel.HIGH.value: (
+                "Your mind deserves a rest. A proper break will help you come back stronger."
+            ),
+            FatigueLevel.CRITICAL.value: (
+                "You have been at it for a while. Your well-being comes first. "
+                "Please take a meaningful break."
+            ),
+        }
+        level = cls.interpret_score(score)
+        return messages.get(
+            level, "Listen to your body and take breaks when you need them."
+        )
+
+
+# ---------------------------------------------------------------------------
+# Break Engine
+# ---------------------------------------------------------------------------
+
+
+class BreakEngine:
+    """Generates personalized break suggestions based on user state.
+
+    The BreakEngine anal
 # ___END_OF_FILE___
