@@ -605,4 +605,79 @@ class BreakEngine:
     """Generates personalized break suggestions based on user state.
 
     The BreakEngine anal
+    """
+
+    MICRO_BREAK_ACTIVITIES: ClassVar[List[Dict[str, str]]] = [
+        {
+            "title": "Eye Rest",
+            "description": "Close your eyes gently and take 5 slow, deep breaths. Let your eye muscles fully relax.",
+            "benefit": "Closing your eyes for just 20 seconds reduces eye strain by allowing your ciliary muscles to reset their focus.",
+        },
+        {
+            "title": "Gentle Neck Rolls",
+            "description": "Slowly roll your head in a circle: drop chin to chest, roll to the right shoulder, back, then left. Repeat 3 times each direction.",
+            "benefit": "Neck rolls release tension in the cervical spine and improve blood flow to the brain, reducing headaches.",
+        },
+        {
+            "title": "Shoulder Shrugs",
+            "description": "Lift both shoulders up toward your ears, hold for 3 seconds, then let them drop. Repeat 5 times.",
+            "benefit": "Shoulder shrugs release upper body tension that builds from forward posture during screen work.",
+        },
+        {
+            "title": "Finger and Wrist Stretch",
+            "description": "Extend your arms forward, spread your fingers wide, then make a fist. Rotate your wrists 5 times each direction.",
+            "benefit": "These movements prevent repetitive strain injury and improve circulation to your hands and forearms.",
+        },
+        {
+            "title": "Deep Breathing Reset",
+            "description": "Place one hand on your belly. Inhale deeply through your nose for 4 counts, feeling your belly rise. Exhale slowly for 6 counts. Repeat 5 times.",
+            "benefit": "Deep diaphragmatic breathing activates your parasympathetic nervous system, reducing stress in under 60 seconds.",
+        },
+        {
+            "title": "Desk Stretch",
+            "description": "Interlace your fingers and reach your arms overhead with palms up. Stretch tall, hold for 10 seconds, then gently lean side to side.",
+            "benefit": "Overhead stretching decompresses the spine and counteracts the compressive effects of sitting.",
+        },
+        {
+            "title": "Palming",
+            "description": "Rub your palms together to warm them, then gently cup them over your closed eyes. Relax for 20-30 seconds.",
+            "benefit": "The warmth and darkness help relax the eye muscles and stimulate tear production, relieving dry eyes.",
+        },
+        {
+            "title": "Ankle Circles",
+            "description": "Lift one foot slightly off the ground and rotate your ankle 10 times in each direction. Switch feet.",
+            "benefit": "Ankle circles improve lower leg circulation and help prevent blood pooling from prolonged sitting.",
+        },
+        {
+            "title": "Jaw Relaxation",
+            "description": "Let your jaw hang loose, gently massage your jaw muscles in small circles, then open and close your mouth slowly 5 times.",
+            "benefit": "Many people unconsciously clench their jaw while focusing. This release reduces tension headaches.",
+        },
+        {
+            "title": "Gentle Spinal Twist",
+            "description": "Sit tall, place your right hand on your left knee, and gently twist your torso to the left. Hold for 10 seconds, then switch sides.",
+            "benefit": "Spinal twists relieve tension in the lower back and improve spinal mobility after sitting.",
+        },
+    ]
+
+    SHORT_BREAK_ACTIVITIES: ClassVar[List[Dict[str, str]]] = [
+        {
+            "title": "Take a Walk",
+            "description": "Step away from your screen and walk around your space, or step outside if possible. Notice the sights and sounds around you.",
+            "benefit": "Walking increases blood flow to the brain, boosts creative thinking by 60%, and counteracts the effects of prolonged sitting.",
+        },
+        {
+            "title": "Hydration Break",
+            "description": "Drink a full glass of water slowly. Pay attention to the sensation of hydration.",
+            "benefit": "Even mild dehydration impairs cognitive performance. A glass of water restores focus and energy.",
+        },
+        {
+            "title": "Mindful Minute",
+            "description": "Find a comfortable position, close your eyes, and focus entirely on your breath for one minute. When your mind wanders, gently return to your breath.",
+            "benefit": "Just one minute of mindfulness reduces cortisol levels and resets your attention for better focus when you return.",
+        },
+        {
+            "title": "Look at Nature",
+            "description": "Find a window and look at natural scenery for a few minutes. If no window is available, look at images of nature.",
+            "benefit": "Viewing nature reduces mental fatigue and restores directed attention capacit
 # ___END_OF_FILE___
