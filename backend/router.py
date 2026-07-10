@@ -1,4 +1,4 @@
-"""Luqi AI v24.4.0 — FastAPI Router
+"""Luqi AI v24.5.0 — FastAPI Router
 
 Main FastAPI application serving the web UI and all API endpoints.
 v13-v24.4 endpoint modules are auto-imported at the bottom to register
@@ -58,9 +58,9 @@ GENERATED_DIR.mkdir(exist_ok=True)
 # ═══════════════════════════════════════════════════════════════════
 
 app = FastAPI(
-    title="Luqi AI v24.4.0",
-    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, Law Studies, Africa-First capabilities, Jobs & Skills, WhatsApp Bot, Government Services, Real-time Collaborative Workspaces, Network & AI Engineering Training Academy, Global Knowledge Academy, Project Management Training, Digital Workspace Training, IT Security Training Academy, Digital Wellness, and 350+ endpoints. Built by Limitless Telecoms.",
-    version="24.4.0",
+    title="Luqi AI v24.5.0",
+    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, Law Studies, Africa-First capabilities, Jobs & Skills, WhatsApp Bot, Government Services, Real-time Collaborative Workspaces, Network & AI Engineering Training Academy, Global Knowledge Academy, Project Management Training, Digital Workspace Training, IT Security Training Academy, Digital Wellness, Autonomous Multi-Agent System, Animated Practical Learning, and 360+ endpoints. Built by Limitless Telecoms.",
+    version="24.5.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -423,6 +423,11 @@ try:
     import backend.v24_autonomous_endpoints  # v24.5: Autonomous Multi-Agent System
 except Exception as _e:
     logger.warning("v24 autonomous endpoints not loaded: %s", _e)
+
+try:
+    import backend.v25_animation_endpoints  # v24.5: Animated Practical Learning System
+except Exception as _e:
+    logger.warning("v25 animation endpoints not loaded: %s", _e)
 
 # ═══════════════════════════════════════════════════════════════════
 # Exception Handlers & Health Monitor
