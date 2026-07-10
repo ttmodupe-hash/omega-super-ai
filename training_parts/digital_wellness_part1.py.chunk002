@@ -1,0 +1,175 @@
+AD_MULTIPLIERS: Dict[str, float] = {
+    CognitiveLoad.LOW.value: 1.0,
+    CognitiveLoad.MEDIUM.value: 1.5,
+    CognitiveLoad.HIGH.value: 2.5,
+}
+
+
+# ---------------------------------------------------------------------------
+# Wellness Tips Database
+# ---------------------------------------------------------------------------
+
+
+class WellnessTipsDatabase:
+    """Curated wellness tips with contextual selection capabilities.
+
+    This class maintains a comprehensive database of science-backed wellness
+    tips organized by category. Tips are selected contextually based on the
+    user's current state, time of day, activity type, and viewing history
+    to ensure relevance and avoid repetition.
+    """
+
+    _tips: ClassVar[List[WellnessTip]] = []
+    _initialized: ClassVar[bool] = False
+    _lock: ClassVar[threading.Lock] = threading.Lock()
+
+    @classmethod
+    def _initialize(cls) -> None:
+        """Lazily initialize the tips database with 200+ curated tips."""
+        with cls._lock:
+            if cls._initialized:
+                return
+            cls._tips = cls._load_all_tips()
+            cls._initialized = True
+            logger.info(
+                "WellnessTipsDatabase initialized with %d tips", len(cls._tips)
+            )
+
+    @classmethod
+    def get_all_tips(cls) -> List[WellnessTip]:
+        """Get all wellness tips."""
+        if not cls._initialized:
+            cls._initialize()
+        return list(cls._tips)
+
+    @classmethod
+    def get_tips_by_category(cls, category: str) -> List[WellnessTip]:
+        """Get all tips in a specific category."""
+        if not cls._initialized:
+            cls._initialize()
+        return [t for t in cls._tips if t.category == category]
+
+    @classmethod
+    def get_categories(cls) -> List[str]:
+        """Get all available tip category names."""
+        if not cls._initialized:
+            cls._initialize()
+        return sorted({t.category for t in cls._tips})
+
+    @classmethod
+    def select_contextual_tip(
+        cls,
+        fatigue_score: int,
+        current_activity: str = "",
+        tip_history: Optional[List[str]] = None,
+        preferred_category: Optional[str] = None,
+    ) -> WellnessTip:
+        """Select a wellness tip based on current context."""
+        if not cls._initialized:
+            cls._initialize()
+
+        history = tip_history or []
+
+        if preferred_category:
+            candidates = cls.get_tips_by_category(preferred_category)
+        else:
+            category = cls._select_category(fatigue_score, current_activity)
+            candidates = cls.get_tips_by_category(category)
+
+        if not candidates:
+            candidates = cls._tips
+
+        fresh_candidates = [t for t in candidates if t.title not in history]
+        if not fresh_candidates:
+            fresh_candidates = candidates
+
+        return random.choice(fresh_candidates)
+
+    @classmethod
+    def _select_category(cls, fatigue_score: int, activity: str) -> str:
+        """Select the most relevant category based on context."""
+        hour = datetime.utcnow().hour
+
+        if hour >= 21 or hour < 6:
+            return TipCategory.SLEEP.value
+
+        if fatigue_score > 70:
+            weights = {
+                TipCategory.MOVEMENT.value: 0.30,
+                TipCategory.MENTAL_CLARITY.value: 0.25,
+                TipCategory.STRESS.value: 0.20,
+                TipCategory.EYE_HEALTH.value: 0.15,
+                TipCategory.HYDRATION.value: 0.10,
+            }
+            return random.choices(
+                list(weights.keys()), weights=list(weights.values())
+            )[0]
+
+        if fatigue_score > 40:
+            weights = {
+                TipCategory.EYE_HEALTH.value: 0.25,
+                TipCategory.POSTURE.value: 0.25,
+                TipCategory.HYDRATION.value: 0.20,
+                TipCategory.MOVEMENT.value: 0.15,
+                TipCategory.MENTAL_CLARITY.value: 0.15,
+            }
+            return random.choices(
+                list(weights.keys()), weights=list(weights.values())
+            )[0]
+
+        load = FEATURE_COGNITIVE_LOAD.get(activity, CognitiveLoad.MEDIUM.value)
+        if load == CognitiveLoad.HIGH.value:
+            weights = {
+                TipCategory.MENTAL_CLARITY.value: 0.30,
+                TipCategory.MOVEMENT.value: 0.25,
+                TipCategory.POSTURE.value: 0.20,
+                TipCategory.STRESS.value: 0.15,
+                TipCategory.HYDRATION.value: 0.10,
+            }
+            return random.choices(
+                list(weights.keys()), weights=list(weights.values())
+            )[0]
+
+        weights = {
+            TipCategory.EYE_HEALTH.value: 0.20,
+            TipCategory.POSTURE.value: 0.15,
+            TipCategory.HYDRATION.value: 0.15,
+            TipCategory.MOVEMENT.value: 0.15,
+            TipCategory.MENTAL_CLARITY.value: 0.15,
+            TipCategory.SOCIAL.value: 0.10,
+            TipCategory.SLEEP.value: 0.10,
+        }
+        return random.choices(
+            list(weights.keys()), weights=list(weights.values())
+        )[0]
+
+    @classmethod
+    def _load_all_tips(cls) -> List[WellnessTip]:
+        """Load the complete curated tips database (200+ tips)."""
+        tips: List[WellnessTip] = []
+
+        # EYE HEALTH (25 tips)
+        tips.extend([
+            WellnessTip(TipCategory.EYE_HEALTH.value, "The 20-20-20 Rule",
+                "Every 20 minutes, look at something 20 feet away for at least 20 seconds. This simple habit reduces eye strain by allowing your eye muscles to relax and reset their focus point.",
+                "Set a timer for 20 minutes and practice looking out a window at a distant object.", "American Optometric Association"),
+            WellnessTip(TipCategory.EYE_HEALTH.value, "Blink More Often",
+                "When staring at screens, we blink up to 60% less frequently, which leads to dry, irritated eyes. Conscious blinking helps spread tears evenly across the eye surface.",
+                "Try blinking 10 times slowly right now, then set a reminder to do this every 15 minutes.", "American Academy of Ophthalmology"),
+            WellnessTip(TipCategory.EYE_HEALTH.value, "Adjust Screen Brightness",
+                "Your screen should match the brightness of your surrounding environment. A screen that is too bright or too dim forces your eyes to work harder to adjust.",
+                "Match your screen brightness to the ambient light level in your room right now.", "Occupational Health Psychology"),
+            WellnessTip(TipCategory.EYE_HEALTH.value, "Increase Text Size",
+                "Squinting to read small text causes eye strain and can lead to headaches. Increasing your default font size or zoom level reduces the effort your eyes expend.",
+                "Increase your browser or application zoom level by 10%.", "Ergonomic Design Principles"),
+            WellnessTip(TipCategory.EYE_HEALTH.value, "Use the Right Screen Distance",
+                "Position your screen about an arm's length away (20-26 inches) with the top of the screen at or slightly below eye level.",
+                "Check that your screen is at least 20 inches from your face and the top is at or below eye level.", "OSHA Ergonomics Guidelines"),
+            WellnessTip(TipCategory.EYE_HEALTH.value, "Reduce Blue Light in Evening",
+                "Blue light from screens can suppress melatonin production by up to 50%, making it harder to fall asleep. Most devices have a built-in blue light filter.",
+                "Enable your device's blue light filter or night mode now.", "Harvard Medical School Sleep Research"),
+            WellnessTip(TipCategory.EYE_HEALTH.value, "Follow the 10-15-20 Blink Exercise",
+                "Every 20 minutes, close your eyes for 10 seconds, then blink 15 times rapidly. This exercise fully re-lubricates your eyes.",
+                "Try the 10-15-20 blink exercise right now.", "Dry Eye Foundation"),
+            WellnessTip(TipCategory.EYE_HEALTH.value, "Use Artificial Tears",
+        
