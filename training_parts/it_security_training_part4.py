@@ -1,0 +1,60 @@
+    # COURSE 14: DEVSECOPS
+    # ========================================================================
+    mod14 = SecurityModule(
+        id="devsecops_001",
+        course_id="devsecops",
+        title="DevSecOps Engineering",
+        description="Integrate security into the CI/CD pipeline with SAST, DAST, dependency scanning, IaC security, and secrets management.",
+        category=CourseCategory.DEVSECOPS,
+        difficulty=DifficultyLevel.INTERMEDIATE,
+        duration_hours=12.0,
+        prerequisites=[["Software development basics"], ["CI/CD concepts"]],
+        order=14,
+        lessons=[
+            SecurityLesson(
+                id="dso_l1", module_id="devsecops_001", title="DevSecOps Principles",
+                content="Shift-left security philosophy: integrating security early in SDLC. DevSecOps culture: shared responsibility, automation, feedback loops. Security as code: policy-as-code, security requirements as user stories. The Three Ways of DevOps applied to security: flow, feedback, continual learning.",
+                lesson_type=LessonType.TEXT, duration_min=40, order=1,
+            ),
+            SecurityLesson(
+                id="dso_l2", module_id="devsecops_001", title="Secure Coding Practices",
+                content="OWASP ASVS levels and secure coding standards. Input validation, output encoding, parameterized queries, secure session management. Memory safety: buffer overflow prevention, use-after-free mitigation. Language-specific security: Rust ownership, Go memory safety, Python type safety, Java sandboxing.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=55, order=2,
+            ),
+            SecurityLesson(
+                id="dso_l3", module_id="devsecops_001", title="SAST Integration",
+                content="Static Application Security Testing: SonarQube, Semgrep, Checkmarx, CodeQL, Bandit, ESLint security. Integrating SAST into CI/CD: gate policies, quality gates, baseline establishment. Handling false positives, triage workflows, developer feedback loops. Custom rule development.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=55, order=3,
+            ),
+            SecurityLesson(
+                id="dso_l4", module_id="devsecops_001", title="DAST & IAST",
+                content="Dynamic Application Security Testing: OWASP ZAP, Burp Suite Enterprise, Netsparker. IAST (Interactive AST) with runtime agents. DAST in CI/CD: authenticated scanning, API security testing, spidering and AJAX crawling. Baseline scans vs regression testing. Vulnerability validation and false positive reduction.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=55, order=4,
+            ),
+            SecurityLesson(
+                id="dso_l5", module_id="devsecops_001", title="Dependency & Supply Chain Security",
+                content="Software supply chain attacks: SolarWinds, Codecov, dependency confusion. Dependency scanning: Snyk, OWASP Dependency-Check, npm audit, pip-audit, GitHub Dependabot. SBOM generation (SPDX, CycloneDX), signing artifacts with Sigstore/cosign. VEX documents and vulnerability exploitation analysis.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=50, order=5,
+            ),
+            SecurityLesson(
+                id="dso_l6", module_id="devsecops_001", title="CI/CD Pipeline Security",
+                content="Securing CI/CD pipelines: GitHub Actions, GitLab CI, Jenkins, CircleCI. Pipeline hardening: runner isolation, secret management, branch protection, code signing. Supply chain security for CI/CD: pinning actions, verifying checksums, OIDC token authentication. Container image signing and verification.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=55, order=6,
+            ),
+            SecurityLesson(
+                id="dso_l7", module_id="devsecops_001", title="Infrastructure as Code Security",
+                content="Securing Terraform, CloudFormation, ARM templates, Pulumi. Policy-as-code with OPA/Rego, Checkov, tfsec, Terrascan. Least privilege IAM in IaC, state file encryption, remote state security. Drift detection and remediation automation.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=50, order=7,
+            ),
+            SecurityLesson(
+                id="dso_l8", module_id="devsecops_001", title="Secrets Management",
+                content="Secrets lifecycle: generation, distribution, rotation, revocation. Tools: HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Doppler. Hardcoded secret detection with GitLeaks, TruffleHog, Trivy. Dynamic secrets, short-lived credentials, secretless architectures. Kubernetes secrets encryption at rest.",
+                lesson_type=LessonType.TEXT, duration_min=45, order=8,
+            ),
+        ],
+        labs=[
+            SecurityLab(
+                id="dso_lab1", module_id="devsecops_001",
+                title="SAST Integration with SonarQube",
+                description="I
+# ___END_OF_FILE___
