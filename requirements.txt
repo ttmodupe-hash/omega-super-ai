@@ -1,5 +1,5 @@
 # ============================================================
-# Omega Super AI v22-v24.3 — Python Backend Dependencies
+# Luqi AI v24.4.0 — Python Backend Dependencies
 # ============================================================
 
 # --- Web Framework ---
@@ -38,7 +38,7 @@ stripe>=8.0.0
 livekit>=0.11.0
 livekit-api>=0.6.0
 
-# --- AI/ML & Data (CRITICAL - used by ai_engine, agents, memory) ---
+# --- AI/ML & Data ---
 openai>=1.35.0
 numpy>=1.26.0
 chromadb>=0.5.0
@@ -48,9 +48,12 @@ requests>=2.31.0
 # --- Email Templates ---
 jinja2>=3.1.0
 
-# --- Prometheus CLI ---
+# --- CLI & UI ---
 rich>=13.7.0
 
-# --- Training (optional - for netai_training) ---
+# --- System Monitoring (v24.4.0 - Health Monitor) ---
+psutil>=5.9.0
+
+# --- Training (optional) ---
 # torch>=2.1.0
 # transformers>=4.35.0
