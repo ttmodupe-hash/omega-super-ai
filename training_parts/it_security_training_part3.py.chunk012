@@ -1,0 +1,142 @@
+    # RETURN ALL COURSES
+    # ========================================================================
+    return [mod7, mod8, mod9, mod10, mod11, mod12, mod13]
+
+
+# =============================================================================
+# AGGREGATE ALL COURSES
+# =============================================================================
+
+def get_all_training_modules() -> List[SecurityModule]:
+    """Return all training modules from all parts."""
+    from .it_security_training_part1 import get_modules as get_part1
+    from .it_security_training_part2 import get_modules as get_part2
+    from .it_security_training_part3 import get_modules as get_part3
+
+    return get_part1() + get_part2() + get_part3()
+
+
+def find_module_by_id(module_id: str) -> Optional[SecurityModule]:
+    """Find a module by its ID across all training parts."""
+    for mod in get_all_training_modules():
+        if mod.id == module_id:
+            return mod
+    return None
+
+
+def find_course_by_category(category: CourseCategory) -> List[SecurityModule]:
+    """Find all modules in a specific category."""
+    return [mod for mod in get_all_training_modules() if mod.category == category]
+
+
+def calculate_total_training_hours() -> float:
+    """Calculate total duration of all training content."""
+    return sum(mod.duration_hours for mod in get_all_training_modules())
+
+
+def generate_training_pathway(skill_level: DifficultyLevel) -> List[SecurityModule]:
+    """Generate a recommended training pathway based on skill level."""
+    all_modules = get_all_training_modules()
+
+    if skill_level == DifficultyLevel.BEGINNER:
+        return [mod for mod in all_modules
+                if mod.difficulty in (DifficultyLevel.BEGINNER, DifficultyLevel.INTERMEDIATE)]
+    elif skill_level == DifficultyLevel.INTERMEDIATE:
+        return [mod for mod in all_modules
+                if mod.difficulty in (DifficultyLevel.INTERMEDIATE, DifficultyLevel.ADVANCED)]
+    else:
+        return [mod for mod in all_modules
+                if mod.difficulty in (DifficultyLevel.ADVANCED, DifficultyLevel.INTERMEDIATE)]
+
+
+# =============================================================================
+# SUMMARY STATISTICS
+# =============================================================================
+
+TRAINING_STATS = {
+    "total_courses": 13,
+    "total_modules": 13,
+    "total_lessons": 78,
+    "total_labs": 48,
+    "total_quiz_questions": 195,
+    "total_training_hours": 161.0,
+    "courses_by_category": {
+        "Malware Analysis": {"modules": 1, "lessons": 6, "labs": 4, "hours": 16.0},
+        "Digital Forensics": {"modules": 1, "lessons": 7, "labs": 4, "hours": 15.0},
+        "Compliance & Governance": {"modules": 1, "lessons": 8, "labs": 3, "hours": 11.0},
+        "Cloud Security": {"modules": 1, "lessons": 6, "labs": 4, "hours": 14.0},
+        "Mobile Security": {"modules": 1, "lessons": 6, "labs": 4, "hours": 12.0},
+        "Wireless Security": {"modules": 1, "lessons": 6, "labs": 4, "hours": 10.0},
+        "Social Engineering": {"modules": 1, "lessons": 5, "labs": 3, "hours": 8.0},
+        "DevSecOps": {"modules": 1, "lessons": 6, "labs": 4, "hours": 14.0},
+        "IoT Security": {"modules": 1, "lessons": 6, "labs": 4, "hours": 12.0},
+        "AI Security": {"modules": 1, "lessons": 6, "labs": 3, "hours": 12.0},
+        "ICS/SCADA": {"modules": 1, "lessons": 6, "labs": 4, "hours": 14.0},
+        "Threat Intelligence": {"modules": 1, "lessons": 6, "labs": 3, "hours": 12.0},
+        "Africa Telecom": {"modules": 1, "lessons": 6, "labs": 3, "hours": 10.0},
+    },
+    "difficulty_distribution": {
+        "Beginner": 2,
+        "Intermediate": 8,
+        "Advanced": 3,
+    },
+    "certification_alignment": [
+        "CompTIA Security+",
+        "CompTIA CySA+",
+        "CompTIA CASP+",
+        "CISSP",
+        "CEH",
+        "OSCP",
+        "GCIH",
+        "GCFA",
+        "GREM",
+        "CISM",
+        "CISA",
+        "CRISC",
+        "CCSP",
+        "CCNA Security",
+    ],
+}
+
+
+def print_training_summary():
+    """Print a formatted summary of all training content."""
+    stats = TRAINING_STATS
+    print("=" * 70)
+    print("LUQI AI - IT SECURITY TRAINING PROGRAM - PART 3 SUMMARY")
+    print("=" * 70)
+    print(f"Total Courses:       {stats['total_courses']}")
+    print(f"Total Lessons:       {stats['total_lessons']}")
+    print(f"Total Labs:          {stats['total_labs']}")
+    print(f"Total Quiz Questions: {stats['total_quiz_questions']}")
+    print(f"Total Training Hours: {stats['total_training_hours']}")
+    print("-" * 70)
+    print("COURSES IN THIS PART (7-13):")
+    print("-" * 70)
+    print("  7. Malware Analysis & Reverse Engineering    (16 hrs, Adv)")
+    print("  8. Digital Forensics & Investigation         (15 hrs, Adv)")
+    print("  9. Security Compliance & Governance          (11 hrs, Int)")
+    print(" 10. Mobile Application Security               (12 hrs, Int)")
+    print(" 11. Wireless Network Security                 (10 hrs, Int)")
+    print(" 12. Social Engineering Defense                 (8 hrs, Beg)")
+    print(" 13. Africa Telecom & Mobile Money Security    (10 hrs, Int)")
+    print("-" * 70)
+    print("ALL COURSES COVERED (1-13):")
+    print("  1. Network Security Fundamentals               (8 hrs, Beg)")
+    print("  2. Endpoint Security & EDR                    (10 hrs, Int)")
+    print("  3. Web Application Security                   (12 hrs, Int)")
+    print("  4. Penetration Testing                        (14 hrs, Adv)")
+    print("  5. Incident Response & SOC Operations         (12 hrs, Int)")
+    print("  6. Cryptography & PKI                         (10 hrs, Int)")
+    print("  7. Malware Analysis & Reverse Engineering     (16 hrs, Adv)")
+    print("  8. Digital Forensics & Investigation          (15 hrs, Adv)")
+    print("  9. Security Compliance & Governance           (11 hrs, Int)")
+    print(" 10. Mobile Application Security                (12 hrs, Int)")
+    print(" 11. Wireless Network Security                  (10 hrs, Int)")
+    print(" 12. Social Engineering Defense                  (8 hrs, Beg)")
+    print(" 13. Africa Telecom & Mobile Money Security     (10 hrs, Int)")
+    print("=" * 70)
+
+
+if __name__ == "__main__":
+    print_training_summary()
