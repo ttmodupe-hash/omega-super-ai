@@ -20,7 +20,7 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 def cat(parts, output):
     """Concatenate part files into output."""
     print(f"\n[+] Creating {os.path.basename(output)}...")
-    
+
     result = []
     for p in parts:
         path = os.path.join(BASE, p)
@@ -30,7 +30,7 @@ def cat(parts, output):
         with open(path, "r", encoding="utf-8") as f:
             result.append(f.read())
         print(f"  OK: {p} ({os.path.getsize(path)} bytes)")
-    
+
     full = "".join(result)
     os.makedirs(os.path.dirname(output), exist_ok=True)
     with open(output, "w", encoding="utf-8") as f:
@@ -54,9 +54,9 @@ def main():
     print("=" * 60)
     print("Luqi AI v24.4.0 — Merge Part Files")
     print("=" * 60)
-    
+
     all_ok = True
-    
+
     # Merge IT Security Training (4 parts)
     ok = cat(
         [
@@ -71,7 +71,7 @@ def main():
         all_ok &= check(os.path.join(BASE, "..", "backend", "it_security_training.py"))
     else:
         all_ok = False
-    
+
     # Merge Digital Wellness (2 parts)
     ok = cat(
         [
@@ -84,7 +84,7 @@ def main():
         all_ok &= check(os.path.join(BASE, "..", "backend", "digital_wellness.py"))
     else:
         all_ok = False
-    
+
     print("\n" + "=" * 60)
     if all_ok:
         print("SUCCESS! All files merged and verified.")
