@@ -1,0 +1,108 @@
+ttack patterns.", DifficultyLevel.BEGINNER),
+                QuizQuestion("wiq9", "What is a Karma attack?",
+                    ["WiFi jamming", "Rogue AP responding to probe requests for any SSID", "Brute force", "Social engineering"], 1,
+                    "Karma attack creates an AP that responds to any probe request, tricking devices into connecting.", DifficultyLevel.ADVANCED),
+                QuizQuestion("wiq10", "What frequency does standard Bluetooth (BR/EDR) operate on?",
+                    ["900 MHz", "2.4 GHz", "5 GHz", "60 GHz"], 1,
+                    "Bluetooth BR/EDR operates in the 2.4 GHz ISM band with 79 channels.", DifficultyLevel.BEGINNER),
+                QuizQuestion("wiq11", "What NFC attack involves extending the communication range?",
+                    ["Relay attack", "Replay attack", "Denial of service", "Cloning"], 0,
+                    "NFC relay attacks extend the communication range between card and reader using proxy devices.", DifficultyLevel.ADVANCED),
+                QuizQuestion("wiq12", "What is the key difference between WPA2-Personal and WPA2-Enterprise?",
+                    ["Enterprise uses pre-shared key", "Enterprise uses 802.1X/EAP authentication with RADIUS", "Personal is more secure", "Enterprise uses WEP"], 1,
+                    "WPA2-Enterprise uses 802.1X with EAP methods and RADIUS server for per-user authentication.", DifficultyLevel.INTERMEDIATE),
+                QuizQuestion("wiq13", "What tool is commonly used for RFID cloning?",
+                    ["Wireshark", "Proxmark3", "Metasploit", "Nmap"], 1,
+                    "Proxmark3 is the gold standard for RFID research, cloning, and simulation.", DifficultyLevel.INTERMEDIATE),
+            ],
+        ),
+    )
+
+    # ========================================================================
+    # COURSE 12: SOCIAL ENGINEERING
+    # ========================================================================
+    mod12 = SecurityModule(
+        id="soceng_001",
+        course_id="social_engineering",
+        title="Social Engineering Defense",
+        description="Understand social engineering tactics, build defense strategies, and implement security awareness programs.",
+        category=CourseCategory.SOCIAL,
+        difficulty=DifficultyLevel.BEGINNER,
+        duration_hours=8.0,
+        prerequisites=[],
+        order=12,
+        lessons=[
+            SecurityLesson(
+                id="se_l1", module_id="soceng_001", title="Social Engineering Fundamentals",
+                content="Psychology of social engineering: authority, scarcity, familiarity, reciprocity, consensus. Attack lifecycle: research, hook, play, exit. The human element as the weakest security link. Statistics on social engineering success rates and impact. Legal and ethical boundaries of SE testing.",
+                lesson_type=LessonType.TEXT, duration_min=40, order=1,
+            ),
+            SecurityLesson(
+                id="se_l2", module_id="soceng_001", title="Phishing Techniques",
+                content="Email phishing: spoofing, domain lookalikes, credential harvesting. Spear phishing: targeted attacks using OSINT. Whaling: targeting C-suite executives. Vishing: voice-based phishing. Smishing: SMS-based attacks. Clone phishing: copying legitimate emails. Business Email Compromise (BEC) and wire fraud.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=50, order=2,
+            ),
+            SecurityLesson(
+                id="se_l3", module_id="soceng_001", title="Advanced Social Engineering",
+                content="Pretexting: creating fabricated scenarios to gain trust. Baiting: physical media drops, enticing downloads. Tailgating/piggybacking: physical access bypass. Quid pro quo: offering service in exchange for information. Watering hole attacks: compromising trusted websites. Supply chain social engineering.",
+                lesson_type=LessonType.VIDEO, duration_min=45, order=3,
+            ),
+            SecurityLesson(
+                id="se_l4", module_id="soceng_001", title="Defense Strategies",
+                content="Technical controls: SPF, DKIM, DMARC, email filtering, URL rewriting. User training: recognizing phishing indicators, reporting procedures. Policy controls: verification procedures for sensitive requests, out-of-band confirmation. Incident response for social engineering breaches.",
+                lesson_type=LessonType.TEXT, duration_min=40, order=4,
+            ),
+            SecurityLesson(
+                id="se_l5", module_id="soceng_001", title="Security Awareness Programs",
+                content="Building effective security awareness programs: baseline assessment, targeted training, reinforcement. Simulated phishing campaigns: setup, metrics, response tracking. Gamification, microlearning, and behavior change. Measuring program effectiveness: click rates, reporting rates, culture surveys.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=45, order=5,
+            ),
+        ],
+        labs=[
+            SecurityLab(
+                id="se_lab1", module_id="soceng_001",
+                title="Analyze Real Phishing Emails",
+                description="Examine phishing email samples and identify tell-tale indicators.",
+                environment="Sample phishing emails (.eml/.msg), email header analyzer, URL inspection tools.",
+                tasks=[
+                    "Examine email headers for spoofing indicators",
+                    "Inspect links by hovering and decoding URLs",
+                    "Check sender domain against legitimate domain",
+                    "Identify urgency tactics and emotional manipulation",
+                    "Verify attachment types and extensions",
+                    "Document findings in phishing analysis report",
+                ],
+                hints=[
+                    "Check SPF, DKIM, DMARC in headers",
+                    "Use URL expanders for shortened links",
+                    "Look for subtle domain misspellings",
+                ],
+                solution="Headers: Return-Path doesn't match From; SPF=fail; DKIM=none; URL: http://paypa1-security[.]com (domain substitution); Attachment: invoice.pdf.exe (double extension); Indicators: Urgent language, threatens account suspension, generic greeting 'Dear Customer'",
+                duration_min=45, points=100,
+            ),
+            SecurityLab(
+                id="se_lab2", module_id="soceng_001",
+                title="Configure Email Authentication (SPF, DKIM, DMARC)",
+                description="Implement email authentication to protect your domain from spoofing.",
+                environment="DNS management access, domain, mail server, DMARC reporting service.",
+                tasks=[
+                    "Create SPF record authorizing mail servers",
+                    "Generate DKIM key pair and publish public key",
+                    "Configure mail server to sign outgoing mail",
+                    "Create DMARC record with reporting",
+                    "Test with email authentication checkers",
+                    "Monitor DMARC reports for unauthorized senders",
+                ],
+                hints=[
+                    "Start DMARC with p=none to monitor before enforcing",
+                    "Include all legitimate sending IPs in SPF",
+                    "Rotate DKIM keys periodically",
+                ],
+                solution="SPF: v=spf1 mx include:_spf.google.com -all; DKIM: selector._domainkey IN TXT \"v=DKIM1; k=rsa; p=MIGfMA...\"; DMARC: _dmarc IN TXT \"v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com; pct=100; adkim=r; aspf=r\"",
+                duration_min=60, points=125,
+            ),
+            SecurityLab(
+                id="se_lab3", module_id="soceng_001",
+                title="Design Simulated Phishing Campaign",
+                description="Design and execute a controlled phishing simulation for security awareness testing.",
+           
