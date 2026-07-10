@@ -1,7 +1,7 @@
 """Luqi AI v24.4.0 — FastAPI Router
 
 Main FastAPI application serving the web UI and all API endpoints.
-v14-v24.4 endpoint modules are auto-imported at the bottom to register
+v13-v24.4 endpoint modules are auto-imported at the bottom to register
 their routes on the shared `app` instance.
 """
 
@@ -59,7 +59,7 @@ GENERATED_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(
     title="Luqi AI v24.4.0",
-    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, Law Studies, Africa-First capabilities, Jobs & Skills, WhatsApp Bot, Government Services, Real-time Collaborative Workspaces, Network & AI Engineering Training Academy, Global Knowledge Academy, Project Management Training, Digital Workspace Training, Digital Wellness, IT Security Training Academy, and 350+ endpoints. Built by Limitless Telecoms.",
+    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, Law Studies, Africa-First capabilities, Jobs & Skills, WhatsApp Bot, Government Services, Real-time Collaborative Workspaces, Network & AI Engineering Training Academy, Global Knowledge Academy, Project Management Training, Digital Workspace Training, IT Security Training Academy, Digital Wellness, and 350+ endpoints. Built by Limitless Telecoms.",
     version="24.4.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -78,168 +78,275 @@ app.add_middleware(
 
 
 # ═══════════════════════════════════════════════════════════════════
-# Middleware
-# ═══════════════════════════════════════════════════════════════════
-
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    start = time.time()
-    response = await call_next(request)
-    duration = (time.time() - start) * 1000
-    logger.info(f"{request.method} {request.url.path} - {response.status_code} ({duration:.0f}ms)")
-    return response
-
-
-# ═══════════════════════════════════════════════════════════════════
-# Static Files
+# v13 Core Endpoints
 # ═══════════════════════════════════════════════════════════════════
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    return FileResponse("web/index.html")
+    """Serve the main web UI (index.html)."""
+    index_path = Path("web/index.html")
+    if index_path.exists():
+        return HTMLResponse(content=index_path.read_text(encoding="utf-8"))
+    return HTMLResponse("<h1>Luqi AI v20</h1><p>Frontend not found. Place web/index.html</p>")
 
 
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page():
-    return FileResponse("web/admin.html")
+    """Serve the admin dashboard."""
+    admin_path = Path("web/admin.html")
+    if admin_path.exists():
+        return HTMLResponse(content=admin_path.read_text(encoding="utf-8"))
+    raise HTTPException(status_code=404, detail="Admin page not found")
 
 
-@app.get("/wellness", response_class=HTMLResponse)
-async def wellness_page():
-    return FileResponse("web/wellness.html")
-
-
-@app.get("/favicon.ico")
-async def favicon():
-    return FileResponse("web/icons/favicon-32x32.png")
-
-
-@app.get("/manifest.json")
-async def manifest():
-    return FileResponse("web/manifest.json")
-
-
-# ═══════════════════════════════════════════════════════════════════
-# Health Check
-# ═══════════════════════════════════════════════════════════════════
-
-@app.get("/health")
+@app.get("/api/health")
 async def health_check():
-    return {"status": "ok", "version": "24.4.0", "timestamp": datetime.utcnow().isoformat()}
+    """Health check endpoint."""
+    import backend
+    return {
+        "status": "healthy",
+        "version": backend.__version__,
+        "timestamp": datetime.utcnow().isoformat(),
+    }
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Core API Endpoints
-# ═══════════════════════════════════════════════════════════════════
+# ── Chat Endpoints ───────────────────────────────────────────────────
+
+@app.post("/api/chat")
+async def api_chat(request: Request):
+    """Standard chat endpoint."""
+    try:
+        data = json.loads(await request.body())
+        from backend.chat import chat_with_ai
+        response = chat_with_ai(
+            message=data.get("message", ""),
+            history=data.get("history", []),
+            mode=data.get("mode", "default"),
+        )
+        return JSONResponse({"response": response})
+    except Exception as e:
+        logger.error("Chat error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/chat/stream")
+async def api_chat_stream(request: Request):
+    """Streaming chat endpoint."""
+    try:
+        data = json.loads(await request.body())
+        from backend.chat import stream_chat_with_ai
+
+        async def event_generator():
+            async for chunk in stream_chat_with_ai(
+                message=data.get("message", ""),
+                history=data.get("history", []),
+            ):
+                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            yield "data: [DONE]\n\n"
+
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
+    except Exception as e:
+        logger.error("Stream chat error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── File Upload & Processing ─────────────────────────────────────────
 
 @app.post("/api/upload")
 async def api_upload(file: UploadFile = File(...)):
-    """Upload a file."""
-    import re
-    safe_name = re.sub(r'[^a-zA-Z0-9._-]', '_', file.filename)
-    file_path = UPLOAD_DIR / safe_name
-    with open(file_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-    return {"filename": safe_name, "path": str(file_path), "size": file_path.stat().st_size}
-
-
-@app.get("/api/download/{filename}")
-async def api_download(filename: str):
-    """Download a file."""
-    import re
-    safe_name = re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
-    file_path = UPLOAD_DIR / safe_name
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path, filename=safe_name)
-
-
-# ═══════════════════════════════════════════════════════════════════
-# Chat Endpoints
-# ═══════════════════════════════════════════════════════════════════
-
-try:
-    from backend.chat import chat_with_ai, stream_chat_with_ai
-    logger.info("Chat module loaded successfully")
-except Exception as e:
-    logger.warning("Chat module not available: %s", e)
-    chat_with_ai = None
-    stream_chat_with_ai = None
-
-
-if chat_with_ai:
-    @app.post("/api/chat")
-    async def api_chat(request: Request):
+    """Upload and process a file (PDF, image, doc, txt)."""
+    try:
+        file_path = UPLOAD_DIR / file.filename
+        with open(file_path, "wb") as f:
+            shutil.copyfileobj(file.file, f)
+        # Try to process with file processor if available
         try:
-            data = json.loads(await request.body())
-            result = await chat_with_ai(
-                message=data.get("message", ""),
-                model=data.get("model"),
-                system_prompt=data.get("system_prompt"),
-                context=data.get("context"),
-                temperature=float(data.get("temperature", 0.7)),
-                max_tokens=int(data.get("max_tokens", 2000)),
+            from backend.files import FileProcessor
+            processor = FileProcessor()
+            result = processor.process(str(file_path))
+            return JSONResponse({"status": "processed", "result": result, "file": file.filename})
+        except ImportError:
+            # File processor not available, return upload confirmation
+            return JSONResponse({
+                "status": "uploaded",
+                "message": "File uploaded successfully. File processing module not available.",
+                "file": file.filename,
+                "path": str(file_path),
+                "size": os.path.getsize(file_path) if file_path.exists() else 0,
+            })
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Upload error: %s", e)
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+# ── Image Generation ─────────────────────────────────────────────────
+
+@app.post("/api/image/generate")
+async def api_generate_image(request: Request):
+    """Generate an image from a text prompt."""
+    try:
+        data = json.loads(await request.body())
+        prompt = data.get("prompt", "")
+        if not prompt:
+            raise HTTPException(status_code=422, detail="Prompt is required")
+        # Try OpenAI DALL-E if available
+        try:
+            import openai
+            client = openai.AsyncOpenAI()
+            size = data.get("size", "1024x1024")
+            valid_sizes = ["1024x1024", "1792x1024", "1024x1792"]
+            if size not in valid_sizes:
+                size = "1024x1024"
+            response = await client.images.generate(
+                model=data.get("model", "dall-e-3"),
+                prompt=prompt,
+                size=size,
+                quality=data.get("quality", "standard"),
+                n=1,
             )
-            return JSONResponse(result)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Invalid JSON")
-        except Exception as e:
-            logger.error("Chat error: %s", e)
-            raise HTTPException(status_code=500, detail="Chat service unavailable")
+            image_url = response.data[0].url
+            return JSONResponse({"status": "success", "url": image_url, "prompt": prompt})
+        except ImportError:
+            return JSONResponse({
+                "status": "unavailable",
+                "message": "Image generation requires OpenAI API key. Configure OPENAI_API_KEY environment variable.",
+                "prompt": prompt,
+            }, status_code=503)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Image generation error: %s", e)
+        raise HTTPException(status_code=500, detail=f"Image generation failed: {str(e)}")
 
-    @app.post("/api/chat/stream")
-    async def api_chat_stream(request: Request):
+
+# ── Search ───────────────────────────────────────────────────────────
+
+@app.post("/api/search")
+async def api_search(request: Request):
+    """Perform a web search."""
+    try:
+        data = json.loads(await request.body())
+        query = data.get("query", "")
+        if not query:
+            raise HTTPException(status_code=422, detail="Query is required")
+        # Try search engine module if available
         try:
-            data = json.loads(await request.body())
-            async def generate():
-                async for chunk in stream_chat_with_ai(
-                    message=data.get("message", ""),
-                    model=data.get("model"),
-                    system_prompt=data.get("system_prompt"),
-                    context=data.get("context"),
-                ):
-                    yield f"data: {json.dumps({'chunk': chunk})}\n\n"
-                yield "data: [DONE]\n\n"
-            return StreamingResponse(generate(), media_type="text/event-stream")
-        except Exception as e:
-            logger.error("Stream chat error: %s", e)
-            raise HTTPException(status_code=500, detail="Streaming unavailable")
+            from backend.search import SearchEngine
+            engine = SearchEngine()
+            results = engine.search(query)
+            return JSONResponse({"status": "success", "query": query, "results": results})
+        except ImportError:
+            # Fallback: return helpful message
+            return JSONResponse({
+                "status": "fallback",
+                "query": query,
+                "message": "Search engine module not available. Install dependencies or configure search API.",
+                "results": [],
+            })
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Search error: %s", e)
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Financial Analysis Endpoint
-# ═══════════════════════════════════════════════════════════════════
+# ── Memory ───────────────────────────────────────────────────────────
 
-try:
-    from backend.financial import analyze_financials
-    logger.info("Financial module loaded successfully")
-except Exception as e:
-    logger.warning("Financial module not available: %s", e)
-    analyze_financials = None
-
-
-if analyze_financials:
-    @app.post("/api/financial/analyze")
-    async def api_financial_analyze(request: Request):
+@app.post("/api/memory/save")
+async def api_memory_save(request: Request):
+    """Save a memory entry."""
+    try:
+        data = json.loads(await request.body())
+        text = data.get("text", "")
+        if not text:
+            raise HTTPException(status_code=422, detail="Text is required")
         try:
-            data = json.loads(await request.body())
-            result = await analyze_financials(
-                data=data.get("data", {}),
-                analysis_type=data.get("analysis_type", "general"),
-                currency=data.get("currency", "USD"),
-            )
-            return JSONResponse(result)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=400, detail="Invalid JSON")
-        except Exception as e:
-            logger.error("Financial analysis error: %s", e)
-            raise HTTPException(status_code=500, detail="Analysis failed")
+            from backend.memory import VectorMemory
+            memory = VectorMemory()
+            memory_id = memory.add(text, data.get("metadata", {}))
+            return JSONResponse({"status": "saved", "id": memory_id})
+        except ImportError:
+            # Memory module not available, save to simple JSON file
+            mem_file = UPLOAD_DIR / "memory_fallback.json"
+            memories = []
+            if mem_file.exists():
+                memories = json.loads(mem_file.read_text(encoding="utf-8"))
+            entry = {
+                "id": f"mem_{int(time.time())}",
+                "text": text,
+                "metadata": data.get("metadata", {}),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+            memories.append(entry)
+            mem_file.write_text(json.dumps(memories, indent=2), encoding="utf-8")
+            return JSONResponse({"status": "saved_fallback", "id": entry["id"]})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Memory save error: %s", e)
+        raise HTTPException(status_code=500, detail=f"Memory save failed: {str(e)}")
 
 
-# ═══════════════════════════════════════════════════════════════════
-# Import all endpoint modules (v14 through v24.4)
-# Each module registers its own routes on the shared `app` instance
-# ═══════════════════════════════════════════════════════════════════
+@app.post("/api/memory/search")
+async def api_memory_search(request: Request):
+    """Search memory entries."""
+    try:
+        data = json.loads(await request.body())
+        query = data.get("query", "")
+        if not query:
+            raise HTTPException(status_code=422, detail="Query is required")
+        try:
+            from backend.memory import VectorMemory
+            memory = VectorMemory()
+            results = memory.query(query, data.get("limit", 5))
+            return JSONResponse({"status": "success", "query": query, "results": results})
+        except ImportError:
+            # Fallback: search in JSON file
+            mem_file = UPLOAD_DIR / "memory_fallback.json"
+            if not mem_file.exists():
+                return JSONResponse({"status": "fallback", "query": query, "results": []})
+            memories = json.loads(mem_file.read_text(encoding="utf-8"))
+            q_lower = query.lower()
+            results = [m for m in memories if q_lower in m.get("text", "").lower()]
+            return JSONResponse({"status": "fallback", "query": query, "results": results[:data.get("limit", 5)]})
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Memory search error: %s", e)
+        raise HTTPException(status_code=500, detail=f"Memory search failed: {str(e)}")
+
+
+# ── Financial ────────────────────────────────────────────────────────
+
+@app.post("/api/financial/analyze")
+async def api_financial_analyze(request: Request):
+    """Analyze financial data."""
+    try:
+        data = json.loads(await request.body())
+        from backend.financial import analyze_financials
+        result = analyze_financials(data.get("data", {}))
+        return JSONResponse(result)
+    except Exception as e:
+        logger.error("Financial analysis error: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Static Files ─────────────────────────────────────────────────────
+
+@app.get("/web/{filename}")
+async def serve_web_file(filename: str):
+    """Serve static web files."""
+    file_path = Path(f"web/{filename}")
+    if file_path.exists():
+        return FileResponse(str(file_path))
+    raise HTTPException(status_code=404, detail="File not found")
+
+
+# ── v14-v20 Endpoint Module Imports ──────────────────────────────────
+# These modules import `app` from backend.router and register their
+# endpoints using @app decorators.
 
 try:
     import backend.v14_endpoints   # SaaS: subscriptions, developer, website, dashboard
@@ -301,6 +408,7 @@ try:
 except Exception as _e:
     logger.warning("v24 endpoints not loaded: %s", _e)
 
+
 try:
     import backend.v24_wellness_endpoints   # v24.3: Digital Wellness - fatigue prevention, Pomodoro, break suggestions
 except Exception as _e:
@@ -311,7 +419,47 @@ try:
 except Exception as _e:
     logger.warning("v24 branding endpoints not loaded: %s", _e)
 
+
 try:
-    import backend.v24_security_endpoints   # v24.4: IT Security Training Academy - 15 courses, CTF challenges
+    import backend.v24_security_endpoints  # v24.4: IT Security Training Academy - 15 courses, CTF challenges
 except Exception as _e:
     logger.warning("v24 security endpoints not loaded: %s", _e)
+
+# ═══════════════════════════════════════════════════════════════════
+# Exception Handlers & Health Monitor
+# ═══════════════════════════════════════════════════════════════════
+
+# Register custom exception handlers
+try:
+    from backend.exception_handler import register_exception_handlers
+    register_exception_handlers(app)
+    logger.info("Custom exception handlers registered")
+except Exception as _e:
+    logger.warning("Exception handlers not registered: %s", _e)
+
+# Register health monitoring endpoints
+try:
+    from backend.health_monitor import register_health_endpoints, ModuleHealthChecker
+    register_health_endpoints(app)
+    logger.info("Health monitoring endpoints registered")
+    # Print startup banner with module status
+    try:
+        from backend.health_monitor import print_startup_banner
+        checker = ModuleHealthChecker()
+        status = checker.check_all_modules([
+            "backend.router",
+            "backend.exception_handler",
+            "backend.validators",
+            "backend.db_utils",
+            "backend.chat",
+            "backend.financial",
+            "backend.it_security_training",
+            "backend.digital_wellness",
+            "backend.health_monitor",
+            "backend.v24_security_endpoints",
+        ])
+        print_startup_banner(status)
+    except Exception as banner_err:
+        logger.debug("Startup banner not displayed: %s", banner_err)
+except Exception as _e:
+    logger.warning("Health monitor not registered: %s", _e)
