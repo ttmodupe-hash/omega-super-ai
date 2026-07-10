@@ -1,201 +1,231 @@
+ompleted"] += 1
+        scores[uid]["labs_completed"] += len(progress.lab_scores)
+        scores[uid]["quizzes_completed"] += len(progress.quiz_scores)
+
+    # Sort by total score descending
+    sorted_scores = sorted(scores.values(), key=lambda x: x["total_score"], reverse=True)
+
+    # Add ranks
+    result = []
+    for rank, entry in enumerate(sorted_scores[:limit], 1):
+        entry["rank"] = rank
+        # Get user badges
+        if entry["user_id"] in _skill_trees:
+            entry["badges"] = len(_skill_trees[entry["user_id"]].badges)
+            entry["level"] = _skill_trees[entry["user_id"]].level
+        else:
+            entry["badges"] = 0
+            entry["level"] = 1
+        result.append(entry)
+
+    return result
 
 
-    def get_modules_for_team_role(self, role: str) -> List[SecurityModule]:
-        """Recommend modules based on team role."""
-        role_map = {
-            "developer": ["devsecops_001", "cloudsec_001", "crypto_001"],
-            "security_analyst": ["thintel_001", "incresp_001", "forensics_001", "netsec_001"],
-            "network_admin": ["netsec_001", "cloudsec_001", "iam_001"],
-            "compliance_officer": ["iam_001", "crypto_001", "cloudsec_001"],
-            "penetration_tester": ["ethhack_001", "netsec_001", "thintel_001"],
-            "incident_responder": ["incresp_001", "forensics_001", "thintel_001"],
-            "security_architect": ["cloudsec_001", "devsecops_001", "iam_001", "crypto_001"],
-            "soc_analyst": ["thintel_001", "incresp_001", "netsec_001"],
+def search_courses(query: str, category: Optional[str] = None,
+                   difficulty: Optional[str] = None) -> List[dict]:
+    """Search courses with filtering by query, category, and difficulty.
+
+    Performs case-insensitive search across course titles, descriptions,
+    module titles, and lesson content.
+
+    Args:
+        query: Search query string.
+        category: Optional category filter (e.g., 'network', 'web_application').
+        difficulty: Optional difficulty filter (beginner/intermediate/advanced/expert).
+
+    Returns:
+        List[dict]: Matching courses sorted by relevance.
+
+    Example:
+        >>> results = search_courses('firewall', category='network')
+        >>> len(results) > 0
+        True
+    """
+    if not query:
+        return []
+
+    query_lower = query.lower()
+    results = []
+
+    for course in _courses.values():
+        # Category filter
+        if category and course.category.value != category.lower():
+            continue
+        # Difficulty filter
+        if difficulty and course.difficulty.value != difficulty.lower():
+            continue
+
+        # Search relevance scoring
+        relevance = 0
+        if query_lower in course.title.lower():
+            relevance += 10
+        if query_lower in course.description.lower():
+            relevance += 5
+
+        # Search in modules
+        for module in course.modules:
+            if query_lower in module.title.lower():
+                relevance += 3
+            if query_lower in module.description.lower():
+                relevance += 2
+            for lesson in module.lessons:
+                if query_lower in lesson.title.lower():
+                    relevance += 1
+                if query_lower in lesson.content.lower():
+                    relevance += 1
+
+        if relevance > 0:
+            course_dict = course.to_dict()
+            course_dict["relevance"] = relevance
+            results.append(course_dict)
+
+    # Sort by relevance descending
+    results.sort(key=lambda x: x["relevance"], reverse=True)
+    return results
+
+
+def get_recommended_courses(user_id: str) -> List[dict]:
+    """Get personalized course recommendations based on user progress.
+
+    Analyzes user's current progress, completed courses, and skill tree
+    to recommend the next best courses to take.
+
+    Args:
+        user_id: Unique identifier for the user.
+
+    Returns:
+        List[dict]: Recommended courses with match scores and reasons.
+
+    Example:
+        >>> recs = get_recommended_courses('user_123')
+        >>> len(recs) > 0
+        True
+    """
+    recommendations = []
+
+    # Get user's enrolled courses and skills
+    enrolled_courses = set()
+    user_skills: Dict[str, int] = {}
+    if user_id in _skill_trees:
+        user_skills = _skill_trees[user_id].skills
+
+    for key, progress in _user_progress.items():
+        if progress.user_id == user_id:
+            enrolled_courses.add(progress.course_id)
+
+    # Prerequisite chains
+    prereq_chains = {
+        "network_security": [],
+        "web_app_security": [],
+        "cryptography": [],
+        "ethical_hacking": ["network_security"],
+        "incident_response": ["network_security"],
+        "cloud_security": ["network_security"],
+        "malware_analysis": ["ethical_hacking", "cryptography"],
+        "digital_forensics": ["incident_response"],
+        "compliance_governance": [],
+        "mobile_security": ["web_app_security"],
+        "wireless_security": ["network_security"],
+        "social_engineering": [],
+        "africa_telecom_security": ["network_security"],
+        "devsecops": ["web_app_security"],
+        "threat_intelligence": ["incident_response"],
+    }
+
+    for course_id, course in _courses.items():
+        if course_id in enrolled_courses:
+            continue
+
+        match_score = 0
+        reasons = []
+
+        # Check prerequisites
+        prereqs_met = True
+        for prereq in prereq_chains.get(course_id, []):
+            if prereq not in enrolled_courses:
+                prereqs_met = False
+                break
+
+        if prereqs_met:
+            match_score += 20
+            reasons.append("Prerequisites met")
+
+        # Skill affinity
+        skill_map = {
+            "network_security": "networking",
+            "web_app_security": "web_security",
+            "cryptography": "cryptography",
+            "ethical_hacking": "pentesting",
+            "incident_response": "incident_response",
+            "cloud_security": "cloud_security",
+            "malware_analysis": "malware_analysis",
+            "digital_forensics": "forensics",
+            "compliance_governance": "compliance",
+            "mobile_security": "mobile_security",
+            "wireless_security": "wireless_security",
+            "social_engineering": "social_engineering",
+            "africa_telecom_security": "telecom_security",
+            "devsecops": "devsecops",
+            "threat_intelligence": "threat_intelligence",
         }
-        module_ids = role_map.get(role.lower(), [])
-        return [self._modules[mid] for mid in module_ids if mid in self._modules]
+        related_skill = skill_map.get(course_id)
+        if related_skill and related_skill in user_skills:
+            skill_level = user_skills[related_skill]
+            if skill_level < 50:
+                match_score += 30  # High priority - new skill
+                reasons.append("New skill area to explore")
+            elif skill_level < 150:
+                match_score += 20  # Medium priority - building skill
+                reasons.append("Continue building this skill")
+            else:
+                match_score += 10  # Lower priority - already skilled
 
-    def generate_study_timeline(self, start_date: str, hours_per_week: float) -> List[Dict[str, any]]:
-        """Generate a study timeline with dates."""
-        from datetime import datetime, timedelta
-        modules = self.get_all_modules()
-        timeline = []
-        current_date = datetime.strptime(start_date, "%Y-%m-%d")
-        remaining_hours = hours_per_week
-        
-        for module in modules:
-            module_hours = module.duration_hours
-            while module_hours > 0:
-                if remaining_hours <= 0:
-                    current_date += timedelta(days=1)
-                    while current_date.weekday() >= 5:
-                        current_date += timedelta(days=1)
-                    remaining_hours = hours_per_week
-                
-                hours_today = min(remaining_hours, module_hours)
-                timeline.append({
-                    "date": current_date.strftime("%Y-%m-%d"),
-                    "module": module.title,
-                    "hours": round(hours_today, 1),
-                })
-                module_hours -= hours_today
-                remaining_hours -= hours_today
-        
-        return timeline
+        # Difficulty appropriateness
+        if course.difficulty == DifficultyLevel.BEGINNER:
+            match_score += 10
+            reasons.append("Beginner-friendly")
 
-    def get_collaborative_learning_groups(self) -> Dict[str, List[SecurityModule]]:
-        """Suggest collaborative learning groups based on module themes."""
-        return {
-            "Foundations": self.get_modules_by_category(CourseCategory.FUNDAMENTALS),
-            "Offensive Security": self.get_modules_by_category(CourseCategory.OFFENSIVE),
-            "Defensive Security": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.DEFENSIVE, CourseCategory.INCIDENT_RESPONSE, CourseCategory.THREAT_INTEL]
-            ],
-            "Cloud & Architecture": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.CLOUD_SECURITY, CourseCategory.DEVSECOPS]
-            ],
-        }
+        if match_score > 0:
+            course_dict = course.to_dict()
+            course_dict["match_score"] = match_score
+            course_dict["recommendation_reasons"] = reasons
+            recommendations.append(course_dict)
 
-    def get_challenge_labs(self) -> List[SecurityLab]:
-        """Get the most challenging labs (highest points)."""
-        all_labs = []
-        for module in self._modules.values():
-            all_labs.extend(module.labs)
-        return sorted(all_labs, key=lambda l: l.points, reverse=True)[:10]
+    # Sort by match score descending
+    recommendations.sort(key=lambda x: x["match_score"], reverse=True)
+    return recommendations[:10]
 
-    def get_leaderboard_template(self) -> str:
-        """Generate a leaderboard template."""
-        lines = [
-            "╔" + "═" * 58 + "╗",
-            "║" + " " * 16 + "TRAINING LEADERBOARD" + " " * 22 + "║",
-            "╠" + "═" * 58 + "╣",
-            "║  Rank │ Name          │ Modules │ Hours │ Score   ║",
-            "╠" + "═" * 58 + "╣",
-            "║   1   │               │         │       │         ║",
-            "║   2   │               │         │       │         ║",
-            "║   3   │               │         │       │         ║",
-            "║   4   │               │         │       │         ║",
-            "║   5   │               │         │       │         ║",
-            "╚" + "═" * 58 + "╝",
-        ]
-        return "\n".join(lines)
 
-    def export_to_csv(self) -> str:
-        """Export module summary to CSV format."""
-        lines = ["id,title,category,difficulty,duration_hours,lesson_count,lab_count,quiz_question_count"]
-        for m in self.get_all_modules():
-            lines.append(
-                f'"{m.id}","{m.title}","{m.category.value}","{m.difficulty.value}",'
-                f'{m.duration_hours},{len(m.lessons)},{len(m.labs)},'
-                f'{len(m.quiz.questions) if m.quiz else 0}'
-            )
-        return "\n".join(lines)
+def create_ctf_challenge(difficulty: str = "intermediate",
+                         category: str = "network") -> dict:
+    """Generate a random CTF challenge based on difficulty and category.
 
-    def get_spaced_repetition_schedule(self, module_id: str) -> List[Dict[str, str]]:
-        """Generate a spaced repetition schedule for a module."""
-        from datetime import datetime, timedelta
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        intervals = [1, 3, 7, 14, 30]  # days
-        schedule = []
-        base_date = datetime.now()
-        
-        for interval in intervals:
-            review_date = base_date + timedelta(days=interval)
-            schedule.append({
-                "date": review_date.strftime("%Y-%m-%d"),
-                "module": module.title,
-                "interval_days": interval,
-                "activity": f"Review {module.title} - Day {interval}",
-            })
-        return schedule
+    Selects from the pool of 15 pre-built CTF challenges or generates
+    a random puzzle challenge.
 
-    def get_modules_with_video_content(self) -> List[SecurityModule]:
-        """Get modules that include video content."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.VIDEO for l in m.lessons)
-        ]
+    Args:
+        difficulty: Difficulty level (beginner/intermediate/advanced/expert).
+        category: Course category for the challenge.
 
-    def get_modules_with_interactive_content(self) -> List[SecurityModule]:
-        """Get modules with interactive lessons."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.INTERACTIVE for l in m.lessons)
-        ]
+    Returns:
+        dict: CTF challenge details (without revealing the flag).
 
-    def get_pomodoro_schedule(self, module_id: str) -> List[Dict[str, any]]:
-        """Generate a Pomodoro-style study schedule for a module."""
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        schedule = []
-        pomodoro_count = 0
-        total_minutes = int(module.duration_hours * 60)
-        
-        for lesson in module.lessons:
-            lesson_poms = max(1, lesson.duration_min // 25)
-            for p in range(lesson_poms):
-                pomodoro_count += 1
-                schedule.append({
-                    "pomodoro": pomodoro_count,
-                    "activity": f"Study: {lesson.title}",
-                    "duration_min": min(25, lesson.duration_min - p * 25),
-                    "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-                })
-        
-        for lab in module.labs:
-            pomodoro_count += 1
-            schedule.append({
-                "pomodoro": pomodoro_count,
-                "activity": f"Lab: {lab.title}",
-                "duration_min": min(25, lab.duration_min),
-                "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-            })
-        
-        return schedule
+    Example:
+        >>> challenge = create_ctf_challenge('intermediate', 'network')
+        >>> 'flag' not in challenge
+        True
+    """
+    # Filter challenges by criteria
+    available = []
+    for ctf in _ctf_challenges.values():
+        cat_match = not category or ctf.category.value == category.lower()
+        diff_match = not difficulty or ctf.difficulty.value == difficulty.lower()
+        if cat_match or diff_match:
+            available.append(ctf)
 
-    def get_gamification_summary(self, completed_ids: List[str]) -> Dict[str, any]:
-        """Get gamification summary for a user."""
-        total_points = self.get_total_points()
-        earned_points = sum(
-            sum(lab.points for lab in m.labs)
-            for m in self._modules.values()
-            if m.id in completed_ids
-        )
-        
-        return {
-            "total_points": total_points,
-            "earned_points": earned_points,
-            "completion_percentage": round((earned_points / total_points) * 100, 1) if total_points > 0 else 0,
-            "modules_completed": len(completed_ids),
-            "total_modules": len(self._modules),
-            "achievements": self._get_achievements(completed_ids),
-        }
+    if not available:
+        # Return a random challenge if no exact match
+        available = list(_ctf_challenges.values())
 
-    def _get_achievements(self, completed_ids: List[str]) -> List[str]:
-        """Get list of achievements based on progress."""
-        achievements = []
-        completed_set = set(completed_ids)
-        
-        if len(completed_set) >= 1:
-            achievements.append("🎓 First Steps - Complete your first module")
-        if len(completed_set) >= 5:
-            achievements.append("📚 Halfway There - Complete 5 modules")
-        if len(completed_set) >= 10:
-            achievements.append("🏆 Master - Complete 10 modules")
-        if len(completed_set) >= 15:
-            achievements.append("⭐ Grandmaster - Complete all modules")
-        
-        # Category achievements
-        for cat in CourseCategory:
-            cat_modules = [m.id for m in self._modules.values() if m.category == cat]
-            if cat_modules and all(m in completed_set for m in cat_modules):
-                achievements.append(f"🔒 {cat.value} Expert - Complete all {cat.value} modules")
-        
-        return achievements
+    challenge = random.choice(available)
+    return challenge.to_dict(reve

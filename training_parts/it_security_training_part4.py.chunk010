@@ -1,201 +1,279 @@
+al_flag=False)
 
 
-    def get_modules_for_team_role(self, role: str) -> List[SecurityModule]:
-        """Recommend modules based on team role."""
-        role_map = {
-            "developer": ["devsecops_001", "cloudsec_001", "crypto_001"],
-            "security_analyst": ["thintel_001", "incresp_001", "forensics_001", "netsec_001"],
-            "network_admin": ["netsec_001", "cloudsec_001", "iam_001"],
-            "compliance_officer": ["iam_001", "crypto_001", "cloudsec_001"],
-            "penetration_tester": ["ethhack_001", "netsec_001", "thintel_001"],
-            "incident_responder": ["incresp_001", "forensics_001", "thintel_001"],
-            "security_architect": ["cloudsec_001", "devsecops_001", "iam_001", "crypto_001"],
-            "soc_analyst": ["thintel_001", "incresp_001", "netsec_001"],
+def verify_ctf_flag(challenge_id: str, flag: str) -> dict:
+    """Verify a CTF flag submission with timing and attempt tracking.
+
+    Args:
+        challenge_id: ID of the CTF challenge.
+        flag: Submitted flag string (e.g., 'LUQI{...}').
+
+    Returns:
+        dict: Verification result with correctness, points, and hints.
+
+    Raises:
+        CTFChallengeNotFoundError: If the challenge does not exist.
+        InvalidSubmissionError: If flag is empty.
+
+    Example:
+        >>> result = verify_ctf_flag('ctf_netsec', 'LUQI{NETSCAN_MASTERY_2024}')
+        >>> result['correct']
+        True
+    """
+    if not flag:
+        raise InvalidSubmissionError("Flag cannot be empty")
+    if challenge_id not in _ctf_challenges:
+        raise CTFChallengeNotFoundError(f"CTF challenge '{challenge_id}' not found")
+
+    challenge = _ctf_challenges[challenge_id]
+    is_correct = flag.strip() == challenge.flag
+
+    if is_correct:
+        challenge.solves += 1
+
+    return {
+        "correct": is_correct,
+        "challenge_id": challenge_id,
+        "points": challenge.points if is_correct else 0,
+        "difficulty": challenge.difficulty.value,
+        "category": challenge.category.value,
+        "hints_unlocked": challenge.hints if not is_correct else [],
+        "total_solves": challenge.solves,
+        "message": "Correct! Flag verified." if is_correct else "Incorrect flag. Try again!",
+    }
+
+
+def get_all_badges() -> List[dict]:
+    """Get all available skill badges in the platform.
+
+    Returns:
+        List[dict]: All skill badges with their requirements.
+
+    Example:
+        >>> badges = get_all_badges()
+        >>> len(badges) >= 30
+        True
+    """
+    return [badge.to_dict() for badge in _badges.values()]
+
+
+def get_user_badges(user_id: str) -> List[dict]:
+    """Get all badges earned by a specific user.
+
+    Args:
+        user_id: Unique identifier for the user.
+
+    Returns:
+        List[dict]: User's earned badges with details.
+    """
+    if user_id not in _skill_trees:
+        return []
+
+    tree = _skill_trees[user_id]
+    result = []
+    for badge_id in tree.badges:
+        if badge_id in _badges:
+            badge_dict = _badges[badge_id].to_dict()
+            badge_dict["earned"] = True
+            result.append(badge_dict)
+    return result
+
+
+def get_certification_tracks() -> List[dict]:
+    """Get all available certification preparation tracks.
+
+    Returns:
+        List[dict]: Certification tracks with associated courses.
+
+    Example:
+        >>> tracks = get_certification_tracks()
+        >>> len(tracks)
+        4
+    """
+    tracks = {
+        CertificationTrack.COMPTIA_SECURITY_PLUS: [],
+        CertificationTrack.CEH: [],
+        CertificationTrack.CISSP: [],
+        CertificationTrack.OSCP: [],
+    }
+
+    for course in _courses.values():
+        if course.certification_track in tracks:
+            tracks[course.certification_track].append(course.id)
+
+    return [
+        {
+            "name": track.value,
+            "courses": course_list,
+            "total_courses": len(course_list),
+            "estimated_hours": sum(_courses[c].duration_hours for c in course_list if c in _courses),
         }
-        module_ids = role_map.get(role.lower(), [])
-        return [self._modules[mid] for mid in module_ids if mid in self._modules]
+        for track, course_list in tracks.items()
+    ]
 
-    def generate_study_timeline(self, start_date: str, hours_per_week: float) -> List[Dict[str, any]]:
-        """Generate a study timeline with dates."""
-        from datetime import datetime, timedelta
-        modules = self.get_all_modules()
-        timeline = []
-        current_date = datetime.strptime(start_date, "%Y-%m-%d")
-        remaining_hours = hours_per_week
-        
-        for module in modules:
-            module_hours = module.duration_hours
-            while module_hours > 0:
-                if remaining_hours <= 0:
-                    current_date += timedelta(days=1)
-                    while current_date.weekday() >= 5:
-                        current_date += timedelta(days=1)
-                    remaining_hours = hours_per_week
-                
-                hours_today = min(remaining_hours, module_hours)
-                timeline.append({
-                    "date": current_date.strftime("%Y-%m-%d"),
-                    "module": module.title,
-                    "hours": round(hours_today, 1),
-                })
-                module_hours -= hours_today
-                remaining_hours -= hours_today
-        
-        return timeline
 
-    def get_collaborative_learning_groups(self) -> Dict[str, List[SecurityModule]]:
-        """Suggest collaborative learning groups based on module themes."""
-        return {
-            "Foundations": self.get_modules_by_category(CourseCategory.FUNDAMENTALS),
-            "Offensive Security": self.get_modules_by_category(CourseCategory.OFFENSIVE),
-            "Defensive Security": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.DEFENSIVE, CourseCategory.INCIDENT_RESPONSE, CourseCategory.THREAT_INTEL]
-            ],
-            "Cloud & Architecture": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.CLOUD_SECURITY, CourseCategory.DEVSECOPS]
-            ],
-        }
+def get_platform_stats() -> dict:
+    """Get comprehensive platform statistics.
 
-    def get_challenge_labs(self) -> List[SecurityLab]:
-        """Get the most challenging labs (highest points)."""
-        all_labs = []
-        for module in self._modules.values():
-            all_labs.extend(module.labs)
-        return sorted(all_labs, key=lambda l: l.points, reverse=True)[:10]
+    Returns:
+        dict: Statistics about courses, modules, labs, quizzes, CTFs,
+            badges, and user engagement.
 
-    def get_leaderboard_template(self) -> str:
-        """Generate a leaderboard template."""
-        lines = [
-            "╔" + "═" * 58 + "╗",
-            "║" + " " * 16 + "TRAINING LEADERBOARD" + " " * 22 + "║",
-            "╠" + "═" * 58 + "╣",
-            "║  Rank │ Name          │ Modules │ Hours │ Score   ║",
-            "╠" + "═" * 58 + "╣",
-            "║   1   │               │         │       │         ║",
-            "║   2   │               │         │       │         ║",
-            "║   3   │               │         │       │         ║",
-            "║   4   │               │         │       │         ║",
-            "║   5   │               │         │       │         ║",
-            "╚" + "═" * 58 + "╝",
-        ]
-        return "\n".join(lines)
+    Example:
+        >>> stats = get_platform_stats()
+        >>> stats['total_courses']
+        15
+    """
+    total_quiz_questions = sum(
+        len(quiz.questions) for quiz in _quizzes.values()
+    )
 
-    def export_to_csv(self) -> str:
-        """Export module summary to CSV format."""
-        lines = ["id,title,category,difficulty,duration_hours,lesson_count,lab_count,quiz_question_count"]
-        for m in self.get_all_modules():
-            lines.append(
-                f'"{m.id}","{m.title}","{m.category.value}","{m.difficulty.value}",'
-                f'{m.duration_hours},{len(m.lessons)},{len(m.labs)},'
-                f'{len(m.quiz.questions) if m.quiz else 0}'
-            )
-        return "\n".join(lines)
+    return {
+        "total_courses": len(_courses),
+        "total_modules": len(_modules),
+        "total_lessons": len(_lessons),
+        "total_labs": len(_labs),
+        "total_quizzes": len(_quizzes),
+        "total_quiz_questions": total_quiz_questions,
+        "total_ctf_challenges": len(_ctf_challenges),
+        "total_badges": len(_badges),
+        "total_enrolled_users": len(set(p.user_id for p in _user_progress.values())),
+        "total_certificates_issued": len(_certificates),
+        "certification_tracks": len(CertificationTrack),
+        "version": "24.4.0",
+        "platform": "Luqi AI Security Training Academy",
+        "company": "Limitless Telecoms",
+    }
 
-    def get_spaced_repetition_schedule(self, module_id: str) -> List[Dict[str, str]]:
-        """Generate a spaced repetition schedule for a module."""
-        from datetime import datetime, timedelta
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        intervals = [1, 3, 7, 14, 30]  # days
-        schedule = []
-        base_date = datetime.now()
-        
-        for interval in intervals:
-            review_date = base_date + timedelta(days=interval)
-            schedule.append({
-                "date": review_date.strftime("%Y-%m-%d"),
-                "module": module.title,
-                "interval_days": interval,
-                "activity": f"Review {module.title} - Day {interval}",
-            })
-        return schedule
 
-    def get_modules_with_video_content(self) -> List[SecurityModule]:
-        """Get modules that include video content."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.VIDEO for l in m.lessons)
-        ]
+def get_module_for_course(course_id: str) -> Optional[dict]:
+    """Get the primary module for a course.
 
-    def get_modules_with_interactive_content(self) -> List[SecurityModule]:
-        """Get modules with interactive lessons."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.INTERACTIVE for l in m.lessons)
-        ]
+    Args:
+        course_id: The course identifier.
 
-    def get_pomodoro_schedule(self, module_id: str) -> List[Dict[str, any]]:
-        """Generate a Pomodoro-style study schedule for a module."""
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        schedule = []
-        pomodoro_count = 0
-        total_minutes = int(module.duration_hours * 60)
-        
-        for lesson in module.lessons:
-            lesson_poms = max(1, lesson.duration_min // 25)
-            for p in range(lesson_poms):
-                pomodoro_count += 1
-                schedule.append({
-                    "pomodoro": pomodoro_count,
-                    "activity": f"Study: {lesson.title}",
-                    "duration_min": min(25, lesson.duration_min - p * 25),
-                    "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-                })
-        
-        for lab in module.labs:
-            pomodoro_count += 1
-            schedule.append({
-                "pomodoro": pomodoro_count,
-                "activity": f"Lab: {lab.title}",
-                "duration_min": min(25, lab.duration_min),
-                "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-            })
-        
-        return schedule
+    Returns:
+        dict or None: Module details if found.
+    """
+    if course_id not in _courses:
+        return None
+    course = _courses[course_id]
+    if course.modules:
+        return course.modules[0].to_dict()
+    return None
 
-    def get_gamification_summary(self, completed_ids: List[str]) -> Dict[str, any]:
-        """Get gamification summary for a user."""
-        total_points = self.get_total_points()
-        earned_points = sum(
-            sum(lab.points for lab in m.labs)
-            for m in self._modules.values()
-            if m.id in completed_ids
-        )
-        
-        return {
-            "total_points": total_points,
-            "earned_points": earned_points,
-            "completion_percentage": round((earned_points / total_points) * 100, 1) if total_points > 0 else 0,
-            "modules_completed": len(completed_ids),
-            "total_modules": len(self._modules),
-            "achievements": self._get_achievements(completed_ids),
-        }
 
-    def _get_achievements(self, completed_ids: List[str]) -> List[str]:
-        """Get list of achievements based on progress."""
-        achievements = []
-        completed_set = set(completed_ids)
-        
-        if len(completed_set) >= 1:
-            achievements.append("🎓 First Steps - Complete your first module")
-        if len(completed_set) >= 5:
-            achievements.append("📚 Halfway There - Complete 5 modules")
-        if len(completed_set) >= 10:
-            achievements.append("🏆 Master - Complete 10 modules")
-        if len(completed_set) >= 15:
-            achievements.append("⭐ Grandmaster - Complete all modules")
-        
-        # Category achievements
-        for cat in CourseCategory:
-            cat_modules = [m.id for m in self._modules.values() if m.category == cat]
-            if cat_modules and all(m in completed_set for m in cat_modules):
-                achievements.append(f"🔒 {cat.value} Expert - Complete all {cat.value} modules")
-        
-        return achievements
+def get_lessons_for_module(module_id: str) -> List[dict]:
+    """Get all lessons for a specific module.
+
+    Args:
+        module_id: The module identifier.
+
+    Returns:
+        List[dict]: Lessons sorted by order.
+    """
+    if module_id not in _modules:
+        return []
+    module = _modules[module_id]
+    return sorted([lesson.to_dict() for lesson in module.lessons], key=lambda x: x["order"])
+
+
+def get_labs_for_module(module_id: str) -> List[dict]:
+    """Get all labs for a specific module.
+
+    Args:
+        module_id: The module identifier.
+
+    Returns:
+        List[dict]: Lab exercises for the module.
+    """
+    if module_id not in _modules:
+        return []
+    module = _modules[module_id]
+    return [lab.to_dict() for lab in module.labs]
+
+
+def get_quiz_for_module(module_id: str) -> Optional[dict]:
+    """Get the quiz for a specific module.
+
+    Args:
+        module_id: The module identifier.
+
+    Returns:
+        dict or None: Quiz details if the module has one.
+    """
+    if module_id not in _modules:
+        return None
+    module = _modules[module_id]
+    return module.quiz.to_dict() if module.quiz else None
+
+
+def reset_user_progress(user_id: str, course_id: str) -> dict:
+    """Reset a user's progress in a course (for retaking).
+
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course to reset.
+
+    Returns:
+        dict: Reset confirmation.
+
+    Raises:
+        UserNotEnrolledError: If user is not enrolled.
+    """
+    progress_key = f"{user_id}:{course_id}"
+    if progress_key not in _user_progress:
+        raise UserNotEnrolledError(f"User {user_id} is not enrolled in {course_id}")
+
+    del _user_progress[progress_key]
+    return {
+        "status": "success",
+        "message": f"Progress reset for user {user_id} in course {course_id}",
+    }
+
+
+def export_user_report(user_id: str) -> dict:
+    """Generate a comprehensive report for a user.
+
+    Args:
+        user_id: Unique identifier for the user.
+
+    Returns:
+        dict: Complete user report with all progress, certificates,
+            skill tree, and badges.
+    """
+    # Get all progress entries
+    user_progress = []
+    for key, progress in _user_progress.items():
+        if progress.user_id == user_id:
+            user_progress.append(progress.to_dict())
+
+    # Get certificates
+    user_certs = []
+    for key, cert in _certificates.items():
+        if cert.user_id == user_id:
+            user_certs.append(cert.to_dict())
+
+    skill_tree = get_skill_tree(user_id)
+    badges = get_user_badges(user_id)
+
+    return {
+        "user_id": user_id,
+        "generated_at": datetime.utcnow().isoformat(),
+        "courses_enrolled": len(user_progress),
+        "courses_completed": sum(1 for p in user_progress if p["status"] == "completed"),
+        "overall_progress": user_progress,
+        "certificates": user_certs,
+        "skill_tree": skill_tree,
+        "badges": badges,
+    }
+
+
+# ============================================================================
+# INITIALIZATION
+# ============================================================================
+
+def initialize_platform() -> dict:
+    """Initialize the security training platform.
+
+    Ensures all courses, badges, and CTF challe
