@@ -1,0 +1,157 @@
+===========
+    # Self-test
+    # =====================================================================
+
+    def self_test(self) -> Dict[str, Any]:
+        """Run validation tests on all subsystems.
+
+        Returns:
+            Dictionary with test results for each subsystem.
+        """
+        results: Dict[str, Any] = {}
+        test_user = "__test_user__"
+
+        try:
+            # Test session tracking
+            self.track_activity(test_user, "chat", 120000, "low")
+            self.track_activity(test_user, "coding", 300000, "high")
+            screen_time = self._session_tracker.get_screen_time_minutes(
+                test_user, 60
+            )
+            results["session_tracking"] = {
+                "status": "pass" if screen_time == 7 else "fail",
+                "screen_time_minutes": screen_time,
+            }
+
+            # Test fatigue calculation
+            status = self.get_status(test_user)
+            results["fatigue_calculation"] = {
+                "status": "pass" if 0 <= status.fatigue_score <= 100 else "fail",
+                "fatigue_score": status.fatigue_score,
+                "fatigue_level": status.fatigue_level,
+            }
+
+            # Test break suggestions
+            suggestion = self.get_break_suggestion(test_user)
+            results["break_suggestion"] = {
+                "status": "pass" if suggestion.title else "fail",
+                "break_type": suggestion.break_type,
+                "title": suggestion.title,
+            }
+
+            # Test wellness tips
+            tip = self.get_wellness_tip(test_user)
+            results["wellness_tips"] = {
+                "status": "pass" if tip.title else "fail",
+                "category": tip.category,
+                "title": tip.title,
+            }
+
+            # Test focus mode
+            self.toggle_focus_mode(test_user, True)
+            focus_status = self.get_focus_status(test_user)
+            results["focus_mode"] = {
+                "status": "pass" if focus_status.state == "active" else "fail",
+                "state": focus_status.state,
+            }
+            self.toggle_focus_mode(test_user, False)
+
+            # Test Pomodoro
+            self.start_pomodoro(test_user, "classic")
+            pom_status = self.get_focus_status(test_user)
+            results["pomodoro"] = {
+                "status": (
+                    "pass"
+                    if pom_status.pomodoro_phase == "work"
+                    else "fail"
+                ),
+                "phase": pom_status.pomodoro_phase,
+                "work_minutes": pom_status.pomodoro_work_minutes,
+            }
+            self.stop_pomodoro(test_user)
+
+            # Test goals
+            goals = ScreenTimeGoals(daily_limit_minutes=300)
+            self.set_goals(test_user, goals)
+            retrieved_goals = self.get_goals(test_user)
+            results["screen_time_goals"] = {
+                "status": (
+                    "pass"
+                    if retrieved_goals.daily_limit_minutes == 300
+                    else "fail"
+                ),
+                "limit": retrieved_goals.daily_limit_minutes,
+            }
+
+            # Test eye strain tracker
+            reminder = self.get_eye_strain_reminder(test_user)
+            results["eye_strain_tracker"] = {
+                "status": "pass",  # Either due or not is valid
+                "reminder_due": reminder is not None,
+            }
+
+            # Test wind-down
+            wd_status = self.get_wind_down_status(test_user)
+            results["wind_down"] = {
+                "status": "pass" if "active" in wd_status else "fail",
+                "active": wd_status["active"],
+            }
+
+            # Test preferences
+            prefs = self.update_wellness_preferences(
+                test_user, {"tip_frequency": "high"}
+            )
+            results["preferences"] = {
+                "status": (
+                    "pass" if prefs.tip_frequency == "high" else "fail"
+                ),
+                "tip_frequency": prefs.tip_frequency,
+            }
+
+            # Test tip categories
+            categories = self.get_tip_categories()
+            results["tip_categories"] = {
+                "status": "pass" if len(categories) >= 8 else "fail",
+                "count": len(categories),
+                "categories": categories,
+            }
+
+            # Test usage report
+            report = self.get_usage_report(test_user, "today")
+            results["usage_report"] = {
+                "status": "pass" if report.total_screen_time_minutes >= 0 else "fail",
+                "total_minutes": report.total_screen_time_minutes,
+                "insights_count": len(report.insights),
+            }
+
+            # Overall result
+            all_passed = all(
+                r.get("status") == "pass" for r in results.values()
+            )
+            results["overall"] = {
+                "status": "pass" if all_passed else "fail",
+                "tests_run": len(results),
+                "tests_passed": sum(
+                    1 for r in results.values() if r.get("status") == "pass"
+                ),
+            }
+
+        except Exception as exc:
+            results["overall"] = {
+                "status": "error",
+                "error": str(exc),
+            }
+            logger.error("Self-test failed: %s", exc, exc_info=True)
+
+        finally:
+            # Clean up test data
+            self.clear_user_data(test_user)
+
+        return results
+
+
+# ---------------------------------------------------------------------------
+# Module-level singleton instance
+# ---------------------------------------------------------------------------
+
+wellness_engine = WellnessEngine()
