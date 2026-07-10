@@ -1,0 +1,25 @@
+# Luqi AI v24.4.0 — Digital Wellness Part 1 Manifest
+# Total Size: 90,177 bytes | 12 chunks of ~8KB each
+# Source: digital_wellness_part1.py
+# Pushed: 2026-07-10
+
+FILE: training_parts/digital_wellness_part1.py
+CHUNKS: 12
+CHUNK_SIZE: 8000 bytes
+TOTAL_SIZE: 90177 bytes
+
+CHUNK_MAP:
+  chunk000: bytes 0-7999 (8000 bytes) - Module docstring, imports, Constants, Enums, Data Models (ActivityRecord through WellnessStatus)
+  chunk001: bytes 8000-15999 (8000 bytes) - Data Models continued (BreakSuggestion through WellnessPreferences), FEATURE_COGNITIVE_LOAD
+  chunk002: bytes 16000-23999 (8000 bytes) - COGNITIVE_LOAD_MULTIPLIERS, WellnessTipsDatabase class start, _initialize, get_all_tips
+  chunk003: bytes 24000-31999 (8000 bytes) - select_contextual_tip, _select_category, _load_all_tips - EYE HEALTH tips (25 tips)
+  chunk004: bytes 32000-39999 (8000 bytes) - EYE HEALTH tips continued, POSTURE & ERGONOMICS tips (25 tips)
+  chunk005: bytes 40000-47999 (8000 bytes) - MENTAL CLARITY tips (25 tips) start
+  chunk006: bytes 48000-55999 (8000 bytes) - MENTAL CLARITY tips continued, SLEEP HYGIENE tips (25 tips) start
+  chunk007: bytes 56000-63999 (8000 bytes) - SLEEP HYGIENE tips continued, HYDRATION & NUTRITION tips (25 tips) start
+  chunk008: bytes 64000-71999 (8000 bytes) - HYDRATION tips continued, MOVEMENT & EXERCISE tips (25 tips)
+  chunk009: bytes 72000-79999 (8000 bytes) - MOVEMENT tips continued, STRESS MANAGEMENT tips (25 tips) start
+  chunk010: bytes 80000-87999 (8000 bytes) - STRESS tips continued, SOCIAL CONNECTION tips (25 tips) start
+  chunk011: bytes 88000-90176 (2177 bytes) - SOCIAL tips continued, return tips, Session Tracker section header
+
+# To reconstruct: cat chunk000 chunk001 ... chunk011 > digital_wellness_part1.py
