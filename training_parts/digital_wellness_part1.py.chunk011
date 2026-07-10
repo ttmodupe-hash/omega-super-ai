@@ -1,0 +1,27 @@
+educes cortisol. Even a brief hug can significantly reduce stress.",
+                "If appropriate and welcome, share a hug or pat on the back with someone you care about.", "Psychological Science"),
+            WellnessTip(TipCategory.SOCIAL.value, "Be a Good Neighbor",
+                "Simple neighborly gestures build community cohesion and increase your own sense of belonging.",
+                "Do one neighborly act today: greet a neighbor, offer help, or share something.", "Community Psychology Research"),
+            WellnessTip(TipCategory.SOCIAL.value, "Listen to Understand, Not to Reply",
+                "Most people listen with the intent to reply rather than to understand. Practice listening with curiosity.",
+                "In your next conversation, focus entirely on understanding the other person before responding.", "Active Listening Research (Rogers & Farson)"),
+            WellnessTip(TipCategory.SOCIAL.value, "Create a Ritual with Loved Ones",
+                "Shared rituals like weekly dinners or morning walks provide predictable connection points that strengthen relationships.",
+                "Propose a recurring ritual with someone you care about.", "Family Rituals Research (Fiese et al., 2002)"),
+            WellnessTip(TipCategory.SOCIAL.value, "Express Love in Others' Languages",
+                "People receive love differently: words of affirmation, acts of service, gifts, quality time, or physical touch.",
+                "Identify the love language of someone close to you and express care in that way today.", "The 5 Love Languages by Gary Chapman"),
+            WellnessTip(TipCategory.SOCIAL.value, "Practice Digital Connection Mindfully",
+                "While digital tools enable connection, they can create shallow interactions. Use video calls over text when possible.",
+                "Replace one text-based interaction today with a video call or voice message.", "Digital Communication Research"),
+        ])
+
+        return tips
+
+
+# ---------------------------------------------------------------------------
+# Session Tracker
+# ---------------------------------------------------------------------------
+
+
