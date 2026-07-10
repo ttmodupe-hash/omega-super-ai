@@ -53,5 +53,80 @@
             ),
             SecurityLesson(
                 id="crypto_l9", module_id="crypto_001", title="Introduction to Post-Quantum Cryptography",
-                content="Quantum computing threats to current cryptography: Shor's algorithm breaking RSA/ECC, Grover's algorithm halving symmetric key security. NIST PQC standardization: CRYSTALS-Kyber (key encapsulation), CRYSTALS-Dil
+                content="Quantum computing threats to current cryptography: Shor's algorithm breaking RSA/ECC, Grover's algorithm halving symmetric key security. NIST PQC standardization: CRYSTALS-Kyber (key encapsulation), CRYSTALS-Dilithium (signatures), SPHINCS+, FALCON. Migration strategies and crypto agility.",
+                lesson_type=LessonType.TEXT, duration_min=45, order=9,
+            ),
+        ],
+        labs=[
+            SecurityLab(
+                id="crypto_lab1", module_id="crypto_001",
+                title="Implement AES-GCM Encryption in Python",
+                description="Build a secure file encryption tool using AES-256-GCM with proper key derivation.",
+                environment="Python 3.11 with cryptography library, test files of various sizes.",
+                tasks=[
+                    "Generate a random 256-bit key using os.urandom",
+                    "Derive key from password using PBKDF2-HMAC-SHA256",
+                    "Encrypt a file using AES-GCM with unique nonce per file",
+                    "Store nonce and tag alongside ciphertext",
+                    "Implement secure decryption with authentication verification",
+                    "Add support for large files using chunked encryption",
+                ],
+                hints=[
+                    "Never reuse a (key, nonce) pair with GCM",
+                    "Use a minimum of 100,000 PBKDF2 iterations",
+                    "Authenticate the ciphertext before decryption",
+                ],
+                solution="from cryptography.hazmat.primitives.ciphers.aead import AESGCM; key = AESGCM.generate_key(bit_length=256); aesgcm = AESGCM(key); nonce = os.urandom(12); ct = aesgcm.encrypt(nonce, plaintext, None); decrypt: aesgcm.decrypt(nonce, ct, None)",
+                duration_min=75, points=150,
+            ),
+            SecurityLab(
+                id="crypto_lab2", module_id="crypto_001",
+                title="Build a Password Hashing System",
+                description="Implement secure password hashing with Argon2id and verify against timing attacks.",
+                environment="Python 3.11 with argon2-cffi, bcrypt, hashlib, timing attack simulation tools.",
+                tasks=[
+                    "Install and configure argon2-cffi library",
+                    "Implement hash generation with Argon2id (t=3, m=65536, p=4)",
+                    "Implement constant-time password verification",
+                    "Compare performance of bcrypt, scrypt, and Argon2",
+                    "Test against timing attack using statistical analysis",
+                    "Implement secure password reset token generation",
+                ],
+                hints=[
+                    "Use argon2.PasswordHasher(time_cost=3, memory_cost=65536, parallelism=4)",
+                    "Use hmac.compare_digest() for constant-time comparison",
+                    "Generate reset tokens with secrets.token_urlsafe()",
+                ],
+                solution="from argon2 import PasswordHasher; ph = PasswordHasher(time_cost=3, memory_cost=65536, parallelism=4, hash_len=32, salt_len=16); hash = ph.hash('user_password'); ph.verify(hash, 'user_password'); ph.check_needs_rehash(hash) for parameter updates",
+                duration_min=60, points=125,
+            ),
+            SecurityLab(
+                id="crypto_lab3", module_id="crypto_001",
+                title="TLS Certificate Analysis and Validation",
+                description="Analyze TLS certificates for security issues and implement certificate pinning.",
+                environment="OpenSSL 3.0, Python 3.11 with ssl, socket, cryptography libraries, test server.",
+                tasks=[
+                    "Use openssl s_client to inspect a server's certificate chain",
+                    "Check certificate expiry, SAN, and key usage extensions",
+                    "Verify certificate chain against trusted CAs",
+                    "Check for weak cipher suites and TLS version",
+                    "Implement certificate pinning in Python client",
+                    "Test OCSP stapling support on target server",
+                ],
+                hints=[
+                    "openssl s_client -connect example.com:443 -servername example.com",
+                    "Use cryptography.x509 to parse certificates in Python",
+                    "Pin the SPKI hash, not the full certificate",
+                ],
+                solution="openssl s_client -connect google.com:443 -showcerts </dev/null 2>/dev/null | openssl x509 -noout -text; Python: ssl.get_server_certificate(('host', 443)); cert = x509.load_pem_x509_certificate(cert_pem); pin = base64.b64encode(hashlib.sha256(cert.public_key().public_bytes(Encoding.DER, SubjectPublicKeyInfo())).digest())",
+                duration_min=60, points=125,
+            ),
+        ],
+        quiz=SecurityQuiz(
+            id="crypto_q1", module_id="crypto_001", title="Cryptography Assessment",
+            passing_score=75, time_limit_minutes=30,
+            questions=[
+                QuizQuestion("cq1", "What is the key size of AES-256?",
+                    ["128 bits", "192 bits", "256 bits", "512 bits"], 2,
+                    "AES-256 uses a 25
 # ___END_OF_FILE___
