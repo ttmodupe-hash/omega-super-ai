@@ -1,0 +1,339 @@
+ on high-priority threats.", DifficultyLevel.INTERMEDIATE),
+            ],
+        ),
+    )
+
+    # ========================================================================
+    # UTILITY FUNCTIONS & GET_ALL_MODULES()
+    # ========================================================================
+
+    def _add_module(self, module: SecurityModule) -> None:
+        """Register a module and index its components."""
+        self._modules[module.id] = module
+        for lesson in module.lessons:
+            self._lessons[lesson.id] = lesson
+        for lab in module.labs:
+            self._labs[lab.id] = lab
+        if module.quiz:
+            for question in module.quiz.questions:
+                self._questions[question.id] = question
+
+    def get_all_modules(self) -> List[SecurityModule]:
+        """Return all training modules sorted by order."""
+        return sorted(self._modules.values(), key=lambda m: m.order)
+
+    def get_module(self, module_id: str) -> Optional[SecurityModule]:
+        """Get a module by its ID."""
+        return self._modules.get(module_id)
+
+    def get_modules_by_category(self, category: CourseCategory) -> List[SecurityModule]:
+        """Get all modules in a specific category."""
+        return [m for m in self._modules.values() if m.category == category]
+
+    def get_modules_by_difficulty(self, difficulty: DifficultyLevel) -> List[SecurityModule]:
+        """Get all modules at a specific difficulty level."""
+        return [m for m in self._modules.values() if m.difficulty == difficulty]
+
+    def get_lesson(self, lesson_id: str) -> Optional[SecurityLesson]:
+        """Get a lesson by its ID."""
+        return self._lessons.get(lesson_id)
+
+    def get_lab(self, lab_id: str) -> Optional[SecurityLab]:
+        """Get a lab by its ID."""
+        return self._labs.get(lab_id)
+
+    def get_quiz_question(self, question_id: str) -> Optional[QuizQuestion]:
+        """Get a quiz question by its ID."""
+        return self._questions.get(question_id)
+
+    def get_modules_for_user_level(self, level: str) -> List[SecurityModule]:
+        """Get modules appropriate for a given user experience level."""
+        level_map = {
+            "beginner": [DifficultyLevel.BEGINNER],
+            "intermediate": [DifficultyLevel.BEGINNER, DifficultyLevel.INTERMEDIATE],
+            "advanced": [DifficultyLevel.BEGINNER, DifficultyLevel.INTERMEDIATE, DifficultyLevel.ADVANCED],
+            "expert": [DifficultyLevel.BEGINNER, DifficultyLevel.INTERMEDIATE, DifficultyLevel.ADVANCED, DifficultyLevel.EXPERT],
+        }
+        levels = level_map.get(level.lower(), [DifficultyLevel.BEGINNER])
+        return [m for m in self._modules.values() if m.difficulty in levels]
+
+    def get_total_duration(self) -> float:
+        """Get total training duration in hours."""
+        return sum(m.duration_hours for m in self._modules.values())
+
+    def get_total_lessons(self) -> int:
+        """Get total number of lessons across all modules."""
+        return sum(len(m.lessons) for m in self._modules.values())
+
+    def get_total_labs(self) -> int:
+        """Get total number of labs across all modules."""
+        return sum(len(m.labs) for m in self._modules.values())
+
+    def get_total_questions(self) -> int:
+        """Get total number of quiz questions across all modules."""
+        return sum(len(m.quiz.questions) for m in self._modules.values() if m.quiz)
+
+    def search_modules(self, query: str) -> List[SecurityModule]:
+        """Search modules by title, description, or category."""
+        query = query.lower()
+        results = []
+        for module in self._modules.values():
+            if (query in module.title.lower() or
+                query in module.description.lower() or
+                query in module.category.value.lower()):
+                results.append(module)
+        return results
+
+    def get_learning_path(self, target_cert: str) -> List[SecurityModule]:
+        """Get a recommended learning path for a target certification."""
+        cert_paths = {
+            "Security+": ["secplus_001", "netsec_001", "crypto_001", "iam_001"],
+            "CISSP": ["secplus_001", "iam_001", "netsec_001", "crypto_001", "cloudsec_001", "devsecops_001", "thintel_001"],
+            "CEH": ["ethhack_001", "netsec_001", "thintel_001", "cloudsec_001"],
+            "CCSP": ["cloudsec_001", "netsec_001", "crypto_001", "devsecops_001"],
+            "GCIH": ["incresp_001", "thintel_001", "forensics_001"],
+            "OSCP": ["ethhack_001", "netsec_001", "thintel_001", "incresp_001"],
+        }
+        module_ids = cert_paths.get(target_cert, [])
+        return [self._modules[mid] for mid in module_ids if mid in self._modules]
+
+    def get_progress_stats(self, completed_module_ids: List[str]) -> Dict[str, any]:
+        """Calculate progress statistics for a user."""
+        total = len(self._modules)
+        completed = len([m for m in completed_module_ids if m in self._modules])
+        total_hours = sum(self._modules[m].duration_hours for m in completed_module_ids if m in self._modules)
+        return {
+            "total_modules": total,
+            "completed_modules": completed,
+            "completion_percentage": round((completed / total) * 100, 1) if total > 0 else 0,
+            "completed_hours": total_hours,
+            "total_hours": sum(m.duration_hours for m in self._modules.values()),
+            "remaining_modules": total - completed,
+        }
+
+    def export_module_to_json(self, module_id: str) -> str:
+        """Export a module to JSON format."""
+        module = self._modules.get(module_id)
+        if not module:
+            return "{}"
+        import json
+        return json.dumps(module.to_dict(), indent=2)
+
+    def export_all_modules_to_json(self) -> str:
+        """Export all modules to JSON format."""
+        import json
+        return json.dumps([m.to_dict() for m in self.get_all_modules()], indent=2)
+
+    def get_module_summary(self) -> List[Dict[str, any]]:
+        """Get a summary of all modules."""
+        return [
+            {
+                "id": m.id,
+                "title": m.title,
+                "category": m.category.value,
+                "difficulty": m.difficulty.value,
+                "duration_hours": m.duration_hours,
+                "lesson_count": len(m.lessons),
+                "lab_count": len(m.labs),
+                "quiz_question_count": len(m.quiz.questions) if m.quiz else 0,
+            }
+            for m in self.get_all_modules()
+        ]
+
+    def get_category_distribution(self) -> Dict[str, int]:
+        """Get distribution of modules across categories."""
+        from collections import Counter
+        return dict(Counter(m.category.value for m in self._modules.values()))
+
+    def get_difficulty_distribution(self) -> Dict[str, int]:
+        """Get distribution of modules across difficulty levels."""
+        from collections import Counter
+        return dict(Counter(m.difficulty.value for m in self._modules.values()))
+
+    def get_modules_with_prerequisites(self, completed_ids: List[str]) -> List[SecurityModule]:
+        """Get modules whose prerequisites are satisfied."""
+        completed_set = set(completed_ids)
+        available = []
+        for module in self._modules.values():
+            if module.id in completed_set:
+                continue
+            prereqs_met = all(
+                any(prereq in completed_set for prereq in group)
+                for group in module.prerequisites
+            )
+            if prereqs_met:
+                available.append(module)
+        return available
+
+    def get_next_recommended_module(self, completed_ids: List[str]) -> Optional[SecurityModule]:
+        """Get the next recommended module based on completed modules."""
+        available = self.get_modules_with_prerequisites(completed_ids)
+        if not available:
+            return None
+        # Recommend by lowest order first
+        return min(available, key=lambda m: m.order)
+
+    def validate_quiz_answer(self, question_id: str, selected_index: int) -> Dict[str, any]:
+        """Validate a quiz answer and return feedback."""
+        question = self._questions.get(question_id)
+        if not question:
+            return {"correct": False, "message": "Question not found."}
+        correct = selected_index == question.correct_index
+        return {
+            "correct": correct,
+            "correct_index": question.correct_index,
+            "correct_answer": question.options[question.correct_index],
+            "explanation": question.explanation,
+            "difficulty": question.difficulty.value,
+        }
+
+    def get_random_quiz(self, num_questions: int = 10) -> List[QuizQuestion]:
+        """Get a random selection of quiz questions."""
+        import random
+        all_questions = list(self._questions.values())
+        if num_questions >= len(all_questions):
+            return all_questions
+        return random.sample(all_questions, num_questions)
+
+    def get_category_quiz(self, category: CourseCategory, num_questions: int = 5) -> List[QuizQuestion]:
+        """Get quiz questions from a specific category."""
+        import random
+        category_modules = [m for m in self._modules.values() if m.category == category]
+        questions = []
+        for module in category_modules:
+            if module.quiz:
+                questions.extend(module.quiz.questions)
+        if num_questions >= len(questions):
+            return questions
+        return random.sample(questions, num_questions)
+
+    def calculate_score(self, answers: Dict[str, int]) -> Dict[str, any]:
+        """Calculate a quiz score from a dictionary of question_id -> answer_index."""
+        correct = 0
+        total = len(answers)
+        wrong_questions = []
+        for qid, selected in answers.items():
+            question = self._questions.get(qid)
+            if question and selected == question.correct_index:
+                correct += 1
+            else:
+                wrong_questions.append(qid)
+        return {
+            "correct": correct,
+            "total": total,
+            "percentage": round((correct / total) * 100, 1) if total > 0 else 0,
+            "wrong_question_ids": wrong_questions,
+        }
+
+    def get_study_guide(self, module_id: str) -> str:
+        """Generate a study guide for a module."""
+        module = self._modules.get(module_id)
+        if not module:
+            return "Module not found."
+        lines = [
+            f"# Study Guide: {module.title}",
+            f"\n**Category:** {module.category.value}",
+            f"**Difficulty:** {module.difficulty.value}",
+            f"**Duration:** {module.duration_hours} hours",
+            f"**Lessons:** {len(module.lessons)}",
+            f"**Labs:** {len(module.labs)}",
+            "\n## Lessons",
+        ]
+        for lesson in module.lessons:
+            lines.append(f"- [{lesson.lesson_type.value}] {lesson.title} ({lesson.duration_min} min)")
+        lines.append("\n## Labs")
+        for lab in module.labs:
+            lines.append(f"- {lab.title} ({lab.duration_min} min, {lab.points} points)")
+        if module.quiz:
+            lines.append(f"\n## Quiz: {module.quiz.title}")
+            lines.append(f"- Passing score: {module.quiz.passing_score}%")
+            lines.append(f"- Time limit: {module.quiz.time_limit_minutes} minutes")
+            lines.append(f"- Questions: {len(module.quiz.questions)}")
+        return "\n".join(lines)
+
+    def get_all_study_guides(self) -> Dict[str, str]:
+        """Generate study guides for all modules."""
+        return {mid: self.get_study_guide(mid) for mid in self._modules}
+
+    def get_modules_requiring_prerequisites(self) -> List[SecurityModule]:
+        """Get modules that have prerequisites."""
+        return [m for m in self._modules.values() if m.prerequisites]
+
+    def get_modules_with_no_prerequisites(self) -> List[SecurityModule]:
+        """Get modules with no prerequisites (beginner-friendly)."""
+        return [m for m in self._modules.values() if not m.prerequisites]
+
+    def get_total_points(self) -> int:
+        """Get total available points across all labs."""
+        return sum(
+            sum(lab.points for lab in m.labs)
+            for m in self._modules.values()
+        )
+
+    def get_lab_by_difficulty(self, difficulty: DifficultyLevel) -> List[SecurityLab]:
+        """Get labs filtered by module difficulty."""
+        labs = []
+        for module in self._modules.values():
+            if module.difficulty == difficulty:
+                labs.extend(module.labs)
+        return labs
+
+    def get_completion_certificate_text(self, completed_ids: List[str]) -> str:
+        """Generate completion certificate text."""
+        stats = self.get_progress_stats(completed_ids)
+        lines = [
+            "=" * 60,
+            "      LUQI AI - IT SECURITY TRAINING CERTIFICATE",
+            "=" * 60,
+            f"",
+            f"This certifies that the participant has completed:",
+            f"  {stats['completed_modules']} of {stats['total_modules']} modules",
+            f"  {stats['completed_hours']:.1f} of {stats['total_hours']:.1f} training hours",
+            f"  Completion: {stats['completion_percentage']}%",
+            f"",
+            f"Modules completed:",
+        ]
+        for mid in completed_ids:
+            module = self._modules.get(mid)
+            if module:
+                lines.append(f"  ✓ {module.title}")
+        lines.extend([
+            f"",
+            f"Date: ________________",
+            f"Signature: ________________",
+            f"=" * 60,
+        ])
+        return "\n".join(lines)
+
+    def generate_training_report(self) -> str:
+        """Generate a comprehensive training report."""
+        modules = self.get_all_modules()
+        lines = [
+            "=" * 60,
+            "      LUQI AI - IT SECURITY TRAINING REPORT",
+            "=" * 60,
+            f"Total Modules: {len(modules)}",
+            f"Total Lessons: {self.get_total_lessons()}",
+            f"Total Labs: {self.get_total_labs()}",
+            f"Total Quiz Questions: {self.get_total_questions()}",
+            f"Total Duration: {self.get_total_duration():.1f} hours",
+            f"Total Lab Points: {self.get_total_points()}",
+            f"",
+            f"Category Distribution:",
+        ]
+        for cat, count in self.get_category_distribution().items():
+            lines.append(f"  {cat}: {count}")
+        lines.extend([
+            f"",
+            f"Difficulty Distribution:",
+        ])
+        for diff, count in self.get_difficulty_distribution().items():
+            lines.append(f"  {diff}: {count}")
+        lines.extend([
+            f"",
+            f"Modules:",
+        ])
+        for m in modules:
+            lines.append(f"  {m.order}. [{m.difficulty.value}] {m.title} ({m.duration_hours}h) - {m.category.value}")
+        lines.append(f"\n{'=' * 60}")
+        return "\n".join(lines)
