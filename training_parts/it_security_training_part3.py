@@ -180,4 +180,67 @@ ic requires a sandbox"], 1,
                     "Kill switches like the WannaCry sinkhole domain can prevent ransomware from activating.", DifficultyLevel.INTERMEDIATE),
                 QuizQuestion("maq15", "What technique do malware authors use to detect sandboxes?",
                     ["Netw
+ork speed tests", "VM detection: checking registry keys, MAC addresses, processes", "File size checks", "User agent checks"], 1,
+                    "Malware checks for VM artifacts (e.g., VMWare tools, specific MAC prefixes) to evade sandboxes.", DifficultyLevel.ADVANCED),
+            ],
+        ),
+    )
+
+    # ========================================================================
+    # COURSE 8: DIGITAL FORENSICS
+    # ========================================================================
+    mod8 = SecurityModule(
+        id="df_001",
+        course_id="digital_forensics",
+        title="Digital Forensics & Investigation",
+        description="Master evidence collection, preservation, and analysis across disk, memory, network, and mobile platforms following legal standards.",
+        category=CourseCategory.FORENSICS,
+        difficulty=DifficultyLevel.ADVANCED,
+        duration_hours=15.0,
+        prerequisites=[["File systems (NTFS, ext4)"], ["Operating system internals"]],
+        order=8,
+        lessons=[
+            SecurityLesson(
+                id="df_l1", module_id="df_001", title="Forensic Principles & Legal Framework",
+                content="Digital forensics methodology: identification, preservation, collection, examination, analysis, reporting. Legal considerations: chain of custody, admissibility (Daubert standard), search warrants, privacy laws. Ethics in forensics: objectivity, documentation, expert testimony preparation. International frameworks and cross-border challenges.",
+                lesson_type=LessonType.TEXT, duration_min=50, order=1,
+            ),
+            SecurityLesson(
+                id="df_l2", module_id="df_001", title="Evidence Collection & Imaging",
+                content="Forensic imaging techniques: bit-for-bit copying with dd, dc3dd, FTK Imager, Guymager. Write-blocking hardware and software. Hash verification (MD5, SHA-256) for integrity. Live vs dead system acquisition. Order of volatility: registers, cache, RAM, disk, remote storage. Documentation standards.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=60, order=2,
+            ),
+            SecurityLesson(
+                id="df_l3", module_id="df_001", title="Disk Forensics with Autopsy",
+                content="Using Autopsy and The Sleuth Kit for disk analysis: file system parsing (NTFS, FAT, ext, APFS), deleted file recovery, keyword searching, timeline generation. Hash databases (NSRL), EXIF data extraction, email parsing. Correlation of artifacts across the file system.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=65, order=3,
+            ),
+            SecurityLesson(
+                id="df_l4", module_id="df_001", title="File Carving & Recovery",
+                content="File carving techniques: header/footer signatures, structure-based carving, content-based carving. Tools: scalpel, foremost, PhotoRec, bulk_extractor. Carving from unallocated space, slack space, and swap files. Challenges: fragmentation, overwritten data, encrypted volumes.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=55, order=4,
+            ),
+            SecurityLesson(
+                id="df_l5", module_id="df_001", title="Windows Registry Analysis",
+                content="Registry structure: hives, keys, values. Critical forensic artifacts: UserAssist, ShimCache, AmCache, RecentDocs, TypedURLs, USB device history, network profiles. Tools: RegRipper, Registry Explorer. Timeline reconstruction from registry timestamps.",
+                lesson_type=LessonType.VIDEO, duration_min=50, order=5,
+            ),
+            SecurityLesson(
+                id="df_l6", module_id="df_001", title="Memory Forensics with Volatility",
+                content="RAM acquisition and analysis with Volatility 3. Identifying running processes, network connections, loaded DLLs, open handles. Extracting credentials (mimikatz-style), detecting rootkits, analyzing malware in memory. Profile selection and plugin development.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=70, order=6,
+            ),
+            SecurityLesson(
+                id="df_l7", module_id="df_001", title="Network Forensics",
+                content="Analyzing network captures for forensic purposes: extracting files from PCAP, reconstructing sessions, identifying C2 traffic, detecting data exfiltration. Log correlation: firewall, proxy, DNS, DHCP. Tools: Wireshark, NetworkMiner, Zeek, Splunk for network analysis.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=60, order=7,
+            ),
+        ],
+        labs=[
+            SecurityLab(
+                id="df_lab1", module_id="df_001",
+                title="Forensic Disk Imaging and Verification",
+                description="Create a forensic image of a suspect drive with full chain of custody documentation.",
+                environment="SIFT Workstation, FTK Imager, dd, dc3dd, write blocker, USB drive.",
+      
 # ___END_OF_FILE___
