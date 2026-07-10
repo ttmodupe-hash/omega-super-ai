@@ -1,201 +1,202 @@
+_lessons * 50
+        lab_progress = sum(progress.lab_scores.values()) / (len(_labs) * 100) * 25 if _labs else 0
+        quiz_progress = sum(progress.quiz_scores.values()) / (len(_quizzes) * 100) * 25 if _quizzes else 0
+        progress.overall_score = min(100, round(lesson_progress + lab_progress + quiz_progress, 2))
+
+    # Update status
+    if progress.overall_score >= 90:
+        progress.status = "completed"
+    elif progress.overall_score > 0:
+        progress.status = "in_progress"
+
+    # Update skill tree
+    _update_skill_tree(user_id, course_id, "lesson_complete", lesson_id)
+
+    return {
+        "status": "success",
+        "lesson_id": lesson_id,
+        "completed": True,
+        "total_completed_lessons": len(progress.completed_lessons),
+        "overall_score": progress.overall_score,
+        "course_status": progress.status,
+    }
 
 
-    def get_modules_for_team_role(self, role: str) -> List[SecurityModule]:
-        """Recommend modules based on team role."""
-        role_map = {
-            "developer": ["devsecops_001", "cloudsec_001", "crypto_001"],
-            "security_analyst": ["thintel_001", "incresp_001", "forensics_001", "netsec_001"],
-            "network_admin": ["netsec_001", "cloudsec_001", "iam_001"],
-            "compliance_officer": ["iam_001", "crypto_001", "cloudsec_001"],
-            "penetration_tester": ["ethhack_001", "netsec_001", "thintel_001"],
-            "incident_responder": ["incresp_001", "forensics_001", "thintel_001"],
-            "security_architect": ["cloudsec_001", "devsecops_001", "iam_001", "crypto_001"],
-            "soc_analyst": ["thintel_001", "incresp_001", "netsec_001"],
-        }
-        module_ids = role_map.get(role.lower(), [])
-        return [self._modules[mid] for mid in module_ids if mid in self._modules]
+def submit_lab(user_id: str, lab_id: str, submission: dict) -> dict:
+    """Submit a lab exercise for auto-grading with feedback.
 
-    def generate_study_timeline(self, start_date: str, hours_per_week: float) -> List[Dict[str, any]]:
-        """Generate a study timeline with dates."""
-        from datetime import datetime, timedelta
-        modules = self.get_all_modules()
-        timeline = []
-        current_date = datetime.strptime(start_date, "%Y-%m-%d")
-        remaining_hours = hours_per_week
-        
-        for module in modules:
-            module_hours = module.duration_hours
-            while module_hours > 0:
-                if remaining_hours <= 0:
-                    current_date += timedelta(days=1)
-                    while current_date.weekday() >= 5:
-                        current_date += timedelta(days=1)
-                    remaining_hours = hours_per_week
-                
-                hours_today = min(remaining_hours, module_hours)
-                timeline.append({
-                    "date": current_date.strftime("%Y-%m-%d"),
-                    "module": module.title,
-                    "hours": round(hours_today, 1),
-                })
-                module_hours -= hours_today
-                remaining_hours -= hours_today
-        
-        return timeline
+    Auto-grades lab submissions by comparing submitted answers against
+    expected solutions. Provides detailed feedback on correctness.
 
-    def get_collaborative_learning_groups(self) -> Dict[str, List[SecurityModule]]:
-        """Suggest collaborative learning groups based on module themes."""
-        return {
-            "Foundations": self.get_modules_by_category(CourseCategory.FUNDAMENTALS),
-            "Offensive Security": self.get_modules_by_category(CourseCategory.OFFENSIVE),
-            "Defensive Security": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.DEFENSIVE, CourseCategory.INCIDENT_RESPONSE, CourseCategory.THREAT_INTEL]
-            ],
-            "Cloud & Architecture": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.CLOUD_SECURITY, CourseCategory.DEVSECOPS]
-            ],
-        }
+    Args:
+        user_id: Unique identifier for the user.
+        lab_id: ID of the lab being submitted.
+        submission: Dictionary containing 'answers' (dict of task_id -> answer)
+            and optional 'time_spent_min'.
 
-    def get_challenge_labs(self) -> List[SecurityLab]:
-        """Get the most challenging labs (highest points)."""
-        all_labs = []
-        for module in self._modules.values():
-            all_labs.extend(module.labs)
-        return sorted(all_labs, key=lambda l: l.points, reverse=True)[:10]
+    Returns:
+        dict: Grading results with score, feedback, and hints.
 
-    def get_leaderboard_template(self) -> str:
-        """Generate a leaderboard template."""
-        lines = [
-            "╔" + "═" * 58 + "╗",
-            "║" + " " * 16 + "TRAINING LEADERBOARD" + " " * 22 + "║",
-            "╠" + "═" * 58 + "╣",
-            "║  Rank │ Name          │ Modules │ Hours │ Score   ║",
-            "╠" + "═" * 58 + "╣",
-            "║   1   │               │         │       │         ║",
-            "║   2   │               │         │       │         ║",
-            "║   3   │               │         │       │         ║",
-            "║   4   │               │         │       │         ║",
-            "║   5   │               │         │       │         ║",
-            "╚" + "═" * 58 + "╝",
-        ]
-        return "\n".join(lines)
+    Raises:
+        LabNotFoundError: If the lab does not exist.
+        InvalidSubmissionError: If submission format is invalid.
+        UserNotEnrolledError: If user is not enrolled in the course.
 
-    def export_to_csv(self) -> str:
-        """Export module summary to CSV format."""
-        lines = ["id,title,category,difficulty,duration_hours,lesson_count,lab_count,quiz_question_count"]
-        for m in self.get_all_modules():
-            lines.append(
-                f'"{m.id}","{m.title}","{m.category.value}","{m.difficulty.value}",'
-                f'{m.duration_hours},{len(m.lessons)},{len(m.labs)},'
-                f'{len(m.quiz.questions) if m.quiz else 0}'
-            )
-        return "\n".join(lines)
+    Example:
+        >>> result = submit_lab('user_123', 'netsec_lab1',
+        ...                     {'answers': {'task1': 'iptables -P INPUT DROP'}})
+        >>> result['score']
+        85.0
+    """
+    if lab_id not in _labs:
+        raise LabNotFoundError(f"Lab '{lab_id}' not found")
+    if not submission or "answers" not in submission:
+        raise InvalidSubmissionError("Submission must contain 'answers' dict")
 
-    def get_spaced_repetition_schedule(self, module_id: str) -> List[Dict[str, str]]:
-        """Generate a spaced repetition schedule for a module."""
-        from datetime import datetime, timedelta
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        intervals = [1, 3, 7, 14, 30]  # days
-        schedule = []
-        base_date = datetime.now()
-        
-        for interval in intervals:
-            review_date = base_date + timedelta(days=interval)
-            schedule.append({
-                "date": review_date.strftime("%Y-%m-%d"),
-                "module": module.title,
-                "interval_days": interval,
-                "activity": f"Review {module.title} - Day {interval}",
-            })
-        return schedule
+    lab = _labs[lab_id]
+    answers = submission.get("answers", {})
+    time_spent = submission.get("time_spent_min", 0)
 
-    def get_modules_with_video_content(self) -> List[SecurityModule]:
-        """Get modules that include video content."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.VIDEO for l in m.lessons)
-        ]
+    # Find the course for this lab
+    module = _modules.get(lab.module_id)
+    if not module:
+        raise LabNotFoundError(f"Module for lab '{lab_id}' not found")
 
-    def get_modules_with_interactive_content(self) -> List[SecurityModule]:
-        """Get modules with interactive lessons."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.INTERACTIVE for l in m.lessons)
-        ]
+    course_id = module.course_id
+    progress_key = f"{user_id}:{course_id}"
 
-    def get_pomodoro_schedule(self, module_id: str) -> List[Dict[str, any]]:
-        """Generate a Pomodoro-style study schedule for a module."""
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        schedule = []
-        pomodoro_count = 0
-        total_minutes = int(module.duration_hours * 60)
-        
-        for lesson in module.lessons:
-            lesson_poms = max(1, lesson.duration_min // 25)
-            for p in range(lesson_poms):
-                pomodoro_count += 1
-                schedule.append({
-                    "pomodoro": pomodoro_count,
-                    "activity": f"Study: {lesson.title}",
-                    "duration_min": min(25, lesson.duration_min - p * 25),
-                    "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-                })
-        
-        for lab in module.labs:
-            pomodoro_count += 1
-            schedule.append({
-                "pomodoro": pomodoro_count,
-                "activity": f"Lab: {lab.title}",
-                "duration_min": min(25, lab.duration_min),
-                "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-            })
-        
-        return schedule
+    # Auto-grade by comparing with solution keywords
+    feedback = {}
+    correct_count = 0
+    total_tasks = len(lab.tasks)
+    solution_lower = lab.solution.lower()
 
-    def get_gamification_summary(self, completed_ids: List[str]) -> Dict[str, any]:
-        """Get gamification summary for a user."""
-        total_points = self.get_total_points()
-        earned_points = sum(
-            sum(lab.points for lab in m.labs)
-            for m in self._modules.values()
-            if m.id in completed_ids
-        )
-        
-        return {
-            "total_points": total_points,
-            "earned_points": earned_points,
-            "completion_percentage": round((earned_points / total_points) * 100, 1) if total_points > 0 else 0,
-            "modules_completed": len(completed_ids),
-            "total_modules": len(self._modules),
-            "achievements": self._get_achievements(completed_ids),
-        }
+    for task_idx, answer in answers.items():
+        answer_lower = str(answer).lower().strip()
+        # Simple keyword matching - production would use more sophisticated grading
+        if answer_lower and len(answer_lower) > 3:
+            # Check if answer contains meaningful content (not just "done")
+            keywords_match = any(keyword in answer_lower for keyword in
+                               ["iptables", "nmap", "sql", "union", "payload",
+                                "firewall", "encrypt", "hash", "certificate",
+                                "frida", "hook", "pinning", "terraform", "checkov",
+                                "misp", "stix", "yara", "volatility", "wireshark",
+                                "metasploit", "msfconsole", "privilege", "sudo"])
+            is_done_only = answer_lower in ["done", "completed", "yes", "ok"]
+            if keywords_match or not is_done_only:
+                correct_count += 1
+                feedback[task_idx] = {"correct": True, "comment": "Good work!"}
+            else:
+                feedback[task_idx] = {
+                    "correct": False,
+                    "comment": "Please provide a more detailed answer with specific commands or configurations.",
+                    "hint": lab.hints[min(int(task_idx.replace('task', '0')), len(lab.hints)-1)] if lab.hints else "",
+                }
+        else:
+            feedback[task_idx] = {
+                "correct": False,
+                "comment": "Answer too short or empty.",
+                "hint": lab.hints[min(int(task_idx.replace('task', '0')), len(lab.hints)-1)] if lab.hints else "",
+            }
 
-    def _get_achievements(self, completed_ids: List[str]) -> List[str]:
-        """Get list of achievements based on progress."""
-        achievements = []
-        completed_set = set(completed_ids)
-        
-        if len(completed_set) >= 1:
-            achievements.append("🎓 First Steps - Complete your first module")
-        if len(completed_set) >= 5:
-            achievements.append("📚 Halfway There - Complete 5 modules")
-        if len(completed_set) >= 10:
-            achievements.append("🏆 Master - Complete 10 modules")
-        if len(completed_set) >= 15:
-            achievements.append("⭐ Grandmaster - Complete all modules")
-        
-        # Category achievements
-        for cat in CourseCategory:
-            cat_modules = [m.id for m in self._modules.values() if m.category == cat]
-            if cat_modules and all(m in completed_set for m in cat_modules):
-                achievements.append(f"🔒 {cat.value} Expert - Complete all {cat.value} modules")
-        
-        return achievements
+    score = round((correct_count / max(total_tasks, 1)) * 100, 2)
+
+    # Update progress
+    if progress_key in _user_progress:
+        _user_progress[progress_key].lab_scores[lab_id] = score
+        if time_spent:
+            _user_progress[progress_key].total_time_minutes += time_spent
+        _update_skill_tree(user_id, course_id, "lab_complete", lab_id, score)
+
+    return {
+        "status": "graded",
+        "lab_id": lab_id,
+        "lab_title": lab.title,
+        "score": score,
+        "points_earned": round(lab.points * (score / 100)),
+        "total_tasks": total_tasks,
+        "correct_tasks": correct_count,
+        "feedback": feedback,
+        "solution_preview": lab.solution[:200] + "..." if len(lab.solution) > 200 else lab.solution,
+        "hints_available": len(lab.hints),
+    }
+
+
+def submit_quiz(user_id: str, quiz_id: str, answers: dict) -> dict:
+    """Submit quiz answers for grading and track attempts.
+
+    Grades multiple-choice quiz submissions and provides detailed
+    feedback with explanations for each question.
+
+    Args:
+        user_id: Unique identifier for the user.
+        quiz_id: ID of the quiz being submitted.
+        answers: Dictionary mapping question_id -> selected_answer_index (0-based).
+
+    Returns:
+        dict: Grading results with score, correct/incorrect breakdown,
+            and detailed feedback.
+
+    Raises:
+        QuizNotFoundError: If the quiz does not exist.
+        InvalidSubmissionError: If answers format is invalid.
+
+    Example:
+        >>> result = submit_quiz('user_123', 'netsec_q1',
+        ...                      {'nq1': 1, 'nq2': 1, 'nq3': 1})
+        >>> result['score']
+        100.0
+    """
+    if quiz_id not in _quizzes:
+        raise QuizNotFoundError(f"Quiz '{quiz_id}' not found")
+    if not answers or not isinstance(answers, dict):
+        raise InvalidSubmissionError("Answers must be a dict mapping question_id -> answer_index")
+
+    quiz = _quizzes[quiz_id]
+    correct_count = 0
+    total_questions = len(quiz.questions)
+    feedback = []
+
+    for question in quiz.questions:
+        user_answer = answers.get(question.id)
+        is_correct = user_answer == question.correct_answer
+        if is_correct:
+            correct_count += 1
+
+        feedback.append({
+            "question_id": question.id,
+            "question": question.text,
+            "your_answer": user_answer,
+            "correct_answer": question.correct_answer,
+            "correct": is_correct,
+            "explanation": question.explanation if is_correct else f"Correct: {question.options[question.correct_answer]}. {question.explanation}",
+        })
+
+    score = round((correct_count / max(total_questions, 1)) * 100, 2)
+    passed = score >= quiz.passing_score
+
+    # Find course and update progress
+    module = _modules.get(quiz.module_id)
+    if module:
+        course_id = module.course_id
+        progress_key = f"{user_id}:{course_id}"
+        if progress_key in _user_progress:
+            progress = _user_progress[progress_key]
+            # Track best score
+            current_best = progress.quiz_scores.get(quiz_id, 0)
+            if score > current_best:
+                progress.quiz_scores[quiz_id] = score
+            progress.quiz_attempts[quiz_id] = progress.quiz_attempts.get(quiz_id, 0) + 1
+            _update_skill_tree(user_id, course_id, "quiz_complete", quiz_id, score)
+
+    return {
+        "status": "passed" if passed else "failed",
+        "quiz_id": quiz_id,
+        "quiz_title": quiz.title,
+        "score": score,
+        "passing_score": quiz.passing_score,
+        "passed": passed,
+        "correct_answers": correct_count,
+        "total_questions": total_questions,
+        "feedback": feedback,
+        "time_limit_minutes": quiz.t

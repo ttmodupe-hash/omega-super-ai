@@ -1,339 +1,82 @@
- on high-priority threats.", DifficultyLevel.INTERMEDIATE),
-            ],
-        ),
-    )
+tered incident response procedures", "🚨", CourseCategory.DEFENSIVE, 500),
+        ("badge_cloud", "Cloud Guardian", "Secured AWS, Azure, and GCP environments", "☁️", CourseCategory.CLOUD, 500),
+        ("badge_malware", "Malware Hunter", "Analyzed malware through static and dynamic techniques", "🦠", CourseCategory.MALWARE, 600),
+        ("badge_forensics", "Digital Detective", "Completed digital forensics investigation", "🔍", CourseCategory.FORENSICS, 600),
+        ("badge_compliance", "Compliance Officer", "Mastered security compliance frameworks", "📋", CourseCategory.COMPLIANCE, 400),
+        ("badge_mobile", "Mobile Security Expert", "Secured Android and iOS platforms", "📱", CourseCategory.MOBILE, 500),
+        ("badge_wireless", "Wireless Sentinel", "Mastered wireless security protocols", "📡", CourseCategory.WIRELESS, 400),
+        ("badge_se", "Human Firewall", "Completed social engineering defense training", "🎭", CourseCategory.SOCIAL, 300),
+        ("badge_telecom", "Telecom Guardian", "Secured African telecom and mobile money systems", "📞", CourseCategory.TELECOM, 500),
+        ("badge_devsecops", "Pipeline Security Engineer", "Implemented DevSecOps in CI/CD pipeline", "🔄", CourseCategory.DEVSECOPS, 500),
+        ("badge_threat", "Threat Hunter", "Completed threat intelligence and hunting course", "🧠", CourseCategory.THREAT_INTEL, 600),
+        ("badge_nmap", "Nmap Ninja", "Mastered network scanning techniques", "🔎", CourseCategory.NETWORK, 200),
+        ("badge_xss", "XSS Slayer", "Found and fixed all XSS vulnerabilities", "⚔️", CourseCategory.WEB_APP, 200),
+        ("badge_sqli", "SQL Injection Master", "Exploited and remediated SQL injection", "💉", CourseCategory.WEB_APP, 200),
+        ("badge_wireshark", "Packet Whisperer", "Expert-level packet analysis with Wireshark", "📊", CourseCategory.NETWORK, 200),
+        ("badge_aes", "Encryption Expert", "Implemented secure encryption systems", "🔒", CourseCategory.CRYPTOGRAPHY, 200),
+        ("badge_c2", "C2 Hunter", "Identified command and control infrastructure", "🎯", CourseCategory.THREAT_INTEL, 300),
+        ("badge_ctf", "CTF Champion", "Completed 10+ CTF challenges", "🏆", CourseCategory.OFFENSIVE, 400),
+        ("badge_linux", "Linux Privesc Pro", "Mastered Linux privilege escalation", "🐧", CourseCategory.OFFENSIVE, 300),
+        ("badge_memory", "Memory Forensics Analyst", "Completed memory analysis investigations", "🧠", CourseCategory.FORENSICS, 300),
+        ("badge_registry", "Registry Analyst", "Mastered Windows registry forensics", "🪟", CourseCategory.FORENSICS, 200),
+        ("badge_ghidra", "Reverse Engineer", "Completed reverse engineering with Ghidra", "🔧", CourseCategory.MALWARE, 300),
+        ("badge_yara", "YARA Rulesmith", "Created effective YARA detection rules", "📝", CourseCategory.MALWARE, 200),
+        ("badge_frida", "Frida Master", "Bypassed security controls with dynamic instrumentation", "🎸", CourseCategory.MOBILE, 300),
+        ("badge_pinning", "Certificate Pinning Expert", "Implemented and bypassed certificate pinning", "📌", CourseCategory.MOBILE, 200),
+        ("badge_wifi", "Wireless Auditor", "Completed WiFi penetration testing", "📶", CourseCategory.WIRELESS, 200),
+        ("badge_phish", "Phishing Defender", "Implemented SPF, DKIM, DMARC successfully", "📧", CourseCategory.SOCIAL, 200),
+        ("badge_soc2", "SOC 2 Ready", "Completed SOC 2 compliance preparation", "✅", CourseCategory.COMPLIANCE, 300),
+        ("badge_gdpr", "GDPR Practitioner", "Mastered GDPR requirements and implementation", "🇪🇺", CourseCategory.COMPLIANCE, 200),
+        ("badge_ss7", "Signaling Security Expert", "Analyzed SS7/Diameter signaling security", "📡", CourseCategory.TELECOM, 300),
+        ("badge_momo", "Mobile Money Guardian", "Secured mobile money platforms", "💰", CourseCategory.TELECOM, 200),
+        ("badge_pipeline", "CI/CD Security Pro", "Secured build and deployment pipelines", "🚀", CourseCategory.DEVSECOPS, 300),
+        ("badge_iac", "IaC Security Expert", "Secured infrastructure-as-code deployments", "🏗️", CourseCategory.DEVSECOPS, 200),
+        ("badge_mitre", "ATT&CK Navigator", "Mapped threats using MITRE ATT&CK framework", "🗺️", CourseCategory.THREAT_INTEL, 300),
+        ("badge_misp", "CTI Analyst", "Deployed and used MISP threat intelligence platform", "📊", CourseCategory.THREAT_INTEL, 200),
+    ]
+    for bid, name, desc, icon, cat, pts in badge_data:
+        _badges[bid] = SkillBadge(id=bid, name=name, description=desc, icon=icon, category=cat, required_points=pts)
 
     # ========================================================================
-    # UTILITY FUNCTIONS & GET_ALL_MODULES()
+    # INITIALIZE CTF CHALLENGES
     # ========================================================================
-
-    def _add_module(self, module: SecurityModule) -> None:
-        """Register a module and index its components."""
-        self._modules[module.id] = module
-        for lesson in module.lessons:
-            self._lessons[lesson.id] = lesson
-        for lab in module.labs:
-            self._labs[lab.id] = lab
-        if module.quiz:
-            for question in module.quiz.questions:
-                self._questions[question.id] = question
-
-    def get_all_modules(self) -> List[SecurityModule]:
-        """Return all training modules sorted by order."""
-        return sorted(self._modules.values(), key=lambda m: m.order)
-
-    def get_module(self, module_id: str) -> Optional[SecurityModule]:
-        """Get a module by its ID."""
-        return self._modules.get(module_id)
-
-    def get_modules_by_category(self, category: CourseCategory) -> List[SecurityModule]:
-        """Get all modules in a specific category."""
-        return [m for m in self._modules.values() if m.category == category]
-
-    def get_modules_by_difficulty(self, difficulty: DifficultyLevel) -> List[SecurityModule]:
-        """Get all modules at a specific difficulty level."""
-        return [m for m in self._modules.values() if m.difficulty == difficulty]
-
-    def get_lesson(self, lesson_id: str) -> Optional[SecurityLesson]:
-        """Get a lesson by its ID."""
-        return self._lessons.get(lesson_id)
-
-    def get_lab(self, lab_id: str) -> Optional[SecurityLab]:
-        """Get a lab by its ID."""
-        return self._labs.get(lab_id)
-
-    def get_quiz_question(self, question_id: str) -> Optional[QuizQuestion]:
-        """Get a quiz question by its ID."""
-        return self._questions.get(question_id)
-
-    def get_modules_for_user_level(self, level: str) -> List[SecurityModule]:
-        """Get modules appropriate for a given user experience level."""
-        level_map = {
-            "beginner": [DifficultyLevel.BEGINNER],
-            "intermediate": [DifficultyLevel.BEGINNER, DifficultyLevel.INTERMEDIATE],
-            "advanced": [DifficultyLevel.BEGINNER, DifficultyLevel.INTERMEDIATE, DifficultyLevel.ADVANCED],
-            "expert": [DifficultyLevel.BEGINNER, DifficultyLevel.INTERMEDIATE, DifficultyLevel.ADVANCED, DifficultyLevel.EXPERT],
-        }
-        levels = level_map.get(level.lower(), [DifficultyLevel.BEGINNER])
-        return [m for m in self._modules.values() if m.difficulty in levels]
-
-    def get_total_duration(self) -> float:
-        """Get total training duration in hours."""
-        return sum(m.duration_hours for m in self._modules.values())
-
-    def get_total_lessons(self) -> int:
-        """Get total number of lessons across all modules."""
-        return sum(len(m.lessons) for m in self._modules.values())
-
-    def get_total_labs(self) -> int:
-        """Get total number of labs across all modules."""
-        return sum(len(m.labs) for m in self._modules.values())
-
-    def get_total_questions(self) -> int:
-        """Get total number of quiz questions across all modules."""
-        return sum(len(m.quiz.questions) for m in self._modules.values() if m.quiz)
-
-    def search_modules(self, query: str) -> List[SecurityModule]:
-        """Search modules by title, description, or category."""
-        query = query.lower()
-        results = []
-        for module in self._modules.values():
-            if (query in module.title.lower() or
-                query in module.description.lower() or
-                query in module.category.value.lower()):
-                results.append(module)
-        return results
-
-    def get_learning_path(self, target_cert: str) -> List[SecurityModule]:
-        """Get a recommended learning path for a target certification."""
-        cert_paths = {
-            "Security+": ["secplus_001", "netsec_001", "crypto_001", "iam_001"],
-            "CISSP": ["secplus_001", "iam_001", "netsec_001", "crypto_001", "cloudsec_001", "devsecops_001", "thintel_001"],
-            "CEH": ["ethhack_001", "netsec_001", "thintel_001", "cloudsec_001"],
-            "CCSP": ["cloudsec_001", "netsec_001", "crypto_001", "devsecops_001"],
-            "GCIH": ["incresp_001", "thintel_001", "forensics_001"],
-            "OSCP": ["ethhack_001", "netsec_001", "thintel_001", "incresp_001"],
-        }
-        module_ids = cert_paths.get(target_cert, [])
-        return [self._modules[mid] for mid in module_ids if mid in self._modules]
-
-    def get_progress_stats(self, completed_module_ids: List[str]) -> Dict[str, any]:
-        """Calculate progress statistics for a user."""
-        total = len(self._modules)
-        completed = len([m for m in completed_module_ids if m in self._modules])
-        total_hours = sum(self._modules[m].duration_hours for m in completed_module_ids if m in self._modules)
-        return {
-            "total_modules": total,
-            "completed_modules": completed,
-            "completion_percentage": round((completed / total) * 100, 1) if total > 0 else 0,
-            "completed_hours": total_hours,
-            "total_hours": sum(m.duration_hours for m in self._modules.values()),
-            "remaining_modules": total - completed,
-        }
-
-    def export_module_to_json(self, module_id: str) -> str:
-        """Export a module to JSON format."""
-        module = self._modules.get(module_id)
-        if not module:
-            return "{}"
-        import json
-        return json.dumps(module.to_dict(), indent=2)
-
-    def export_all_modules_to_json(self) -> str:
-        """Export all modules to JSON format."""
-        import json
-        return json.dumps([m.to_dict() for m in self.get_all_modules()], indent=2)
-
-    def get_module_summary(self) -> List[Dict[str, any]]:
-        """Get a summary of all modules."""
-        return [
-            {
-                "id": m.id,
-                "title": m.title,
-                "category": m.category.value,
-                "difficulty": m.difficulty.value,
-                "duration_hours": m.duration_hours,
-                "lesson_count": len(m.lessons),
-                "lab_count": len(m.labs),
-                "quiz_question_count": len(m.quiz.questions) if m.quiz else 0,
-            }
-            for m in self.get_all_modules()
-        ]
-
-    def get_category_distribution(self) -> Dict[str, int]:
-        """Get distribution of modules across categories."""
-        from collections import Counter
-        return dict(Counter(m.category.value for m in self._modules.values()))
-
-    def get_difficulty_distribution(self) -> Dict[str, int]:
-        """Get distribution of modules across difficulty levels."""
-        from collections import Counter
-        return dict(Counter(m.difficulty.value for m in self._modules.values()))
-
-    def get_modules_with_prerequisites(self, completed_ids: List[str]) -> List[SecurityModule]:
-        """Get modules whose prerequisites are satisfied."""
-        completed_set = set(completed_ids)
-        available = []
-        for module in self._modules.values():
-            if module.id in completed_set:
-                continue
-            prereqs_met = all(
-                any(prereq in completed_set for prereq in group)
-                for group in module.prerequisites
-            )
-            if prereqs_met:
-                available.append(module)
-        return available
-
-    def get_next_recommended_module(self, completed_ids: List[str]) -> Optional[SecurityModule]:
-        """Get the next recommended module based on completed modules."""
-        available = self.get_modules_with_prerequisites(completed_ids)
-        if not available:
-            return None
-        # Recommend by lowest order first
-        return min(available, key=lambda m: m.order)
-
-    def validate_quiz_answer(self, question_id: str, selected_index: int) -> Dict[str, any]:
-        """Validate a quiz answer and return feedback."""
-        question = self._questions.get(question_id)
-        if not question:
-            return {"correct": False, "message": "Question not found."}
-        correct = selected_index == question.correct_index
-        return {
-            "correct": correct,
-            "correct_index": question.correct_index,
-            "correct_answer": question.options[question.correct_index],
-            "explanation": question.explanation,
-            "difficulty": question.difficulty.value,
-        }
-
-    def get_random_quiz(self, num_questions: int = 10) -> List[QuizQuestion]:
-        """Get a random selection of quiz questions."""
-        import random
-        all_questions = list(self._questions.values())
-        if num_questions >= len(all_questions):
-            return all_questions
-        return random.sample(all_questions, num_questions)
-
-    def get_category_quiz(self, category: CourseCategory, num_questions: int = 5) -> List[QuizQuestion]:
-        """Get quiz questions from a specific category."""
-        import random
-        category_modules = [m for m in self._modules.values() if m.category == category]
-        questions = []
-        for module in category_modules:
-            if module.quiz:
-                questions.extend(module.quiz.questions)
-        if num_questions >= len(questions):
-            return questions
-        return random.sample(questions, num_questions)
-
-    def calculate_score(self, answers: Dict[str, int]) -> Dict[str, any]:
-        """Calculate a quiz score from a dictionary of question_id -> answer_index."""
-        correct = 0
-        total = len(answers)
-        wrong_questions = []
-        for qid, selected in answers.items():
-            question = self._questions.get(qid)
-            if question and selected == question.correct_index:
-                correct += 1
-            else:
-                wrong_questions.append(qid)
-        return {
-            "correct": correct,
-            "total": total,
-            "percentage": round((correct / total) * 100, 1) if total > 0 else 0,
-            "wrong_question_ids": wrong_questions,
-        }
-
-    def get_study_guide(self, module_id: str) -> str:
-        """Generate a study guide for a module."""
-        module = self._modules.get(module_id)
-        if not module:
-            return "Module not found."
-        lines = [
-            f"# Study Guide: {module.title}",
-            f"\n**Category:** {module.category.value}",
-            f"**Difficulty:** {module.difficulty.value}",
-            f"**Duration:** {module.duration_hours} hours",
-            f"**Lessons:** {len(module.lessons)}",
-            f"**Labs:** {len(module.labs)}",
-            "\n## Lessons",
-        ]
-        for lesson in module.lessons:
-            lines.append(f"- [{lesson.lesson_type.value}] {lesson.title} ({lesson.duration_min} min)")
-        lines.append("\n## Labs")
-        for lab in module.labs:
-            lines.append(f"- {lab.title} ({lab.duration_min} min, {lab.points} points)")
-        if module.quiz:
-            lines.append(f"\n## Quiz: {module.quiz.title}")
-            lines.append(f"- Passing score: {module.quiz.passing_score}%")
-            lines.append(f"- Time limit: {module.quiz.time_limit_minutes} minutes")
-            lines.append(f"- Questions: {len(module.quiz.questions)}")
-        return "\n".join(lines)
-
-    def get_all_study_guides(self) -> Dict[str, str]:
-        """Generate study guides for all modules."""
-        return {mid: self.get_study_guide(mid) for mid in self._modules}
-
-    def get_modules_requiring_prerequisites(self) -> List[SecurityModule]:
-        """Get modules that have prerequisites."""
-        return [m for m in self._modules.values() if m.prerequisites]
-
-    def get_modules_with_no_prerequisites(self) -> List[SecurityModule]:
-        """Get modules with no prerequisites (beginner-friendly)."""
-        return [m for m in self._modules.values() if not m.prerequisites]
-
-    def get_total_points(self) -> int:
-        """Get total available points across all labs."""
-        return sum(
-            sum(lab.points for lab in m.labs)
-            for m in self._modules.values()
-        )
-
-    def get_lab_by_difficulty(self, difficulty: DifficultyLevel) -> List[SecurityLab]:
-        """Get labs filtered by module difficulty."""
-        labs = []
-        for module in self._modules.values():
-            if module.difficulty == difficulty:
-                labs.extend(module.labs)
-        return labs
-
-    def get_completion_certificate_text(self, completed_ids: List[str]) -> str:
-        """Generate completion certificate text."""
-        stats = self.get_progress_stats(completed_ids)
-        lines = [
-            "=" * 60,
-            "      LUQI AI - IT SECURITY TRAINING CERTIFICATE",
-            "=" * 60,
-            f"",
-            f"This certifies that the participant has completed:",
-            f"  {stats['completed_modules']} of {stats['total_modules']} modules",
-            f"  {stats['completed_hours']:.1f} of {stats['total_hours']:.1f} training hours",
-            f"  Completion: {stats['completion_percentage']}%",
-            f"",
-            f"Modules completed:",
-        ]
-        for mid in completed_ids:
-            module = self._modules.get(mid)
-            if module:
-                lines.append(f"  ✓ {module.title}")
-        lines.extend([
-            f"",
-            f"Date: ________________",
-            f"Signature: ________________",
-            f"=" * 60,
-        ])
-        return "\n".join(lines)
-
-    def generate_training_report(self) -> str:
-        """Generate a comprehensive training report."""
-        modules = self.get_all_modules()
-        lines = [
-            "=" * 60,
-            "      LUQI AI - IT SECURITY TRAINING REPORT",
-            "=" * 60,
-            f"Total Modules: {len(modules)}",
-            f"Total Lessons: {self.get_total_lessons()}",
-            f"Total Labs: {self.get_total_labs()}",
-            f"Total Quiz Questions: {self.get_total_questions()}",
-            f"Total Duration: {self.get_total_duration():.1f} hours",
-            f"Total Lab Points: {self.get_total_points()}",
-            f"",
-            f"Category Distribution:",
-        ]
-        for cat, count in self.get_category_distribution().items():
-            lines.append(f"  {cat}: {count}")
-        lines.extend([
-            f"",
-            f"Difficulty Distribution:",
-        ])
-        for diff, count in self.get_difficulty_distribution().items():
-            lines.append(f"  {diff}: {count}")
-        lines.extend([
-            f"",
-            f"Modules:",
-        ])
-        for m in modules:
-            lines.append(f"  {m.order}. [{m.difficulty.value}] {m.title} ({m.duration_hours}h) - {m.category.value}")
-        lines.append(f"\n{'=' * 60}")
-        return "\n".join(lines)
+    ctf_data = [
+        ("ctf_netsec", "Network Recon Challenge",
+         "Find the hidden service and capture the flag through network reconnaissance.",
+         CourseCategory.NETWORK, DifficultyLevel.INTERMEDIATE, "LUQI{NETSCAN_MASTERY_2024}",
+         ["Start with a full port scan", "Check unusual ports above 10000", "Banner grabbing reveals the flag"], 150),
+        ("ctf_webapp", "XSS to Admin",
+         "Escalate a reflected XSS to steal the admin session and retrieve the flag.",
+         CourseCategory.WEB_APP, DifficultyLevel.INTERMEDIATE, "LUQI{XSS_ADMIN_TAKEOVER_2024}",
+         ["Look for unfiltered input in search", "Use document.location to exfiltrate cookies", "Admin panel has the flag"], 200),
+        ("ctf_crypto", "Break the Cipher",
+         "Break a weak custom cipher and decrypt the message containing the flag.",
+         CourseCategory.CRYPTOGRAPHY, DifficultyLevel.ADVANCED, "LUQI{CRYPTO_BREAKER_2024}",
+         ["Analyze the encryption pattern", "Look for repeating patterns indicating weak key schedule", "Frequency analysis helps"], 250),
+        ("ctf_ethhack", "Root the Box",
+         "Gain root access on a vulnerable Linux system and read the flag.",
+         CourseCategory.OFFENSIVE, DifficultyLevel.ADVANCED, "LUQI{ROOT_ACCESS_GRANTED_2024}",
+         ["Check for SUID binaries", "Look at cron jobs", "Kernel exploits are a last resort"], 250),
+        ("ctf_ir", "Incident Response Challenge",
+         "Analyze the provided logs to identify the attack and extract the flag.",
+         CourseCategory.DEFENSIVE, DifficultyLevel.INTERMEDIATE, "LUQI{IR_MASTER_DETECTIVE_2024}",
+         ["Start with authentication logs", "Look for unusual login patterns", "The attacker left the flag in a temp file"], 150),
+        ("ctf_cloud", "S3 Bucket Hunt",
+         "Find and access a misconfigured AWS S3 bucket to retrieve the flag.",
+         CourseCategory.CLOUD, DifficultyLevel.BEGINNER, "LUQI{S3_BUCKET_FOUND_2024}",
+         ["Use bucket enumeration techniques", "Check for public ListBucket permissions", "Flag is in a hidden object"], 100),
+        ("ctf_malware", "Malware Analysis CTF",
+         "Analyze the provided malware sample to find the embedded C2 domain and flag.",
+         CourseCategory.MALWARE, DifficultyLevel.ADVANCED, "LUQI{MALWARE_C2_EXPOSED_2024}",
+         ["Run strings first", "Check resource section", "The C2 domain contains the flag"], 250),
+        ("ctf_forensics", "Hidden in the Image",
+         "Find the flag hidden in the provided image using steganography techniques.",
+         CourseCategory.FORENSICS, DifficultyLevel.INTERMEDIATE, "LUQI{STEGANO_DETECTED_2024}",
+         ["Try LSB extraction", "Check for appended data after EOF", "Use steghide with empty password"], 200),
+        ("ctf_compliance", "Policy Puzzle",
+         "Solve the compliance crossword and regulatory quiz to reveal the flag.",
+         CourseCategory.COMPLIANCE, DifficultyLevel.BEGINNER, "LUQI{COMPLIANCE_EXPERT_2024}",
+         ["Review GDPR articles", "NIST CSF functions hold clues", "The flag is in the answers"], 100),
+        ("ctf_mobile", "APK Reversing",
+         "Reverse engineer the provided Android APK to find the hardcoded flag.",
+         CourseCategory.MOBILE, DifficultyLevel.INTERMEDIATE, "LUQI

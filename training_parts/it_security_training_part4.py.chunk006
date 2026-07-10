@@ -1,431 +1,211 @@
+{APK_REVERSED_2024}",
+         ["Decompile with jadx", "Check strings.xml and shared preferences", "The flag is XOR encoded in native lib"], 200),
+        ("ctf_wireless", "Capture the Handshake",
+         "Capture and crack a WPA2 handshake to find the flag in the network name.",
+         CourseCategory.WIRELESS, DifficultyLevel.ADVANCED, "LUQI{WIFI_HANDSHAKE_CRACKED_2024}",
+         ["Monitor mode is required", "Look for a hidden SSID", "The password is in rockyou.txt"], 250),
+        ("ctf_soceng", "Phishing Simulation",
+         "Identify all phishing indicators in the provided emails to construct the flag.",
+         CourseCategory.SOCIAL, DifficultyLevel.BEGINNER, "LUQI{PHISH_SPOTTER_2024}",
+         ["Check email headers", "Look for spoofed domains", "Each email reveals a part of the flag"], 100),
+        ("ctf_telecom", "SIM Trace",
+         "Trace a fraudulent SIM swap through telecom logs to identify the attacker and flag.",
+         CourseCategory.TELECOM, DifficultyLevel.INTERMEDIATE, "LUQI{SIM_TRACE_COMPLETE_2024}",
+         ["Check HLR logs for unusual SIM updates", "Correlate with customer support calls", "The insider ID is the flag"], 200),
+        ("ctf_devsecops", "Pipeline Poison",
+         "Find and exploit a vulnerability in a CI/CD pipeline to extract the flag.",
+         CourseCategory.DEVSECOPS, DifficultyLevel.ADVANCED, "LUQI{PIPELINE_SECURED_2024}",
+         ["Check for command injection in build scripts", "Look for exposed secrets in environment variables", "The flag is in the deployment credentials"], 250),
+        ("ctf_threat", "APT Attribution",
+         "Analyze threat intel to attribute an attack to the correct APT group and find the flag.",
+         CourseCategory.THREAT_INTEL, DifficultyLevel.ADVANCED, "LUQI{APT_ATTRIBUTED_2024}",
+         ["Map TTPs to MITRE ATT&CK", "Compare with known group profiles", "The group name is the flag suffix"], 250),
+    ]
+    for cid, title, desc, cat, diff, flag, hints, pts in ctf_data:
+        _ctf_challenges[cid] = CTFChallenge(id=cid, title=title, description=desc, category=cat,
+                                             difficulty=diff, flag=flag, hints=hints, points=pts)
+
+    # Initialize empty leaderboard
+    global _leaderboard
+    _leaderboard = []
+
+# Build courses on module import
+_build_courses()
 
 
-    def generate_user_dashboard(self, completed_ids: List[str]) -> str:
-        """Generate a user dashboard summary."""
-        stats = self.get_progress_stats(completed_ids)
-        modules = self.get_all_modules()
-        lines = [
-            "╔" + "═" * 58 + "╗",
-            "║" + " " * 12 + "LUQI AI TRAINING DASHBOARD" + " " * 21 + "║",
-            "╠" + "═" * 58 + "╣",
-            f"║  Progress: {stats['completion_percentage']:>5.1f}% ({stats['completed_modules']}/{stats['total_modules']} modules)          ║",
-            f"║  Hours:    {stats['completed_hours']:>5.1f}/{stats['total_hours']:.1f} completed                        ║",
-            f"║  Remaining: {stats['remaining_modules']} modules                                   ║",
-            "╠" + "═" * 58 + "╣",
-            "║  Module Status:                                        ║",
-        ]
-        for m in modules:
-            status = "✓ DONE" if m.id in completed_ids else "○ TODO"
-            lines.append(f"║  {status} {m.title[:45]:<45} ║")
-        lines.append("╚" + "═" * 58 + "╝")
-        return "\n".join(lines)
 
-    def get_recommended_certifications(self, completed_ids: List[str]) -> List[str]:
-        """Recommend certifications based on completed modules."""
-        cert_requirements = {
-            "Security+": 4,
-            "CISSP": 7,
-            "CEH": 4,
-            "CCSP": 4,
-            "GCIH": 3,
-            "OSCP": 4,
-        }
-        recommendations = []
-        for cert, required in cert_requirements.items():
-            cert_modules = self.get_learning_path(cert)
-            completed_count = sum(1 for m in cert_modules if m.id in completed_ids)
-            if completed_count >= required:
-                recommendations.append(cert)
-        return recommendations
+# ============================================================================
+# CORE FUNCTIONS
+# ============================================================================
 
-    def estimate_study_time(self, module_ids: List[str]) -> Dict[str, float]:
-        """Estimate total study time for a list of modules."""
-        total_hours = 0.0
-        breakdown = {}
-        for mid in module_ids:
-            module = self._modules.get(mid)
-            if module:
-                # lesson time + lab time + quiz time (1 min per question)
-                lesson_time = sum(l.duration_min for l in module.lessons) / 60.0
-                lab_time = sum(l.duration_min for l in module.labs) / 60.0
-                quiz_time = (len(module.quiz.questions) * 1.0 / 60.0) if module.quiz else 0.0
-                module_total = lesson_time + lab_time + quiz_time
-                breakdown[mid] = round(module_total, 1)
-                total_hours += module_total
-        breakdown["total"] = round(total_hours, 1)
-        return breakdown
+def get_all_courses() -> List[dict]:
+    """Return all 15 security training courses with their full content.
 
-    def get_daily_study_plan(self, hours_per_day: float, completed_ids: List[str]) -> List[Dict[str, any]]:
-        """Generate a daily study plan."""
-        remaining = [m for m in self.get_all_modules() if m.id not in completed_ids]
-        plan = []
-        day = 1
-        current_modules = []
-        current_hours = 0.0
-        
-        for module in remaining:
-            if current_hours + module.duration_hours > hours_per_day and current_modules:
-                plan.append({
-                    "day": day,
-                    "modules": current_modules,
-                    "hours": round(current_hours, 1),
-                })
-                day += 1
-                current_modules = []
-                current_hours = 0.0
-            current_modules.append(module.title)
-            current_hours += module.duration_hours
-        
-        if current_modules:
-            plan.append({
-                "day": day,
-                "modules": current_modules,
-                "hours": round(current_hours, 1),
-            })
-        return plan
+    Returns:
+        List[dict]: List of all course dictionaries with modules, lessons,
+            labs, and quizzes.
 
-    def compare_modules(self, module_id1: str, module_id2: str) -> Dict[str, any]:
-        """Compare two modules side by side."""
-        m1 = self._modules.get(module_id1)
-        m2 = self._modules.get(module_id2)
-        if not m1 or not m2:
-            return {"error": "One or both modules not found."}
-        return {
-            "title": [m1.title, m2.title],
-            "category": [m1.category.value, m2.category.value],
-            "difficulty": [m1.difficulty.value, m2.difficulty.value],
-            "duration_hours": [m1.duration_hours, m2.duration_hours],
-            "lessons": [len(m1.lessons), len(m2.lessons)],
-            "labs": [len(m1.labs), len(m2.labs)],
-            "quiz_questions": [len(m1.quiz.questions) if m1.quiz else 0, len(m2.quiz.questions) if m2.quiz else 0],
-            "lab_points": [sum(l.points for l in m1.labs), sum(l.points for l in m2.labs)],
-        }
+    Example:
+        >>> courses = get_all_courses()
+        >>> len(courses)
+        15
+    """
+    return [course.to_dict() for course in _courses.values()]
 
-    def get_skill_assessment(self, completed_ids: List[str]) -> Dict[str, int]:
-        """Get skill assessment scores by category."""
-        from collections import defaultdict
-        scores = defaultdict(int)
-        max_scores = defaultdict(int)
-        
-        for module in self._modules.values():
-            cat = module.category.value
-            max_scores[cat] += len(module.lessons) * 10 + len(module.labs) * 50
-            if module.id in completed_ids:
-                scores[cat] += len(module.lessons) * 10 + len(module.labs) * 50
-        
-        return {
-            cat: round((scores[cat] / max_scores[cat]) * 100) if max_scores[cat] > 0 else 0
-            for cat in max_scores
-        }
 
-    def export_to_anki(self, module_id: str) -> List[Dict[str, str]]:
-        """Export quiz questions to Anki flashcard format."""
-        module = self._modules.get(module_id)
-        if not module or not module.quiz:
-            return []
-        cards = []
-        for q in module.quiz.questions:
-            front = q.text
-            back = f"<b>{q.options[q.correct_index]}</b><br><br>{q.explanation}"
-            cards.append({"front": front, "back": back, "tags": module.category.value})
-        return cards
+def get_course(course_id: str) -> dict:
+    """Get a specific course by its ID.
 
-    def get_modules_by_duration_range(self, min_hours: float, max_hours: float) -> List[SecurityModule]:
-        """Get modules within a duration range."""
-        return [m for m in self._modules.values() if min_hours <= m.duration_hours <= max_hours]
+    Args:
+        course_id: The unique course identifier (e.g., 'network_security').
 
-    def get_most_popular_modules(self, n: int = 5) -> List[SecurityModule]:
-        """Get the most popular modules (by lesson count)."""
-        return sorted(self._modules.values(), key=lambda m: len(m.lessons), reverse=True)[:n]
+    Returns:
+        dict: Course dictionary with all modules, lessons, labs, and quizzes.
 
-    def get_quick_wins(self) -> List[SecurityModule]:
-        """Get modules with high value but low time commitment."""
-        return sorted(
-            [m for m in self._modules.values() if m.duration_hours <= 5],
-            key=lambda m: (len(m.lessons) + len(m.labs)) / max(m.duration_hours, 0.5),
-            reverse=True,
+    Raises:
+        CourseNotFoundError: If the course ID does not exist.
+
+    Example:
+        >>> course = get_course('network_security')
+        >>> course['title']
+        'Network Security Fundamentals'
+    """
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found. Available: {list(_courses.keys())}")
+    return _courses[course_id].to_dict()
+
+
+def enroll_user(user_id: str, course_id: str) -> dict:
+    """Enroll a user in a security training course.
+
+    Creates a new UserProgress entry to track the user's journey through
+    the course. Initializes skill tree if not present.
+
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course to enroll in.
+
+    Returns:
+        dict: Enrollment confirmation with progress details.
+
+    Raises:
+        CourseNotFoundError: If the course does not exist.
+        ValueError: If user_id or course_id is empty.
+
+    Example:
+        >>> result = enroll_user('user_123', 'network_security')
+        >>> result['status']
+        'enrolled'
+    """
+    if not user_id or not course_id:
+        raise ValueError("user_id and course_id are required")
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found")
+
+    progress_key = f"{user_id}:{course_id}"
+    now = datetime.utcnow()
+
+    if progress_key not in _user_progress:
+        _user_progress[progress_key] = UserProgress(
+            user_id=user_id,
+            course_id=course_id,
+            enrolled_at=now,
+            status="enrolled",
+            last_accessed=now,
         )
 
-    def get_certification_pathways(self) -> Dict[str, List[str]]:
-        """Get all certification pathways."""
-        return {
-            "Security+": [m.title for m in self.get_learning_path("Security+")],
-            "CISSP": [m.title for m in self.get_learning_path("CISSP")],
-            "CEH": [m.title for m in self.get_learning_path("CEH")],
-            "CCSP": [m.title for m in self.get_learning_path("CCSP")],
-            "GCIH": [m.title for m in self.get_learning_path("GCIH")],
-            "OSCP": [m.title for m in self.get_learning_path("OSCP")],
-        }
+    # Initialize skill tree if needed
+    if user_id not in _skill_trees:
+        _skill_trees[user_id] = SkillTree(user_id=user_id)
 
-    def get_modules_with_exam_prep(self) -> List[SecurityModule]:
-        """Get modules that include exam preparation content."""
-        return [m for m in self._modules.values() if m.quiz and len(m.quiz.questions) >= 10]
+    progress = _user_progress[progress_key]
+    return {
+        "status": "success",
+        "message": f"User {user_id} enrolled in {course_id}",
+        "enrolled_at": progress.enrolled_at.isoformat(),
+        "user_id": user_id,
+        "course_id": course_id,
+        "progress": progress.to_dict(),
+    }
 
-    def get_weekly_study_plan(self, weeks: int, hours_per_week: float) -> List[Dict[str, any]]:
-        """Generate a weekly study plan."""
-        modules = self.get_all_modules()
-        plan = []
-        module_idx = 0
-        
-        for week in range(1, weeks + 1):
-            weekly_modules = []
-            weekly_hours = 0.0
-            
-            while module_idx < len(modules) and weekly_hours + modules[module_idx].duration_hours <= hours_per_week:
-                m = modules[module_idx]
-                weekly_modules.append(m.title)
-                weekly_hours += m.duration_hours
-                module_idx += 1
-            
-            if weekly_modules:
-                plan.append({
-                    "week": week,
-                    "modules": weekly_modules,
-                    "hours": round(weekly_hours, 1),
-                })
-        
-        return plan
 
-    def get_interleaved_practice_set(self, num_questions: int = 20) -> List[Dict[str, any]]:
-        """Generate an interleaved practice set mixing questions from all modules."""
-        import random
-        all_questions = []
-        for module in self._modules.values():
-            if module.quiz:
-                for q in module.quiz.questions:
-                    all_questions.append({
-                        "question_id": q.id,
-                        "module": module.title,
-                        "category": module.category.value,
-                        "text": q.text,
-                        "options": q.options,
-                        "correct_index": q.correct_index,
-                        "explanation": q.explanation,
-                        "difficulty": q.difficulty.value,
-                    })
-        if num_questions >= len(all_questions):
-            return all_questions
-        return random.sample(all_questions, num_questions)
+def get_user_progress(user_id: str, course_id: str) -> dict:
+    """Get a user's progress in a specific course.
 
-    def generate_cheat_sheet(self, module_id: str) -> str:
-        """Generate a quick reference cheat sheet for a module."""
-        module = self._modules.get(module_id)
-        if not module:
-            return "Module not found."
-        lines = [
-            f"# {module.title} - Cheat Sheet",
-            f"",
-            f"## Key Concepts",
-        ]
-        for lesson in module.lessons:
-            lines.append(f"- **{lesson.title}**: {lesson.content[:100]}...")
-        lines.extend([
-            f"",
-            f"## Quick Reference",
-            f"- Category: {module.category.value}",
-            f"- Difficulty: {module.difficulty.value}",
-            f"- Duration: {module.duration_hours}h",
-            f"- Lessons: {len(module.lessons)}",
-            f"- Labs: {len(module.labs)}",
-        ])
-        return "\n".join(lines)
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course.
 
-    def get_modules_for_team_role(self, role: str) -> List[SecurityModule]:
-        """Recommend modules based on team role."""
-        role_map = {
-            "developer": ["devsecops_001", "cloudsec_001", "crypto_001"],
-            "security_analyst": ["thintel_001", "incresp_001", "forensics_001", "netsec_001"],
-            "network_admin": ["netsec_001", "cloudsec_001", "iam_001"],
-            "compliance_officer": ["iam_001", "crypto_001", "cloudsec_001"],
-            "penetration_tester": ["ethhack_001", "netsec_001", "thintel_001"],
-            "incident_responder": ["incresp_001", "forensics_001", "thintel_001"],
-            "security_architect": ["cloudsec_001", "devsecops_001", "iam_001", "crypto_001"],
-            "soc_analyst": ["thintel_001", "incresp_001", "netsec_001"],
-        }
-        module_ids = role_map.get(role.lower(), [])
-        return [self._modules[mid] for mid in module_ids if mid in self._modules]
+    Returns:
+        dict: User progress including completed lessons, scores, and status.
 
-    def generate_study_timeline(self, start_date: str, hours_per_week: float) -> List[Dict[str, any]]:
-        """Generate a study timeline with dates."""
-        from datetime import datetime, timedelta
-        modules = self.get_all_modules()
-        timeline = []
-        current_date = datetime.strptime(start_date, "%Y-%m-%d")
-        remaining_hours = hours_per_week
-        
-        for module in modules:
-            module_hours = module.duration_hours
-            while module_hours > 0:
-                if remaining_hours <= 0:
-                    current_date += timedelta(days=1)
-                    while current_date.weekday() >= 5:
-                        current_date += timedelta(days=1)
-                    remaining_hours = hours_per_week
-                
-                hours_today = min(remaining_hours, module_hours)
-                timeline.append({
-                    "date": current_date.strftime("%Y-%m-%d"),
-                    "module": module.title,
-                    "hours": round(hours_today, 1),
-                })
-                module_hours -= hours_today
-                remaining_hours -= hours_today
-        
-        return timeline
+    Raises:
+        UserNotEnrolledError: If the user is not enrolled in the course.
+        CourseNotFoundError: If the course does not exist.
 
-    def get_collaborative_learning_groups(self) -> Dict[str, List[SecurityModule]]:
-        """Suggest collaborative learning groups based on module themes."""
-        return {
-            "Foundations": self.get_modules_by_category(CourseCategory.FUNDAMENTALS),
-            "Offensive Security": self.get_modules_by_category(CourseCategory.OFFENSIVE),
-            "Defensive Security": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.DEFENSIVE, CourseCategory.INCIDENT_RESPONSE, CourseCategory.THREAT_INTEL]
-            ],
-            "Cloud & Architecture": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.CLOUD_SECURITY, CourseCategory.DEVSECOPS]
-            ],
-        }
+    Example:
+        >>> progress = get_user_progress('user_123', 'network_security')
+        >>> progress['status']
+        'enrolled'
+    """
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found")
 
-    def get_challenge_labs(self) -> List[SecurityLab]:
-        """Get the most challenging labs (highest points)."""
-        all_labs = []
-        for module in self._modules.values():
-            all_labs.extend(module.labs)
-        return sorted(all_labs, key=lambda l: l.points, reverse=True)[:10]
+    progress_key = f"{user_id}:{course_id}"
+    if progress_key not in _user_progress:
+        raise UserNotEnrolledError(f"User {user_id} is not enrolled in {course_id}")
 
-    def get_leaderboard_template(self) -> str:
-        """Generate a leaderboard template."""
-        lines = [
-            "╔" + "═" * 58 + "╗",
-            "║" + " " * 16 + "TRAINING LEADERBOARD" + " " * 22 + "║",
-            "╠" + "═" * 58 + "╣",
-            "║  Rank │ Name          │ Modules │ Hours │ Score   ║",
-            "╠" + "═" * 58 + "╣",
-            "║   1   │               │         │       │         ║",
-            "║   2   │               │         │       │         ║",
-            "║   3   │               │         │       │         ║",
-            "║   4   │               │         │       │         ║",
-            "║   5   │               │         │       │         ║",
-            "╚" + "═" * 58 + "╝",
-        ]
-        return "\n".join(lines)
+    progress = _user_progress[progress_key]
+    progress.last_accessed = datetime.utcnow()
+    return progress.to_dict()
 
-    def export_to_csv(self) -> str:
-        """Export module summary to CSV format."""
-        lines = ["id,title,category,difficulty,duration_hours,lesson_count,lab_count,quiz_question_count"]
-        for m in self.get_all_modules():
-            lines.append(
-                f'"{m.id}","{m.title}","{m.category.value}","{m.difficulty.value}",'
-                f'{m.duration_hours},{len(m.lessons)},{len(m.labs)},'
-                f'{len(m.quiz.questions) if m.quiz else 0}'
-            )
-        return "\n".join(lines)
 
-    def get_spaced_repetition_schedule(self, module_id: str) -> List[Dict[str, str]]:
-        """Generate a spaced repetition schedule for a module."""
-        from datetime import datetime, timedelta
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        intervals = [1, 3, 7, 14, 30]  # days
-        schedule = []
-        base_date = datetime.now()
-        
-        for interval in intervals:
-            review_date = base_date + timedelta(days=interval)
-            schedule.append({
-                "date": review_date.strftime("%Y-%m-%d"),
-                "module": module.title,
-                "interval_days": interval,
-                "activity": f"Review {module.title} - Day {interval}",
-            })
-        return schedule
+def update_lesson_progress(user_id: str, course_id: str, module_id: str,
+                           lesson_id: str, time_spent_min: int = 0) -> dict:
+    """Mark a lesson as completed and update user progress.
 
-    def get_modules_with_video_content(self) -> List[SecurityModule]:
-        """Get modules that include video content."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.VIDEO for l in m.lessons)
-        ]
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course.
+        module_id: ID of the module containing the lesson.
+        lesson_id: ID of the lesson to mark complete.
+        time_spent_min: Optional time spent on the lesson in minutes.
 
-    def get_modules_with_interactive_content(self) -> List[SecurityModule]:
-        """Get modules with interactive lessons."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.INTERACTIVE for l in m.lessons)
-        ]
+    Returns:
+        dict: Updated progress with completion status.
 
-    def get_pomodoro_schedule(self, module_id: str) -> List[Dict[str, any]]:
-        """Generate a Pomodoro-style study schedule for a module."""
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        schedule = []
-        pomodoro_count = 0
-        total_minutes = int(module.duration_hours * 60)
-        
-        for lesson in module.lessons:
-            lesson_poms = max(1, lesson.duration_min // 25)
-            for p in range(lesson_poms):
-                pomodoro_count += 1
-                schedule.append({
-                    "pomodoro": pomodoro_count,
-                    "activity": f"Study: {lesson.title}",
-                    "duration_min": min(25, lesson.duration_min - p * 25),
-                    "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-                })
-        
-        for lab in module.labs:
-            pomodoro_count += 1
-            schedule.append({
-                "pomodoro": pomodoro_count,
-                "activity": f"Lab: {lab.title}",
-                "duration_min": min(25, lab.duration_min),
-                "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-            })
-        
-        return schedule
+    Raises:
+        UserNotEnrolledError: If user is not enrolled.
+        CourseNotFoundError: If course does not exist.
+        ValueError: If lesson_id is empty.
 
-    def get_gamification_summary(self, completed_ids: List[str]) -> Dict[str, any]:
-        """Get gamification summary for a user."""
-        total_points = self.get_total_points()
-        earned_points = sum(
-            sum(lab.points for lab in m.labs)
-            for m in self._modules.values()
-            if m.id in completed_ids
-        )
-        
-        return {
-            "total_points": total_points,
-            "earned_points": earned_points,
-            "completion_percentage": round((earned_points / total_points) * 100, 1) if total_points > 0 else 0,
-            "modules_completed": len(completed_ids),
-            "total_modules": len(self._modules),
-            "achievements": self._get_achievements(completed_ids),
-        }
+    Example:
+        >>> result = update_lesson_progress('user_123', 'network_security',
+        ...                                  'netsec_001', 'netsec_l1')
+        >>> result['completed']
+        True
+    """
+    if not lesson_id:
+        raise ValueError("lesson_id is required")
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found")
 
-    def _get_achievements(self, completed_ids: List[str]) -> List[str]:
-        """Get list of achievements based on progress."""
-        achievements = []
-        completed_set = set(completed_ids)
-        
-        if len(completed_set) >= 1:
-            achievements.append("🎓 First Steps - Complete your first module")
-        if len(completed_set) >= 5:
-            achievements.append("📚 Halfway There - Complete 5 modules")
-        if len(completed_set) >= 10:
-            achievements.append("🏆 Master - Complete 10 modules")
-        if len(completed_set) >= 15:
-            achievements.append("⭐ Grandmaster - Complete all modules")
-        
-        # Category achievements
-        for cat in CourseCategory:
-            cat_modules = [m.id for m in self._modules.values() if m.category == cat]
-            if cat_modules and all(m in completed_set for m in cat_modules):
-                achievements.append(f"🔒 {cat.value} Expert - Complete all {cat.value} modules")
-        
-        return achievements
+    progress_key = f"{user_id}:{course_id}"
+    if progress_key not in _user_progress:
+        raise UserNotEnrolledError(f"User {user_id} is not enrolled in {course_id}")
+
+    progress = _user_progress[progress_key]
+    now = datetime.utcnow()
+
+    if lesson_id not in progress.completed_lessons:
+        progress.completed_lessons.append(lesson_id)
+
+    progress.last_accessed = now
+    if time_spent_min:
+        progress.total_time_minutes += time_spent_min
+
+    # Calculate overall progress
+    course = _courses[course_id]
+    total_lessons = sum(len(m.lessons) for m in course.modules)
+    if total_lessons > 0:
+        lesson_progress = len(progress.completed_lessons) / total

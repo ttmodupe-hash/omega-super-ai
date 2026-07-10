@@ -1,201 +1,235 @@
+ime_limit_minutes,
+    }
 
 
-    def get_modules_for_team_role(self, role: str) -> List[SecurityModule]:
-        """Recommend modules based on team role."""
-        role_map = {
-            "developer": ["devsecops_001", "cloudsec_001", "crypto_001"],
-            "security_analyst": ["thintel_001", "incresp_001", "forensics_001", "netsec_001"],
-            "network_admin": ["netsec_001", "cloudsec_001", "iam_001"],
-            "compliance_officer": ["iam_001", "crypto_001", "cloudsec_001"],
-            "penetration_tester": ["ethhack_001", "netsec_001", "thintel_001"],
-            "incident_responder": ["incresp_001", "forensics_001", "thintel_001"],
-            "security_architect": ["cloudsec_001", "devsecops_001", "iam_001", "crypto_001"],
-            "soc_analyst": ["thintel_001", "incresp_001", "netsec_001"],
-        }
-        module_ids = role_map.get(role.lower(), [])
-        return [self._modules[mid] for mid in module_ids if mid in self._modules]
+def generate_certificate(user_id: str, course_id: str) -> dict:
+    """Generate a completion certificate with verification hash.
 
-    def generate_study_timeline(self, start_date: str, hours_per_week: float) -> List[Dict[str, any]]:
-        """Generate a study timeline with dates."""
-        from datetime import datetime, timedelta
-        modules = self.get_all_modules()
-        timeline = []
-        current_date = datetime.strptime(start_date, "%Y-%m-%d")
-        remaining_hours = hours_per_week
-        
-        for module in modules:
-            module_hours = module.duration_hours
-            while module_hours > 0:
-                if remaining_hours <= 0:
-                    current_date += timedelta(days=1)
-                    while current_date.weekday() >= 5:
-                        current_date += timedelta(days=1)
-                    remaining_hours = hours_per_week
-                
-                hours_today = min(remaining_hours, module_hours)
-                timeline.append({
-                    "date": current_date.strftime("%Y-%m-%d"),
-                    "module": module.title,
-                    "hours": round(hours_today, 1),
-                })
-                module_hours -= hours_today
-                remaining_hours -= hours_today
-        
-        return timeline
+    Creates a cryptographically signed certificate when a user completes
+    a course with sufficient overall score (>= 70%).
 
-    def get_collaborative_learning_groups(self) -> Dict[str, List[SecurityModule]]:
-        """Suggest collaborative learning groups based on module themes."""
-        return {
-            "Foundations": self.get_modules_by_category(CourseCategory.FUNDAMENTALS),
-            "Offensive Security": self.get_modules_by_category(CourseCategory.OFFENSIVE),
-            "Defensive Security": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.DEFENSIVE, CourseCategory.INCIDENT_RESPONSE, CourseCategory.THREAT_INTEL]
-            ],
-            "Cloud & Architecture": [
-                m for m in self._modules.values()
-                if m.category in [CourseCategory.CLOUD_SECURITY, CourseCategory.DEVSECOPS]
-            ],
-        }
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the completed course.
 
-    def get_challenge_labs(self) -> List[SecurityLab]:
-        """Get the most challenging labs (highest points)."""
-        all_labs = []
-        for module in self._modules.values():
-            all_labs.extend(module.labs)
-        return sorted(all_labs, key=lambda l: l.points, reverse=True)[:10]
+    Returns:
+        dict: Certificate details with verification hash and download info.
 
-    def get_leaderboard_template(self) -> str:
-        """Generate a leaderboard template."""
-        lines = [
-            "╔" + "═" * 58 + "╗",
-            "║" + " " * 16 + "TRAINING LEADERBOARD" + " " * 22 + "║",
-            "╠" + "═" * 58 + "╣",
-            "║  Rank │ Name          │ Modules │ Hours │ Score   ║",
-            "╠" + "═" * 58 + "╣",
-            "║   1   │               │         │       │         ║",
-            "║   2   │               │         │       │         ║",
-            "║   3   │               │         │       │         ║",
-            "║   4   │               │         │       │         ║",
-            "║   5   │               │         │       │         ║",
-            "╚" + "═" * 58 + "╝",
-        ]
-        return "\n".join(lines)
+    Raises:
+        CourseNotFoundError: If course does not exist.
+        UserNotEnrolledError: If user is not enrolled.
+        SecurityTrainingError: If course completion criteria not met.
 
-    def export_to_csv(self) -> str:
-        """Export module summary to CSV format."""
-        lines = ["id,title,category,difficulty,duration_hours,lesson_count,lab_count,quiz_question_count"]
-        for m in self.get_all_modules():
-            lines.append(
-                f'"{m.id}","{m.title}","{m.category.value}","{m.difficulty.value}",'
-                f'{m.duration_hours},{len(m.lessons)},{len(m.labs)},'
-                f'{len(m.quiz.questions) if m.quiz else 0}'
-            )
-        return "\n".join(lines)
+    Example:
+        >>> cert = generate_certificate('user_123', 'network_security')
+        >>> cert['verified']
+        True
+    """
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found")
 
-    def get_spaced_repetition_schedule(self, module_id: str) -> List[Dict[str, str]]:
-        """Generate a spaced repetition schedule for a module."""
-        from datetime import datetime, timedelta
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        intervals = [1, 3, 7, 14, 30]  # days
-        schedule = []
-        base_date = datetime.now()
-        
-        for interval in intervals:
-            review_date = base_date + timedelta(days=interval)
-            schedule.append({
-                "date": review_date.strftime("%Y-%m-%d"),
-                "module": module.title,
-                "interval_days": interval,
-                "activity": f"Review {module.title} - Day {interval}",
-            })
-        return schedule
+    progress_key = f"{user_id}:{course_id}"
+    if progress_key not in _user_progress:
+        raise UserNotEnrolledError(f"User {user_id} is not enrolled in {course_id}")
 
-    def get_modules_with_video_content(self) -> List[SecurityModule]:
-        """Get modules that include video content."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.VIDEO for l in m.lessons)
-        ]
-
-    def get_modules_with_interactive_content(self) -> List[SecurityModule]:
-        """Get modules with interactive lessons."""
-        return [
-            m for m in self._modules.values()
-            if any(l.lesson_type == LessonType.INTERACTIVE for l in m.lessons)
-        ]
-
-    def get_pomodoro_schedule(self, module_id: str) -> List[Dict[str, any]]:
-        """Generate a Pomodoro-style study schedule for a module."""
-        module = self._modules.get(module_id)
-        if not module:
-            return []
-        
-        schedule = []
-        pomodoro_count = 0
-        total_minutes = int(module.duration_hours * 60)
-        
-        for lesson in module.lessons:
-            lesson_poms = max(1, lesson.duration_min // 25)
-            for p in range(lesson_poms):
-                pomodoro_count += 1
-                schedule.append({
-                    "pomodoro": pomodoro_count,
-                    "activity": f"Study: {lesson.title}",
-                    "duration_min": min(25, lesson.duration_min - p * 25),
-                    "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-                })
-        
-        for lab in module.labs:
-            pomodoro_count += 1
-            schedule.append({
-                "pomodoro": pomodoro_count,
-                "activity": f"Lab: {lab.title}",
-                "duration_min": min(25, lab.duration_min),
-                "break_min": 5 if pomodoro_count % 4 != 0 else 15,
-            })
-        
-        return schedule
-
-    def get_gamification_summary(self, completed_ids: List[str]) -> Dict[str, any]:
-        """Get gamification summary for a user."""
-        total_points = self.get_total_points()
-        earned_points = sum(
-            sum(lab.points for lab in m.labs)
-            for m in self._modules.values()
-            if m.id in completed_ids
+    progress = _user_progress[progress_key]
+    if progress.overall_score < 70:
+        raise SecurityTrainingError(
+            f"Course completion requires 70% overall score. Current: {progress.overall_score}%"
         )
-        
-        return {
-            "total_points": total_points,
-            "earned_points": earned_points,
-            "completion_percentage": round((earned_points / total_points) * 100, 1) if total_points > 0 else 0,
-            "modules_completed": len(completed_ids),
-            "total_modules": len(self._modules),
-            "achievements": self._get_achievements(completed_ids),
-        }
 
-    def _get_achievements(self, completed_ids: List[str]) -> List[str]:
-        """Get list of achievements based on progress."""
-        achievements = []
-        completed_set = set(completed_ids)
-        
-        if len(completed_set) >= 1:
-            achievements.append("🎓 First Steps - Complete your first module")
-        if len(completed_set) >= 5:
-            achievements.append("📚 Halfway There - Complete 5 modules")
-        if len(completed_set) >= 10:
-            achievements.append("🏆 Master - Complete 10 modules")
-        if len(completed_set) >= 15:
-            achievements.append("⭐ Grandmaster - Complete all modules")
-        
-        # Category achievements
-        for cat in CourseCategory:
-            cat_modules = [m.id for m in self._modules.values() if m.category == cat]
-            if cat_modules and all(m in completed_set for m in cat_modules):
-                achievements.append(f"🔒 {cat.value} Expert - Complete all {cat.value} modules")
-        
-        return achievements
+    course = _courses[course_id]
+    cert_id = f"LUQI-CERT-{uuid.uuid4().hex[:12].upper()}"
+    issued_at = datetime.utcnow()
+    expiry_date = issued_at + timedelta(days=730)  # 2 years
+
+    # Generate verification hash
+    hash_input = f"{user_id}:{course_id}:{cert_id}:{issued_at.isoformat()}:LUQIAIv24.4.0"
+    verification_hash = hashlib.sha256(hash_input.encode()).hexdigest()
+
+    cert = UserCertificate(
+        user_id=user_id,
+        course_id=course_id,
+        certificate_id=cert_id,
+        issued_at=issued_at,
+        expiry_date=expiry_date,
+        verification_hash=verification_hash,
+        verified=True,
+    )
+
+    cert_key = f"{user_id}:{course_id}"
+    _certificates[cert_key] = cert
+
+    # Award badge for course completion
+    badge_map = {
+        "network_security": "badge_netsec",
+        "web_app_security": "badge_webapp",
+        "cryptography": "badge_crypto",
+        "ethical_hacking": "badge_hacker",
+        "incident_response": "badge_ir",
+        "cloud_security": "badge_cloud",
+        "malware_analysis": "badge_malware",
+        "digital_forensics": "badge_forensics",
+        "compliance_governance": "badge_compliance",
+        "mobile_security": "badge_mobile",
+        "wireless_security": "badge_wireless",
+        "social_engineering": "badge_se",
+        "africa_telecom_security": "badge_telecom",
+        "devsecops": "badge_devsecops",
+        "threat_intelligence": "badge_threat",
+    }
+    badge_id = badge_map.get(course_id)
+    if badge_id and user_id in _skill_trees:
+        if badge_id not in _skill_trees[user_id].badges:
+            _skill_trees[user_id].badges.append(badge_id)
+
+    return {
+        "status": "success",
+        "certificate_id": cert_id,
+        "user_id": user_id,
+        "course_id": course_id,
+        "course_title": course.title,
+        "issued_at": issued_at.isoformat(),
+        "expiry_date": expiry_date.isoformat(),
+        "verification_hash": verification_hash,
+        "verification_url": f"/api/security/certificates/verify/{cert_id}",
+        "verified": True,
+    }
+
+
+def get_skill_tree(user_id: str) -> dict:
+    """Get a user's skill tree with levels, points, and badges.
+
+    Args:
+        user_id: Unique identifier for the user.
+
+    Returns:
+        dict: Skill tree with levels, badges, skills, and title.
+
+    Example:
+        >>> tree = get_skill_tree('user_123')
+        >>> tree['level']
+        1
+    """
+    if user_id not in _skill_trees:
+        _skill_trees[user_id] = SkillTree(user_id=user_id)
+
+    tree = _skill_trees[user_id]
+    badge_details = []
+    for badge_id in tree.badges:
+        if badge_id in _badges:
+            badge_details.append(_badges[badge_id].to_dict())
+
+    # Calculate level based on total points
+    tree.level = max(1, tree.total_points // 500 + 1)
+    level_titles = {
+        1: "Security Novice", 2: "Security Apprentice", 3: "Security Analyst",
+        4: "Security Professional", 5: "Security Expert", 6: "Security Master",
+        7: "Cyber Guardian", 8: "Elite Defender", 9: "Security Grandmaster",
+        10: "Cyber Legend",
+    }
+    tree.title = level_titles.get(min(tree.level, 10), "Cyber Legend")
+
+    return {
+        "user_id": user_id,
+        "level": tree.level,
+        "title": tree.title,
+        "total_points": tree.total_points,
+        "skills": tree.skills,
+        "badges_earned": len(tree.badges),
+        "badges": badge_details,
+        "next_level_points": tree.level * 500,
+    }
+
+
+def _update_skill_tree(user_id: str, course_id: str, action: str,
+                       item_id: str, score: float = 0) -> None:
+    """Update user's skill tree based on learning activity.
+
+    Internal function to track skill progression when users complete
+    lessons, labs, and quizzes.
+
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course being worked on.
+        action: Type of activity ('lesson_complete', 'lab_complete', 'quiz_complete').
+        item_id: ID of the completed item.
+        score: Score earned for the activity (0-100).
+    """
+    if user_id not in _skill_trees:
+        _skill_trees[user_id] = SkillTree(user_id=user_id)
+
+    tree = _skill_trees[user_id]
+
+    # Map course to skill category
+    skill_map = {
+        "network_security": "networking",
+        "web_app_security": "web_security",
+        "cryptography": "cryptography",
+        "ethical_hacking": "pentesting",
+        "incident_response": "incident_response",
+        "cloud_security": "cloud_security",
+        "malware_analysis": "malware_analysis",
+        "digital_forensics": "forensics",
+        "compliance_governance": "compliance",
+        "mobile_security": "mobile_security",
+        "wireless_security": "wireless_security",
+        "social_engineering": "social_engineering",
+        "africa_telecom_security": "telecom_security",
+        "devsecops": "devsecops",
+        "threat_intelligence": "threat_intelligence",
+    }
+
+    skill = skill_map.get(course_id, "general")
+
+    if action == "lesson_complete":
+        tree.skills[skill] = tree.skills.get(skill, 0) + 10
+        tree.total_points += 10
+    elif action == "lab_complete":
+        points = int(score / 10)
+        tree.skills[skill] = tree.skills.get(skill, 0) + points
+        tree.total_points += points
+    elif action == "quiz_complete":
+        points = int(score / 10)
+        tree.skills[skill] = tree.skills.get(skill, 0) + points
+        tree.total_points += points
+
+
+
+def get_leaderboard(course_id: Optional[str] = None, limit: int = 50) -> List[dict]:
+    """Get global or course-specific leaderboard ranked by score.
+
+    Args:
+        course_id: Optional course ID to filter leaderboard. If None,
+            returns global leaderboard across all courses.
+        limit: Maximum number of entries to return (default 50, max 100).
+
+    Returns:
+        List[dict]: Ranked list of user entries with scores and badges.
+
+    Example:
+        >>> board = get_leaderboard('network_security', limit=10)
+        >>> board[0]['rank']
+        1
+    """
+    limit = min(limit, 100)
+
+    # Build scores from user progress
+    scores: Dict[str, dict] = {}
+
+    for key, progress in _user_progress.items():
+        if course_id and progress.course_id != course_id:
+            continue
+
+        uid = progress.user_id
+        if uid not in scores:
+            scores[uid] = {
+                "user_id": uid,
+                "total_score": 0,
+                "courses_completed": 0,
+                "labs_completed": 0,
+                "quizzes_completed": 0,
+            }
+        scores[uid]["total_score"] += progress.overall_score
+        if progress.status == "completed":
+            scores[uid]["courses_c
