@@ -1,0 +1,240 @@
+     return [
+            "Read a physical book or e-ink device",
+            "Practice gentle stretching or yoga",
+            "Listen to calming music or a sleep podcast",
+            "Do a meditation or breathing exercise",
+            "Write in a journal",
+            "Take a warm bath or shower",
+            "Prepare for tomorrow to reduce morning stress",
+            "Dim the lights in your environment",
+            "Do a body scan relaxation exercise",
+            "Sip herbal tea like chamomile or peppermint",
+        ]
+
+    def get_tip(self) -> str:
+        """Get a wind-down specific tip.
+
+        Returns:
+            A sleep hygiene tip appropriate for wind-down hours.
+        """
+        tips = [
+            "The blue light from screens can delay melatonin production by up to 3 hours. Consider switching to non-screen activities.",
+            "A consistent bedtime routine signals your brain to prepare for sleep. Try to go to bed at the same time each night.",
+            "Your bedroom should be cool (60-67F), dark, and quiet for optimal sleep conditions.",
+            "Avoid caffeine for at least 6 hours before bedtime. It has a half-life of 5-6 hours.",
+            "A warm bath 1-2 hours before bed helps your body temperature drop, which signals sleepiness.",
+        ]
+        return random.choice(tips)
+
+
+# ---------------------------------------------------------------------------
+# Screen Time Goals Manager
+# ---------------------------------------------------------------------------
+
+
+class ScreenTimeGoalsManager:
+    """Manages user-defined screen time goals and tracks progress.
+
+    Provides gentle warnings when users approach their limits and
+    celebrates healthy habits.
+    """
+
+    def __init__(self, session_tracker: SessionTracker) -> None:
+        """Initialize the goals manager.
+
+        Args:
+            session_tracker: The session tracker for querying usage.
+        """
+        self._tracker = session_tracker
+        self._lock = threading.Lock()
+        self._goals: Dict[str, ScreenTimeGoals] = {}
+        self._warning_sent: Dict[str, Dict[str, bool]] = defaultdict(
+            lambda: {"50": False, "80": False, "100": False}
+        )
+
+    def set_goals(self, user_id: str, goals: ScreenTimeGoals) -> None:
+        """Set screen time goals for a user.
+
+        Args:
+            user_id: The user to set goals for.
+            goals: ScreenTimeGoals object with desired limits.
+        """
+        with self._lock:
+            self._goals[user_id] = goals
+            # Reset warning flags
+            self._warning_sent[user_id] = {
+                "50": False,
+                "80": False,
+                "100": False,
+            }
+
+    def get_goals(self, user_id: str) -> ScreenTimeGoals:
+        """Get current screen time goals for a user.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            ScreenTimeGoals object (returns defaults if not set).
+        """
+        with self._lock:
+            goals = self._goals.get(user_id)
+            if goals is None:
+                goals = ScreenTimeGoals()
+                self._goals[user_id] = goals
+            return goals
+
+    def check_progress(self, user_id: str) -> Dict[str, Any]:
+        """Check progress against screen time goals.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            Dictionary with progress information and any warnings.
+        """
+        goals = self.get_goals(user_id)
+        used_minutes = self._tracker.get_screen_time_minutes(
+            user_id, window_minutes=1440
+        )
+        limit = goals.daily_limit_minutes
+
+        if limit <= 0:
+            percentage = 0.0
+        else:
+            percentage = (used_minutes / limit) * 100.0
+
+        warnings: List[str] = []
+
+        with self._lock:
+            warning_flags = self._warning_sent.get(user_id, {})
+
+            if percentage >= 100 and not warning_flags.get("100"):
+                warnings.append(
+                    "You have reached your daily screen time goal. "
+                    "Great job being mindful of your usage today!"
+                )
+                warning_flags["100"] = True
+            elif percentage >= 80 and not warning_flags.get("80"):
+                warnings.append(
+                    "You are at 80% of your daily screen time goal. "
+                    "Consider taking a longer break or winding down soon."
+                )
+                warning_flags["80"] = True
+            elif percentage >= 50 and not warning_flags.get("50"):
+                warnings.append(
+                    "You are at 50% of your daily screen time goal. "
+                    "You are using your time mindfully. Keep it up!"
+                )
+                warning_flags["50"] = True
+
+        return {
+            "used_minutes": used_minutes,
+            "limit_minutes": limit,
+            "percentage": round(percentage, 1),
+            "remaining_minutes": max(limit - used_minutes, 0),
+            "warnings": warnings,
+        }
+
+    def reset_daily_warnings(self, user_id: str) -> None:
+        """Reset warning flags for a new day.
+
+        Args:
+            user_id: The user to reset.
+        """
+        with self._lock:
+            self._warning_sent[user_id] = {
+                "50": False,
+                "80": False,
+                "100": False,
+            }
+
+
+# ---------------------------------------------------------------------------
+# Wellness Tips Engine
+# ---------------------------------------------------------------------------
+
+
+class WellnessTipsEngine:
+    """Serves contextual wellness tips based on user state.
+
+    Uses the WellnessTipsDatabase to select tips that are relevant to the
+    user's current fatigue level, activity, and tip history.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the tips engine."""
+        self._lock = threading.Lock()
+        self._tip_history: Dict[str, Deque[str]] = defaultdict(
+            lambda: deque(maxlen=Constants.MAX_TIP_HISTORY)
+        )
+
+    def get_tip(
+        self,
+        user_id: str,
+        fatigue_score: int = 50,
+        current_activity: str = "",
+        category: Optional[str] = None,
+    ) -> WellnessTip:
+        """Get a contextual wellness tip.
+
+        Args:
+            user_id: The user to get a tip for.
+            fatigue_score: Current fatigue score.
+            current_activity: Current activity type.
+            category: Optional preferred category.
+
+        Returns:
+            A contextually selected WellnessTip.
+        """
+        with self._lock:
+            history = list(self._tip_history.get(user_id, deque()))
+
+        tip = WellnessTipsDatabase.select_contextual_tip(
+            fatigue_score=fatigue_score,
+            current_activity=current_activity,
+            tip_history=history,
+            preferred_category=category,
+        )
+
+        with self._lock:
+            self._tip_history[user_id].append(tip.title)
+
+        return tip
+
+    def get_categories(self) -> List[str]:
+        """Get all available tip categories.
+
+        Returns:
+            List of category name strings.
+        """
+        return WellnessTipsDatabase.get_categories()
+
+    def get_tips_by_category(self, category: str) -> List[WellnessTip]:
+        """Get all tips in a specific category.
+
+        Args:
+            category: Category to filter by.
+
+        Returns:
+            List of WellnessTip objects.
+        """
+        return WellnessTipsDatabase.get_tips_by_category(category)
+
+    def clear_history(self, user_id: str) -> None:
+        """Clear tip history for a user.
+
+        Args:
+            user_id: The user whose history to clear.
+        """
+        with self._lock:
+            self._tip_history.pop(user_id, None)
+
+
+# ---------------------------------------------------------------------------
+# Usage Analytics
+# ---------------------------------------------------------------------------
+
+
+class UsageAnalytics:
+    """Aggregates us
