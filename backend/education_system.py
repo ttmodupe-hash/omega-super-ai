@@ -995,4 +995,43 @@ class StudentProfile:
             self.emotional_state = state
 
     def update_mastery(self, concept: str, level: float) -> None:
-        """Update mastery level for a concept.
+        """Update mastery level for a concept."""
+        if concept not in self.mastery:
+            self.mastery[concept] = 0.0
+        self.mastery[concept] = min(1.0, max(0.0, level))
+
+    def get_mastery(self, concept: str) -> float:
+        """Get mastery level for a concept."""
+        return self.mastery.get(concept, 0.0)
+
+    def to_dict(self) -> dict:
+        """Serialize student state to dict."""
+        return {
+            "student_id": self.student_id,
+            "mastery": self.mastery.copy(),
+            "emotional_state": self.emotional_state,
+        }
+
+
+class EducationSystem:
+    """Main education system managing students, curricula, and progress."""
+
+    def __init__(self):
+        self.students: dict[str, StudentState] = {}
+        self.curricula: dict[str, dict] = {}
+
+    def get_or_create_student(self, student_id: str) -> StudentState:
+        """Get existing student or create new."""
+        if student_id not in self.students:
+            self.students[student_id] = StudentState(student_id)
+        return self.students[student_id]
+
+    def update_mastery(self, student_id: str, concept: str, level: float) -> None:
+        """Update mastery for a student."""
+        student = self.get_or_create_student(student_id)
+        student.update_mastery(concept, level)
+
+    def get_student_progress(self, student_id: str) -> dict:
+        """Get full progress report for a student."""
+        student = self.get_or_create_student(student_id)
+        return student.to_dict()
