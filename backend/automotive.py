@@ -1,4 +1,4 @@
-"
+"""
 Luqi AI - Automotive Diagnostic Module
 ========================================
 A comprehensive automotive diagnostic AI that helps vehicle owners troubleshoot
@@ -1395,7 +1395,7 @@ INSPECTION_LIBRARY: Dict[str, Dict[str, Any]] = {
         "time": "10 minutes",
         "tools": "Flashlight, jack, jack stands",
         "steps": [
-            "Jack up vehicle and secure on jack stands",
+            "Jack up vehicle and place on jack stands",
             "Inspect control arm bushings for cracks, tears, or deterioration",
             "Check ball joints for play (jack up, wiggle wheel at 12 and 6 o'clock)",
             "Inspect tie rod ends for torn boots and play (wiggle at 3 and 9 o'clock)",
