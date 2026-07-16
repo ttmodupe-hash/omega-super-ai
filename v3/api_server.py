@@ -1,24 +1,76 @@
 """Omega AI v3.2 — HTTP API Server
 Standard-library-only REST API. Start with: python omega_ai.py --server [--port 8080]
+
+Security features:
+- Request size limit (1MB max)
+- JSON body validation
+- Rate limiting (60 req/min per IP)
+- Exception isolation (one bad request can't crash others)
+- Singleton OmegaBrain (no re-initialization per request)
 """
 from __future__ import annotations
 
 import json
 import sys
-import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
+
+# ── Singleton Brain (initialized once, reused forever) ──
+_brain = None
+
+def _get_brain():
+    global _brain
+    if _brain is None:
+        from core_brain import OmegaBrain
+        from preferences import UserPreferences
+        prefs = UserPreferences()
+        _brain = OmegaBrain(max_history=prefs.get("max_history", 6))
+    return _brain
+
+
+# ── Rate Limiter ──
+class _RateLimiter:
+    """Simple in-memory rate limiter: 60 requests per minute per IP."""
+    def __init__(self, max_requests: int = 60, window: int = 60) -> None:
+        self.max_requests = max_requests
+        self.window = window
+        self._requests: dict[str, list[float]] = {}
+
+    def is_allowed(self, ip: str) -> bool:
+        now = time.time()
+        reqs = self._requests.get(ip, [])
+        # Remove old entries outside the window
+        reqs = [t for t in reqs if now - t < self.window]
+        self._requests[ip] = reqs
+        if len(reqs) >= self.max_requests:
+            return False
+        reqs.append(now)
+        return True
+
+    def retry_after(self, ip: str) -> int:
+        now = time.time()
+        reqs = self._requests.get(ip, [])
+        if not reqs:
+            return 0
+        oldest = min(reqs)
+        return max(0, int(self.window - (now - oldest)) + 1)
+
+
+_rate_limiter = _RateLimiter(max_requests=60, window=60)
 
 
 # ── Request Handler ──
 class APIHandler(BaseHTTPRequestHandler):
     _start_time = time.time()
+    MAX_BODY_SIZE = 1024 * 1024  # 1MB
 
     def log_message(self, fmt: str, *args: Any) -> None:
         pass  # Suppress default logging
+
+    def _client_ip(self) -> str:
+        return self.headers.get("X-Forwarded-For", self.client_address[0]).split(",")[0].strip()
 
     def _send_json(self, data: dict, status: int = 200) -> None:
         self.send_response(status)
@@ -31,45 +83,78 @@ class APIHandler(BaseHTTPRequestHandler):
         self._send_json({"error": msg}, status)
 
     def _read_body(self) -> dict:
-        cl = int(self.headers.get("Content-Length", 0))
+        """Read and parse JSON body with safety checks."""
+        cl_str = self.headers.get("Content-Length", "0")
+        try:
+            cl = int(cl_str)
+        except ValueError:
+            raise ValueError("Invalid Content-Length header")
+        if cl > self.MAX_BODY_SIZE:
+            raise ValueError(f"Request body too large: {cl} bytes (max {self.MAX_BODY_SIZE})")
         if cl == 0:
             return {}
-        return json.loads(self.rfile.read(cl).decode())
+        raw = self.rfile.read(cl).decode("utf-8")
+        return json.loads(raw)
+
+    def _check_rate_limit(self) -> bool:
+        ip = self._client_ip()
+        if not _rate_limiter.is_allowed(ip):
+            self.send_response(429)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Retry-After", str(_rate_limiter.retry_after(ip)))
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "Rate limit exceeded. Try again later."}).encode())
+            return False
+        return True
+
+    def _safe_handle(self, handler_fn) -> None:
+        """Wrap endpoint handlers with error isolation."""
+        try:
+            if not self._check_rate_limit():
+                return
+            body = self._read_body()
+            handler_fn(body)
+        except (json.JSONDecodeError, ValueError) as e:
+            self._send_error(f"Bad request: {e}", 400)
+        except Exception as e:
+            self._send_error(f"Internal error: {type(e).__name__}: {str(e)}", 500)
 
     def do_GET(self) -> None:
+        if not self._check_rate_limit():
+            return
         p = urlparse(self.path)
         path = p.path
-        qs = parse_qs(p.query)
 
-        if path == "/api/health":
-            self._send_json({
-                "status": "ok", "version": "3.2.0", "name": "Luqi-AI",
-                "uptime_seconds": round(time.time() - self._start_time),
-                "capabilities": [
-                    "research", "invest", "tax", "lang", "scam", "email",
-                    "price", "calc", "opportunities", "learn", "wizard"
-                ],
-            })
-        elif path == "/api/price/btc" or path == "/api/price/bitcoin":
-            self._price("btc")
-        elif path == "/api/price/eth" or path == "/api/price/ethereum":
-            self._price("eth")
-        elif path == "/api/price/sol" or path == "/api/price/solana":
-            self._price("sol")
-        elif path.startswith("/api/opportunities/"):
-            country = path.split("/")[-1]
-            self._opportunities(country)
-        elif path == "/api/opportunities":
-            self._opportunities("")
-        elif path == "/":
-            self._send_json({"message": "Luqi-AI API v3.2", "docs": "/api/health"})
-        else:
-            self._send_error(f"Not found: {path}", 404)
+        try:
+            if path == "/api/health":
+                self._send_json({
+                    "status": "ok", "version": "3.2.0", "name": "Luqi-AI",
+                    "uptime_seconds": round(time.time() - self._start_time),
+                    "capabilities": [
+                        "research", "invest", "tax", "lang", "scam", "email",
+                        "price", "calc", "opportunities", "learn", "wizard"
+                    ],
+                })
+            elif path == "/api/price/btc" or path == "/api/price/bitcoin":
+                self._price("btc")
+            elif path == "/api/price/eth" or path == "/api/price/ethereum":
+                self._price("eth")
+            elif path == "/api/price/sol" or path == "/api/price/solana":
+                self._price("sol")
+            elif path.startswith("/api/opportunities/"):
+                self._opportunities(path.split("/")[-1])
+            elif path == "/api/opportunities":
+                self._opportunities("")
+            elif path == "/":
+                self._send_json({"message": "Luqi-AI API v3.2", "docs": "/api/health"})
+            else:
+                self._send_error(f"Not found: {path}", 404)
+        except Exception as e:
+            self._send_error(f"Internal error: {type(e).__name__}: {str(e)}", 500)
 
     def do_POST(self) -> None:
         p = urlparse(self.path)
         path = p.path
-        body = self._read_body()
 
         routes = {
             "/api/chat": self._chat, "/api/research": self._research,
@@ -80,8 +165,10 @@ class APIHandler(BaseHTTPRequestHandler):
         }
         handler = routes.get(path)
         if handler:
-            handler(body)
+            self._safe_handle(handler)
         else:
+            if not self._check_rate_limit():
+                return
             self._send_error(f"Not found: {path}", 404)
 
     def do_OPTIONS(self) -> None:
@@ -96,8 +183,7 @@ class APIHandler(BaseHTTPRequestHandler):
         q = body.get("query", "")
         if not q:
             self._send_error("Missing 'query' field"); return
-        from core_brain import OmegaBrain
-        r = OmegaBrain().orchestrate_response(q)
+        r = _get_brain().orchestrate_response(q)
         self._send_json({"query": q, "response": r.get("response"), "module": r.get("module"), "response_time_ms": r.get("response_time_ms")})
 
     def _research(self, body: dict) -> None:
@@ -184,6 +270,9 @@ class APIHandler(BaseHTTPRequestHandler):
 
 # ── Server Entry Point ──
 def start_api_server(port: int = 8080) -> None:
+    # Pre-initialize the brain so first request is fast
+    print("Initializing Luqi-AI brain...")
+    _get_brain()
     server = HTTPServer(("", port), APIHandler)
     print(f"Luqi-AI API server running on http://localhost:{port}")
     print(f"Health check: curl http://localhost:{port}/api/health")
