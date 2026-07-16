@@ -1,1 +1,1 @@
-requests>=2.31.0
+<read_file from /mnt/agents/output/omega_ai/requirements.txt>
