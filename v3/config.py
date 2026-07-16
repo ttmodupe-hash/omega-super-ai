@@ -43,7 +43,7 @@ CONFIG: dict[str, str | int | float | bool | None] = {
     "DEFAULT_DEPTH": os.environ.get("DEFAULT_DEPTH", "deep"),
     "MAX_RETRIES": int(os.environ.get("MAX_RETRIES", "3")),
     "REQUEST_TIMEOUT": int(os.environ.get("REQUEST_TIMEOUT", "15")),
-    "VERSION": "3.1.0",
+    "VERSION": "3.2.0",
     "NAME": "Luqi-AI",
     "AUTHOR": "Luqi AI Labs",
     "MEMORY_DIR": os.environ.get("MEMORY_DIR", str(Path.home() / ".omega_ai")),
@@ -54,7 +54,6 @@ def validate_config() -> list[str]:
     """Validate configuration. Returns list of missing critical keys."""
     missing: list[str] = []
     if not CONFIG.get("OPENAI_API_KEY") and not CONFIG.get("SERPER_API_KEY"):
-        # At least one API key recommended but not strictly required (mock mode works)
         pass
     return missing
 
