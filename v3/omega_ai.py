@@ -135,6 +135,9 @@ def main() -> None:
 
             if user_input.lower().startswith("/save"):
                 filename = user_input[5:].strip() or f"luqi_export_{datetime.now():%Y%m%d_%H%M%S}.md"
+                # SECURITY: Prevent path traversal — sanitize filename
+                filename = filename.replace("..", "").replace("/", "_").replace("\\", "_").replace("~", "")
+                filename = filename.lstrip("._")  # Don't allow hidden files
                 if not filename.endswith(".md"):
                     filename += ".md"
                 export_content = f"""# Luqi-AI Export
@@ -420,8 +423,12 @@ def main() -> None:
 
             # Default: route through brain
             start_time = time.time()
-            with Spinner("Thinking"):
+            spinner = Spinner("Thinking")
+            spinner.start()
+            try:
                 result = brain.orchestrate_response(user_input)
+            finally:
+                spinner.stop()
 
             response_time = time.time() - start_time
 
@@ -439,25 +446,25 @@ def main() -> None:
                 print(format_citations(result['sources']))
 
             # Save interaction
-            memory.save_interaction(user_input, result['response'], result.get('module', 'general'))
+            module_name = result.get('module', 'general')
+            memory.save_interaction(user_input, result['response'], module_name)
 
-            # Show category info
+            # Show module info
             cat_color = {
                 "deep_research": Colors.CYAN, "investment": Colors.YELLOW,
                 "tax": Colors.GREEN, "financial_lit": Colors.MAGENTA,
                 "language": Colors.BLUE, "professional": Colors.WHITE,
                 "opportunity": Colors.YELLOW, "email": Colors.CYAN,
                 "price_ticker": Colors.GREEN, "calc": Colors.CYAN,
-            }.get(result.get('module', ''), Colors.DIM)
+            }.get(module_name, Colors.DIM)
 
-            cat_label = result.get("module", "general")
-            meta_line = f"[{cat_label}] • {response_time:.1f}s"
+            meta_line = f"[{module_name}] • {response_time:.1f}s"
             print(f"\n{colorize(meta_line, Colors.DIM + cat_color)}")
 
             # Prompt for rating
             rating_input = input(colorize("Rate this response (1-5, Enter=skip): ", Colors.DIM)).strip()
             if rating_input.isdigit() and 1 <= int(rating_input) <= 5:
-                memory.record_feedback(user_input, result['response'], int(rating_input), module=result.get('module', 'general'))
+                memory.record_feedback(user_input, result['response'], int(rating_input), module=module_name)
                 print(colorize("  ✓ Thank you for your feedback!", Colors.GREEN))
 
         except KeyboardInterrupt:
