@@ -21,7 +21,7 @@ def _load_dotenv(filepath: Path) -> None:
                 if "=" in line:
                     key, val = line.split("=", 1)
                     key = key.strip()
-                    val = val.strip().strip("'\"\"")
+                    val = val.strip().strip("'\"")
                     if key and key not in os.environ:
                         os.environ[key] = val
     except Exception:
@@ -43,7 +43,7 @@ CONFIG: dict[str, str | int | float | bool | None] = {
     "DEFAULT_DEPTH": os.environ.get("DEFAULT_DEPTH", "deep"),
     "MAX_RETRIES": int(os.environ.get("MAX_RETRIES", "3")),
     "REQUEST_TIMEOUT": int(os.environ.get("REQUEST_TIMEOUT", "15")),
-    "VERSION": "3.0.0",
+    "VERSION": "3.1.0",
     "NAME": "Luqi-AI",
     "AUTHOR": "Luqi AI Labs",
     "MEMORY_DIR": os.environ.get("MEMORY_DIR", str(Path.home() / ".omega_ai")),
