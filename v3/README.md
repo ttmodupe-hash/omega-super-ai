@@ -1,242 +1,97 @@
-# Luqi-AI v3 — Omega AI
+# Luqi-AI v3.2 — Omega AI
 
 **Intelligence Without Limits**
 
-Luqi-AI (Omega AI v3) is a comprehensive, multi-capability AI assistant designed for terminal/CLI use. It features deep research, investment guidance, tax support, companion learning, African language support, financial literacy, and professional assistance across all domains.
+Luqi-AI (Omega AI v3.2) is a comprehensive, multi-capability AI assistant designed for terminal/CLI use. It features deep research, investment guidance, tax support, companion learning, African language support, financial literacy, professional assistance, conversation memory, user preferences, streaming responses, a plugin architecture, crypto price tracking, calculators, reminders, learning progress, history search, guided wizards, capability pipelines, and an HTTP API server.
 
-![Version](https://img.shields.io/badge/version-3.0.0-blue)
+![Version](https://img.shields.io/badge/version-3.2.0-blue)
 ![Python](https://img.shields.io/badge/python-3.11%2B-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
----
-
-## Features
-
-| # | Capability | Description |
-|---|-----------|-------------|
-| 1 | **Deep Research** | Multi-source research with citations, 3 depth levels (quick/deep/comprehensive) |
-| 2 | **Investment & Mining** | Crypto/BTC mining guidance, profitability calculator, portfolio advice |
-| 3 | **Tax Engine** | Global tax support (60+ countries), African focus (SA, Nigeria, Kenya, Ghana, Egypt, Morocco) |
-| 4 | **Financial Literacy** | 18 topics, scam detection (80+ indicators), budget planner |
-| 5 | **African Languages** | 22 languages, phrases, cultural context, learn mode |
-| 6 | **Professional Assist** | 25 domains: engineering, medical, legal, trades, culinary, nursing |
-| 7 | **Opportunity Engine** | African market opportunities, trend analysis, market gap detection |
-| 8 | **Email Assistant** | Grammar check (30+ rules), 7 templates, tone analysis |
-| 9 | **Companion Trainer** | Rate responses, submit corrections, training mode |
-| 10 | **Self-Improvement Lab** | Performance analytics, health checks, benchmarks |
-
----
-
 ## Quick Start
-
-### 1. Clone or Download
 
 ```bash
 git clone https://github.com/ttmodupe-hash/omega-super-ai.git
 cd omega-super-ai/v3
+pip install -r requirements.txt      # only needs requests>=2.31.0
+python omega_ai.py                   # runs in full mock mode, zero API keys needed
 ```
 
-### 2. Install Dependencies
+To unlock LLM power, add API keys to a `.env` file (see `.env.example`).
 
-```bash
-pip install -r requirements.txt
-```
+## Capabilities (25 Total)
 
-### 3. Configure Environment
+| # | Capability | Description |
+|---|-----------|-------------|
+| 1 | **Deep Research** | Multi-source research with citations, 3 depth levels |
+| 2 | **Investment & Mining** | Crypto/BTC mining guidance, profitability calculator |
+| 3 | **Tax Engine** | Global tax support (60+ countries), African focus |
+| 4 | **Financial Literacy** | 36 lessons, scam detection, budget planner |
+| 5 | **African Languages** | 22 languages, phrases, cultural context |
+| 6 | **Professional Assist** | 25 domains: engineering, medical, legal, trades |
+| 7 | **Opportunity Engine** | African market opportunities, trend analysis |
+| 8 | **Email Assistant** | Grammar check, 7 templates, tone analysis |
+| 9 | **Companion Trainer** | Rate responses, submit corrections |
+| 10 | **Self-Improvement Lab** | Performance analytics, real benchmarks |
+| 11 | **Conversation Memory** | Context-aware responses |
+| 12 | **User Preferences** | Persistent settings |
+| 13 | **Export/Save** | Save to Markdown |
+| 14 | **Streaming** | Real-time LLM streaming |
+| 15 | **Plugin Architecture** | Self-registering capabilities |
+| 16 | **Crypto Price Ticker** | Live prices + alerts (v3.2) |
+| 17 | **Calculators** | Currency, mining, tax, compound, loans (v3.2) |
+| 18 | **Reminders** | Deadline tracking (v3.2) |
+| 19 | **Learning Tracker** | Lesson progress (v3.2) |
+| 20 | **History Search** | Search conversations (v3.2) |
+| 21 | **Guided Wizards** | Multi-step workflows (v3.2) |
+| 22 | **Capability Pipelines** | Chain commands (v3.2) |
+| 23 | **Bilingual Mode** | African language responses (v3.2) |
+| 24 | **Multi-Format Export** | CSV, JSON, Markdown (v3.2) |
+| 25 | **HTTP API Server** | REST API mode (v3.2) |
 
-```bash
-cp .env.example .env
-# Edit .env with your API keys
-```
-
-### 4. Run
-
-```bash
-python omega_ai.py
-```
-
----
-
-## Configuration
-
-Create a `.env` file in the project root:
-
-```env
-# Required: At least one of these
-OPENAI_API_KEY=sk-your-key          # OpenAI fallback
-SERPER_API_KEY=your-serper-key      # Web search
-
-# Optional: Local LLM (recommended)
-OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=llama3
-
-# Optional
-DEBUG=false
-DEFAULT_DEPTH=deep
-```
-
-**Note:** The system works in "mock mode" without any API keys, using built-in knowledge and keyword-based responses.
-
----
-
-## Usage
-
-### Interactive Mode
-```bash
-python omega_ai.py
-```
-
-### Quick Commands
+## CLI Commands
 
 | Command | Description |
 |---------|-------------|
 | `/menu` | Show capability menu |
-| `/train` | Enter companion training mode |
-| `/status` | System health report |
+| `/price [symbols]` | Crypto price table |
+| `/alert <sym> <above/below> <price>` | Set price alert |
+| `/calc <args>` | Quick calculator |
+| `/search <query>` | Search conversation history |
+| `/history` | List recent conversations |
+| `/clear` | Clear all history |
+| `/learn` | Financial literacy progress |
+| `/wizard <name>` | Guided workflow |
+| `/pipeline <preset>` | Capability chaining |
+| `/remind <text> [on <date>]` | Set reminder |
+| `/reminders` | List reminders |
+| `/train` | Enter training mode |
+| `/status` | System health + benchmark |
+| `/save [filename]` | Export to Markdown |
+| `/prefs` | View preferences |
+| `/prefs set <key> <val>` | Change preference |
 | `/research <query>` | Deep research |
 | `/invest <asset>` | Investment analysis |
 | `/tax <type> in <country>` | Tax guidance |
-| `/lang <text> to <language>` | Translation |
+| `/lang <text> to <lang>` | Translation |
 | `/scam <description>` | Scam check |
 | `/email <draft>` | Email improvement |
-| `/opportunity <country>` | Business opportunities |
+| `/opportunity [country]` | Business opportunities |
+| `/prof <domain> <query>` | Professional help |
 | `/quit` | Exit |
 
-### Example Queries
+## API Server Mode
 
-```
-How do I start Bitcoin mining in South Africa?
-What are the tax brackets in Nigeria?
-Translate hello to Zulu
-Is this a scam? Guaranteed 100% daily returns
-Write a professional email to request a meeting
-What business opportunities exist in Kenya?
+```bash
+python omega_ai.py --server --port 8080
 ```
 
----
+Endpoints: `/api/health`, `/api/chat`, `/api/research`, `/api/invest/*`, `/api/tax/*`, `/api/price/*`, `/api/calc`, `/api/scam/*`, `/api/email/*`, `/api/lang/*`, `/api/opportunities/*`
 
 ## Architecture
 
-```
-v3/
-├── omega_ai.py           # Main entry point
-├── config.py             # Configuration & env
-├── core_brain.py         # Intent routing & orchestration
-├── utils.py              # Colors, formatting, helpers
-├── local_llm.py          # Ollama + OpenAI integration
-├── web_search.py         # Serper API search
-├── citation_engine.py    # Source verification & citations
-├── memory_store.py       # Persistent memory & feedback
-├── deep_research.py      # Multi-agent research swarm
-├── opportunity_engine.py # Opportunity detection
-├── investment_mining.py  # Crypto investment & mining
-├── tax_engine.py         # Global tax support
-├── financial_literacy.py # Financial education & scam protection
-├── companion_trainer.py  # User training & feedback
-├── self_improve.py       # Performance analytics
-├── african_languages.py  # African language support
-├── professional_assist.py # Multi-domain professional help
-├── email_assistant.py    # Email composition & grammar
-├── requirements.txt      # Dependencies
-├── .env.example          # Environment template
-└── README.md             # This file
-```
-
----
-
-## Capabilities Detail
-
-### Deep Research
-- Automatic sub-query generation
-- Cross-source verification
-- 3 depth levels: quick (1-2 sources), deep (3-5 sub-queries), comprehensive (full swarm)
-- Historical context detection
-- Every claim cited
-
-### Investment & Mining
-- Mining profitability calculator (hash rate, power cost, hardware)
-- ASIC comparison catalog (8 models)
-- Portfolio analysis & risk assessment
-- Live crypto prices (CoinGecko API)
-- **Disclaimer:** Not financial advice
-
-### Tax Engine
-- Personal income, corporate, VAT, capital gains, crypto tax
-- 9 detailed country profiles + generic template for 190+ countries
-- African focus: SARS, FIRS, KRA, GRA, ETA, DGI
-- Step-by-step filing guides
-- **Disclaimer:** General guidance only
-
-### African Languages
-- 22 languages: Zulu, Xhosa, Swahili, Yoruba, Amharic, Hausa, Igbo, Shona, Afrikaans, and more
-- Common phrases: greetings, thanks, numbers 1-10
-- Cultural context notes
-- Language detection
-
-### Financial Literacy
-- 18 topics × 3 levels = 54 lessons
-- Scam detection: 80+ weighted indicators, 0-100 risk score
-- 17 scam types covered
-- Budget planner with 50/30/20 analysis
-- Savings roadmap generator
-
-### Professional Assist
-- 25 professional domains
-- Code assistance (Python, JS, Java, C++, SQL)
-- Engineering calculations (mechanical, electrical, civil)
-- Safety notes for trades
-- Medical/legal disclaimers
-
-### Self-Improvement Lab
-- Performance metrics & analytics
-- System health monitoring
-- Capability benchmarking
-- Improvement suggestions
-- Uptime & error tracking
-
----
-
-## Requirements
-
-- Python 3.11+
-- `requests` library (`pip install requests`)
-- Optional: Ollama for local LLM
-- Optional: API keys for enhanced features
-
----
-
-## African Focus
-
-Luqi-AI is built with Africa in mind:
-- **Tax:** Detailed coverage of SARS, FIRS, KRA, GRA
-- **Languages:** 22 African languages with cultural context
-- **Financial:** Stokvels, mobile money, African scam patterns
-- **Opportunities:** African market analysis
-- **Professional:** Covers trades and professions common across Africa
-
----
-
-## Safety & Disclaimers
-
-- **Financial:** All investment advice includes risk warnings. Not financial advice.
-- **Tax:** General guidance only. Consult a qualified tax professional.
-- **Medical/Legal:** General information only. Consult licensed professionals.
-- **Scam Detection:** Automated analysis, not a guarantee. Always verify independently.
-
----
+32 Python modules, 11,800+ lines, zero required external dependencies (LLMs optional).
 
 ## License
 
-MIT License — see LICENSE file for details.
-
----
-
-## Brand
-
-- **Name:** Luqi-AI
-- **Domain:** luqi-ai.com
-- **Motto:** Intelligence Without Limits
-
----
-
-Built with ❤️ by Luqi AI Labs
+MIT License — Luqi AI Labs
