@@ -1,8 +1,13 @@
-"""Luqi AI v24.4.0 — FastAPI Router
+"""Luqi AI v25.0.0 — FastAPI Router
 
 Main FastAPI application serving the web UI and all API endpoints.
-v13-v24.4 endpoint modules are auto-imported at the bottom to register
+v13-v25 endpoint modules are auto-imported at the bottom to register
 their routes on the shared `app` instance.
+v25: Omega AI Prometheus integration — Error Repair, Memory Manager,
+Pedagogical Engine, Wisdom, Crypto, Rate Limiting, WebSocket, Vector DB,
+Multi-Tenant, Plugin Marketplace, Realtime Prices, Metrics, Email,
+Telegram, PDF, Backup, Local LLM, Agent Mesh, Blockchain Audit,
+Federated Learning.
 """
 
 import asyncio
@@ -58,9 +63,9 @@ GENERATED_DIR.mkdir(exist_ok=True)
 # ═══════════════════════════════════════════════════════════════════
 
 app = FastAPI(
-    title="Luqi AI v24.4.0",
-    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, Law Studies, Africa-First capabilities, Jobs & Skills, WhatsApp Bot, Government Services, Real-time Collaborative Workspaces, Network & AI Engineering Training Academy, Global Knowledge Academy, Project Management Training, Digital Workspace Training, IT Security Training Academy, Digital Wellness, and 350+ endpoints. Built by Limitless Telecoms.",
-    version="24.4.0",
+    title="Luqi AI v25.0.0",
+    description="World-class AI system with multi-agent orchestration, ASI cognitive engine, SaaS platform, Law Studies, Africa-First capabilities, Jobs & Skills, WhatsApp Bot, Government Services, Real-time Collaborative Workspaces, Network & AI Engineering Training Academy, Global Knowledge Academy, Project Management Training, Digital Workspace Training, IT Security Training Academy, Digital Wellness, Animated Learning, Accessibility for Deaf Users, and Omega AI Prometheus Engines (Error Repair, Memory Manager, Pedagogical Engine, Wisdom, Crypto, Rate Limiting, WebSocket, Vector DB, Multi-Tenant, Plugin Marketplace, Realtime Prices, Metrics, Email, Telegram, PDF, Backup, Local LLM, Agent Mesh, Blockchain Audit, Federated Learning). 400+ endpoints. Built by Limitless Telecoms.",
+    version="25.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -87,7 +92,7 @@ async def root():
     index_path = Path("web/index.html")
     if index_path.exists():
         return HTMLResponse(content=index_path.read_text(encoding="utf-8"))
-    return HTMLResponse("<h1>Luqi AI v20</h1><p>Frontend not found. Place web/index.html</p>")
+    return HTMLResponse("<h1>Luqi AI v25</h1><p>Frontend not found. Place web/index.html</p>")
 
 
 @app.get("/admin", response_class=HTMLResponse)
@@ -159,14 +164,12 @@ async def api_upload(file: UploadFile = File(...)):
         file_path = UPLOAD_DIR / file.filename
         with open(file_path, "wb") as f:
             shutil.copyfileobj(file.file, f)
-        # Try to process with file processor if available
         try:
             from backend.files import FileProcessor
             processor = FileProcessor()
             result = processor.process(str(file_path))
             return JSONResponse({"status": "processed", "result": result, "file": file.filename})
         except ImportError:
-            # File processor not available, return upload confirmation
             return JSONResponse({
                 "status": "uploaded",
                 "message": "File uploaded successfully. File processing module not available.",
@@ -191,7 +194,6 @@ async def api_generate_image(request: Request):
         prompt = data.get("prompt", "")
         if not prompt:
             raise HTTPException(status_code=422, detail="Prompt is required")
-        # Try OpenAI DALL-E if available
         try:
             import openai
             client = openai.AsyncOpenAI()
@@ -231,14 +233,12 @@ async def api_search(request: Request):
         query = data.get("query", "")
         if not query:
             raise HTTPException(status_code=422, detail="Query is required")
-        # Try search engine module if available
         try:
             from backend.search import SearchEngine
             engine = SearchEngine()
             results = engine.search(query)
             return JSONResponse({"status": "success", "query": query, "results": results})
         except ImportError:
-            # Fallback: return helpful message
             return JSONResponse({
                 "status": "fallback",
                 "query": query,
@@ -268,7 +268,6 @@ async def api_memory_save(request: Request):
             memory_id = memory.add(text, data.get("metadata", {}))
             return JSONResponse({"status": "saved", "id": memory_id})
         except ImportError:
-            # Memory module not available, save to simple JSON file
             mem_file = UPLOAD_DIR / "memory_fallback.json"
             memories = []
             if mem_file.exists():
@@ -303,7 +302,6 @@ async def api_memory_search(request: Request):
             results = memory.query(query, data.get("limit", 5))
             return JSONResponse({"status": "success", "query": query, "results": results})
         except ImportError:
-            # Fallback: search in JSON file
             mem_file = UPLOAD_DIR / "memory_fallback.json"
             if not mem_file.exists():
                 return JSONResponse({"status": "fallback", "query": query, "results": []})
@@ -344,7 +342,7 @@ async def serve_web_file(filename: str):
     raise HTTPException(status_code=404, detail="File not found")
 
 
-# ── v14-v20 Endpoint Module Imports ──────────────────────────────────
+# ── v14-v25 Endpoint Module Imports ──────────────────────────────────
 # These modules import `app` from backend.router and register their
 # endpoints using @app decorators.
 
@@ -408,9 +406,8 @@ try:
 except Exception as _e:
     logger.warning("v24 endpoints not loaded: %s", _e)
 
-
 try:
-    import backend.v24_wellness_endpoints   # v24.3: Digital Wellness - fatigue prevention, Pomodoro, break suggestions
+    import backend.v24_wellness_endpoints   # v24.3: Digital Wellness
 except Exception as _e:
     logger.warning("v24 wellness endpoints not loaded: %s", _e)
 
@@ -419,12 +416,10 @@ try:
 except Exception as _e:
     logger.warning("v24 branding endpoints not loaded: %s", _e)
 
-
 try:
-    import backend.v24_security_endpoints  # v24.4: IT Security Training Academy - 15 courses, CTF challenges
+    import backend.v24_security_endpoints  # v24.4: IT Security Training Academy
 except Exception as _e:
     logger.warning("v24 security endpoints not loaded: %s", _e)
-
 
 try:
     import backend.v24_autonomous_endpoints  # v24.5: Autonomous Multi-Agent System
@@ -432,20 +427,24 @@ except Exception as _e:
     logger.warning("v24 autonomous endpoints not loaded: %s", _e)
 
 try:
-    import backend.v25_animation_endpoints  # v24.5: Animated Practical Learning System
+    import backend.v25_animation_endpoints  # v25: Animated Practical Learning System
 except Exception as _e:
     logger.warning("v25 animation endpoints not loaded: %s", _e)
 
 try:
-    import backend.v25_accessibility_endpoints  # v24.5: Accessibility for Deaf Users
+    import backend.v25_accessibility_endpoints  # v25: Accessibility for Deaf Users
 except Exception as _e:
     logger.warning("v25 accessibility endpoints not loaded: %s", _e)
+
+try:
+    import backend.v25_endpoints  # v25: Omega AI Prometheus — 20 modules, 50+ endpoints
+except Exception as _e:
+    logger.warning("v25 Prometheus endpoints not loaded: %s", _e)
 
 # ═══════════════════════════════════════════════════════════════════
 # Exception Handlers & Health Monitor
 # ═══════════════════════════════════════════════════════════════════
 
-# Register custom exception handlers
 try:
     from backend.exception_handler import register_exception_handlers
     register_exception_handlers(app)
@@ -453,12 +452,10 @@ try:
 except Exception as _e:
     logger.warning("Exception handlers not registered: %s", _e)
 
-# Register health monitoring endpoints
 try:
     from backend.health_monitor import register_health_endpoints, ModuleHealthChecker
     register_health_endpoints(app)
     logger.info("Health monitoring endpoints registered")
-    # Print startup banner with module status
     try:
         from backend.health_monitor import print_startup_banner
         checker = ModuleHealthChecker()
@@ -469,8 +466,6 @@ try:
             "backend.db_utils",
             "backend.chat",
             "backend.financial",
-            "backend.it_security_training",
-            "backend.digital_wellness",
             "backend.health_monitor",
             "backend.v24_security_endpoints",
             "backend.autonomous_system",
@@ -478,6 +473,7 @@ try:
             "backend.sandbox_validator",
             "backend.research_engine",
             "backend.dead_mans_switch",
+            "backend.v25_endpoints",
         ])
         print_startup_banner(status)
     except Exception as banner_err:
