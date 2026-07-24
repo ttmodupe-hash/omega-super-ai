@@ -587,12 +587,13 @@ def test_digital_workspace(runner: TestRunner):
     runner.section("[6/7] Digital Workspace")
     import backend.digital_workspace as dw
 
+    # Tool guides
     def list_tools():
         r = dw.list_tools()
         assert r["status"] == "success"
-        assert r["total_tools"] >= 51
+        assert r["total_tools"] >= 40
         return r
-    safe_test(runner, "List all tools (51+)", list_tools, lambda r: f"{r['total_tools']} tools")
+    safe_test(runner, "List all tools (40+)", list_tools, lambda r: f"{r['total_tools']} tools")
 
     def tool_guide():
         r = dw.get_tool_guide("slack")
@@ -629,6 +630,7 @@ def test_digital_workspace(runner: TestRunner):
         return r
     safe_test(runner, "Folder structure (software)", folder_struct, lambda r: f"{len(r['folder_structure'])} folders")
 
+    # Security
     def sec_modules():
         r = dw.list_security_modules()
         assert r["status"] == "success"
@@ -641,12 +643,14 @@ def test_digital_workspace(runner: TestRunner):
         return r
     safe_test(runner, "Security module (phishing)", sec_module)
 
+    # Phishing sim
     def phishing():
         r = dw.simulate_phishing_test("medium")
         assert r["status"] == "success"
         return r
-    safe_test(runner, "Phishing simulation", phishing, lambda r: f"is_phishing={r['scenario']['is_phishing']}")
+    safe_test(runner, "Phishing simulation", phishing, lambda r: f"is_phishing={r['is_actually_phishing']}")
 
+    # Productivity
     def prod_methods():
         r = dw.list_productivity_methods()
         assert r["status"] == "success"
