@@ -2,7 +2,7 @@
 """
 Luqi AI v25.1.0 Voice Engine — Speech-to-Text & Text-to-Speech
 ===============================================================
-Standalone voice processing module for the JARVIS agent integration.
+Standalone voice processing module for the LUQI agent integration.
 
 Capabilities:
 - Speech-to-Text (STT): Google Speech Recognition, multiple languages
