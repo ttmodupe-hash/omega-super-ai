@@ -297,7 +297,7 @@ FREELANCE_GUIDES: Dict[str, Dict[str, Any]] = {
         ],
         "tips": [
             "Focus on a niche — specialists earn more than generalists",
-            "Use the \"Rising Talent\" badge to stand out early",
+            'Use the "Rising Talent" badge to stand out early',
             "Maintain a 90%+ Job Success Score",
             "Use Connects strategically on high-quality job posts",
         ],
@@ -316,7 +316,7 @@ FREELANCE_GUIDES: Dict[str, Dict[str, Any]] = {
         ],
         "tips": [
             "Offer 3-tier pricing to capture different budgets",
-            "Use Fiverr's \"Promote Your Gigs\" feature",
+            'Use Fiverr\'s "Promote Your Gigs" feature',
             "Respond to inquiries within 1 hour when possible",
             "Create gig extras for additional revenue",
         ],
@@ -334,7 +334,7 @@ FREELANCE_GUIDES: Dict[str, Dict[str, Any]] = {
             "Build a portfolio of completed work",
         ],
         "tips": [
-            "Use the \"Preferred Freelancer\" program for better visibility",
+            'Use the "Preferred Freelancer" program for better visibility',
             "Participate in contests to win projects and build reputation",
             "Set up automated bid templates for efficiency",
             "Maintain a 4.5+ star rating",
