@@ -65,3 +65,23 @@ class PaymentTransaction(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     student: Mapped["Student"] = relationship(back_populates="payment_records")
+
+
+class CurriculumLesson(Base):
+    __tablename__ = "curriculum_lessons"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    track_code: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    lesson_sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    lesson_title: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_body: Mapped[str] = mapped_column(Text, nullable=False)
+    tier_target: Mapped[str] = mapped_column(String(50), nullable=False)
+
+
+class VocationalModule(Base):
+    __tablename__ = "vocational_modules"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    track_code: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    module_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    estimated_hours: Mapped[int] = mapped_column(Integer, nullable=False)

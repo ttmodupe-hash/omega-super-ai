@@ -9,6 +9,10 @@
 ## [5.35.1] - 2026-09-15
 ### Fixed
 
+## [5.35.5] - 2026-09-15
+### Fixed
+- core/models.py: added curriculum_lessons + vocational_modules tables (Text import included) - migration 002 bulk-inserts into both, and neither existed in Base.metadata, so lembic upgrade head failed at 002 with 'relation does not exist' after 0001 finally passed.
+
 ## [5.35.4] - 2026-09-15
 ### Fixed
 - alembic 0001: skip empty/comment-only SQL fragments before op.execute. security_rls.sql's header comment ends with a semicolon (the commented-out CREATE ROLE ... PASSWORD line), so split(';') yielded a comment-only fragment and psycopg2 raised 'can't execute an empty query' (CI run 4). Both SQL files re-verified: no PL/pgSQL $$ bodies; remaining statements are clean DDL.
