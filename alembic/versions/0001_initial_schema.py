@@ -24,7 +24,7 @@ from core import enterprise_models    # noqa: E402,F401
 
 def _read_ddl(rel: str) -> str:
     import os
-    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                         "core", rel)
     with open(path) as f:
         return f.read()
@@ -33,6 +33,9 @@ def _read_ddl(rel: str) -> str:
 def upgrade() -> None:
     bind = op.get_bind()
     Base.metadata.create_all(bind)
+    # Ensure the app role exists before RLS policies bind to it (CI/fresh-cluster
+    # bootstrap; production creates it with a vault password first - DO-block skips if present).
+    op.execute("DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'luqi_app_user') THEN CREATE ROLE luqi_app_user NOLOGIN; END IF; END $$")
     # Security + wallet DDL: FORCE RLS policies, unique reference index
     for stmt in _read_ddl("security_rls.sql").split(";"):
         if stmt.strip():

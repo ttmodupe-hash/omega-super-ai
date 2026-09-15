@@ -9,6 +9,11 @@
 ## [5.35.1] - 2026-09-15
 ### Fixed
 
+## [5.35.3] - 2026-09-15
+### Fixed
+- alembic 0001: _read_ddl now resolves the repo root correctly (two dirnames landed in alembic/ -> FileNotFoundError on core/security_rls.sql, killing the CI migration step sub-second on every run).
+- alembic 0001: bootstrap the luqi_app_user role (idempotent DO-block, NOLOGIN) before the RLS policies bind to it - the SQL files reference TO luqi_app_user but never create the role.
+
 ## [5.35.2] - 2026-09-15
 ### Fixed
 - enterprise_models: ACTUALLY added the missing Integer import. v5.35.1's guard matched the word 'Integer' elsewhere in the file and skipped the edit; the import line is verified by direct inspection in this release.
