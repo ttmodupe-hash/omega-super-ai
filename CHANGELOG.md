@@ -5,6 +5,12 @@
   safety envelope). Passing simulations earn real skill credit via the engine (unlocks, certificates).
 
 ## [5.34.0] - 2026-09-15
+
+## [5.35.1] - 2026-09-15
+### Fixed
+- core/enterprise_models.py: added missing Integer import (NameError crashed alembic
+  upgrade head on CI and would crash the app on boot; unblocks CI and Railway).
+- Tags: removed mis-pointed v5.29.1 / v5.31.0 (both pointed at July commits).
 - Submission consensus: three independent checks (validator, structural quality, safety) must agree;
   disagreement routes to human review. No hardcoded skills, JWT auth, works across all trades.
 
