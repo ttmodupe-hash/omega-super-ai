@@ -21,7 +21,7 @@ depends_on = None
 
 def upgrade() -> None:
     for stmt in (
-        """CREATE TABLE dead_man_switch_registry (
+        """CREATE TABLE IF NOT EXISTS dead_man_switch_registry (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             user_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
             country_code VARCHAR(3) NOT NULL,

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from enum import Enum as PyEnum
 from typing import Optional, List
-from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, JSON, Enum
+from sqlalchemy import func, Text, String, Integer, DateTime, Boolean, ForeignKey, JSON, Enum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -47,7 +47,7 @@ class LabProgress(Base):
     completion_percentage: Mapped[int] = mapped_column(Integer, default=0)
     last_known_sandbox_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     saved_state_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, server_default=func.now())
 
     student: Mapped["Student"] = relationship(back_populates="progress_records")
 

@@ -13,6 +13,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.sql import table, column
 import uuid
+import datetime
 
 revision = "002_seed_sovereign_curriculum"
 down_revision = "0001_initial_schema"
@@ -30,13 +31,15 @@ def upgrade() -> None:
         column("full_name", sa.String()),
         column("country_code", sa.String()),
         column("tier", sa.String()),
+        column("is_active", sa.Boolean()),
+        column("created_at", sa.DateTime()),
     )
     op.bulk_insert(students, [{
         "id": SYSTEM_STUDENT_ID,
         "email": "system.curriculum@luqi-ai.local",
         "full_name": "Luqi-AI System Curriculum",
         "country_code": "ZAF",
-        "tier": "primary",
+        "tier": "PRIMARY", "is_active": True, "created_at": datetime.datetime(2026, 1, 1),
     }])
 
     lab_progress = table(

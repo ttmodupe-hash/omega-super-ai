@@ -18,7 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     for stmt in (
-        """CREATE TABLE user_skill_profiles (
+        """CREATE TABLE IF NOT EXISTS user_skill_profiles (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             user_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
             country_code VARCHAR(3) NOT NULL,
@@ -28,7 +28,7 @@ def upgrade() -> None:
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )""",
-        """CREATE TABLE cert_ledger (
+        """CREATE TABLE IF NOT EXISTS cert_ledger (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             user_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
             country_code VARCHAR(3) NOT NULL,

@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.35.6] - 2026-09-15
+### Fixed
+- alembic 0001: DDL path resolves repo root (was alembic/core -> FileNotFoundError); skips comment-only SQL fragments; bootstraps luqi_app_user role (idempotent DO-block).
+- models: Text import for curriculum_lessons.content_body; curriculum_lessons + vocational_modules added; lab_progress timestamps get server_default=func.now().
+- 002 seed: tier PRIMARY (TierType contract) with is_active + created_at; bulk construct declares all three.
+- 003/004: CREATE TABLE IF NOT EXISTS (ORM mirrors already create user_skill_profiles, cert_ledger, dead_man_switch_registry).
+- Proven locally: alembic upgrade head passes 0001->004 on fresh Postgres 16; engine boots with Database layer initialised.
+
+
 ## [5.35.0] - 2026-09-15
 - Spatial telemetry: server-side physics for client-rendered 3D labs (pure load evaluation,
   safety envelope). Passing simulations earn real skill credit via the engine (unlocks, certificates).
