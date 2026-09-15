@@ -1,0 +1,113 @@
+?",
+                    ["Fast, lightweight static analysis with custom rules", "Database scanning", "Network monitoring", "Container runtime security"], 0,
+                    "Semgrep is a fast, lightweight SAST tool supporting custom rules in a simple pattern syntax.", DifficultyLevel.INTERMEDIATE),
+            ],
+        ),
+    )
+
+    # ========================================================================
+    # COURSE 15: THREAT INTELLIGENCE
+    # ========================================================================
+    mod15 = SecurityModule(
+        id="thintel_001",
+        course_id="threat_intelligence",
+        title="Threat Intelligence & Hunting",
+        description="Master threat modeling, MITRE ATT&CK framework, IOC analysis, threat hunting, and CTI platforms.",
+        category=CourseCategory.THREAT_INTEL,
+        difficulty=DifficultyLevel.ADVANCED,
+        duration_hours=13.0,
+        prerequisites=[["Incident Response"], ["Networking fundamentals"]],
+        order=15,
+        lessons=[
+            SecurityLesson(
+                id="ti_l1", module_id="thintel_001", title="Threat Modeling",
+                content="Systematic threat modeling: STRIDE (Spoofing, Tampering, Repudiation, Info Disclosure, DoS, Elevation), PASTA (Process for Attack Simulation), VAST, Trike. Attack surface analysis, data flow diagrams, threat categorization. Applying threat modeling to cloud, mobile, and IoT architectures.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=55, order=1,
+            ),
+            SecurityLesson(
+                id="ti_l2", module_id="thintel_001", title="MITRE ATT&CK Framework",
+                content="ATT&CK matrix: Tactics (14 enterprise), Techniques (200+), Sub-techniques, Procedures. Navigator for mapping defenses. Using ATT&CK for detection engineering, gap analysis, red team planning, and threat intelligence. ATT&CK for ICS and Mobile matrices.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=60, order=2,
+            ),
+            SecurityLesson(
+                id="ti_l3", module_id="thintel_001", title="IOC Analysis & STIX/TAXII",
+                content="Indicators of Compromise: file hashes, IP addresses, domains, URLs, registry keys, YARA rules. STIX 2.1 data model: SDOs, SROs, SCOs. TAXII 2.1 for threat intel sharing. MISP event format, OpenIOC, YARA-CI. Creating and consuming threat intel feeds.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=55, order=3,
+            ),
+            SecurityLesson(
+                id="ti_l4", module_id="thintel_001", title="Threat Hunting Methodology",
+                content="Hypothesis-driven threat hunting: data collection, hypothesis formation, investigation, validation. Hunting techniques: frequency analysis, outlier detection, pattern matching. Data sources: EDR, SIEM, DNS, proxy, email. Building hunting playbooks and documenting findings.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=60, order=4,
+            ),
+            SecurityLesson(
+                id="ti_l5", module_id="thintel_001", title="Dark Web Monitoring",
+                content="Dark web structure: surface, deep, dark web. Tor network, .onion services, hidden marketplaces. OSINT on dark web: credential dumps, malware sales, exploit markets. Legal considerations, operational security, and ethical boundaries. Tools and techniques for monitoring.",
+                lesson_type=LessonType.VIDEO, duration_min=45, order=5,
+            ),
+            SecurityLesson(
+                id="ti_l6", module_id="thintel_001", title="CTI Platforms",
+                content="Cyber Threat Intelligence platforms: MISP, OpenCTI, Anomali ThreatStream, ThreatConnect. Feed curation, indicator lifecycle management, correlation, enrichment. Automation with SOAR integration. Measuring CTI program effectiveness and ROI.",
+                lesson_type=LessonType.INTERACTIVE, duration_min=50, order=6,
+            ),
+        ],
+        labs=[
+            SecurityLab(
+                id="ti_lab1", module_id="thintel_001",
+                title="Threat Model a Web Application with STRIDE",
+                description="Apply STRIDE threat modeling to a fictional e-commerce web application.",
+                environment="Threat modeling template, draw.io/data flow diagram tool, STRIDE-per-element worksheet.",
+                tasks=[
+                    "Create data flow diagram of the application",
+                    "Identify all trust boundaries",
+                    "Apply STRIDE to each element and trust boundary",
+                    "Document identified threats with risk ratings",
+                    "Propose mitigations for each threat",
+                    "Create threat model report",
+                ],
+                hints=[
+                    "Data flows: User -> Web App -> Database -> Payment Gateway",
+                    "Trust boundaries exist at every network boundary",
+                    "Rate each threat: Critical, High, Medium, Low",
+                ],
+                solution="DFD: User(browser) -> [Trust Boundary] -> Web Server -> [Trust Boundary] -> Database; STRIDE: S-Spoofing(Login bypass-Mitigate with MFA), T-Tampering(SQL injection-Parameterized queries), R-Repudiation(Missing audit logs-Add logging), I-Info disclosure(Verbose errors-Custom error pages), D-DoS(Rate limiting-Implement WAF), E-Elevation(Privesc-Least privilege)",
+                duration_min=60, points=125,
+            ),
+            SecurityLab(
+                id="ti_lab2", module_id="thintel_001",
+                title="MITRE ATT&CK Mapping Exercise",
+                description="Map known adversary techniques to MITRE ATT&CK and identify detection gaps.",
+                environment="MITRE ATT&CK Navigator, sample APT report, detection capability spreadsheet.",
+                tasks=[
+                    "Read APT intrusion analysis report",
+                    "Extract all TTPs and map to ATT&CK techniques",
+                    "Import mapping into ATT&CK Navigator",
+                    "Color-code techniques by detection capability",
+                    "Identify detection gaps (red = no coverage)",
+                    "Create detection engineering backlog",
+                ],
+                hints=[
+                    "Look for technique IDs in reports (e.g., T1059 for Command Line)",
+                    "Use Navigator layer format for import",
+                    "Prioritize gaps in Initial Access and Execution",
+                ],
+                solution="APT28 techniques mapped: T1566.001 (Spearphishing Attachment), T1059.001 (PowerShell), T1055 (Process Injection), T1003.001 (LSASS Memory), T1021.001 (Remote Desktop); Coverage: Green-detected, Yellow-logged but no alert, Red-no coverage; Gaps: T1055 Process Injection (no coverage), T1003 Credential Dumping (logged only)",
+                duration_min=75, points=150,
+            ),
+            SecurityLab(
+                id="ti_lab3", module_id="thintel_001",
+                title="Deploy MISP Threat Intelligence Platform",
+                description="Set up MISP instance, configure feeds, and create threat intelligence events.",
+                environment="Docker, MISP container, Ubuntu 22.04, test IOCs, STIX/TAXII feeds.",
+                tasks=[
+                    "Deploy MISP using Docker Compose",
+                    "Configure initial organization and user accounts",
+                    "Enable and schedule threat intel feeds",
+                    "Create a custom event with IOCs (IPs, domains, hashes)",
+                    "Set up TAXII server for automated sharing",
+                    "Export events in STIX 2.1 format",
+                    "Configure alerting for high-confidence indicators",
+                ],
+                hints=[
+                    "MISP Docker: docker-compose up -d",
+                    "Feed settings at Administration -> List Feeds",
+                    "Use PyMISP for

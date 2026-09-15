@@ -1,0 +1,211 @@
+{APK_REVERSED_2024}",
+         ["Decompile with jadx", "Check strings.xml and shared preferences", "The flag is XOR encoded in native lib"], 200),
+        ("ctf_wireless", "Capture the Handshake",
+         "Capture and crack a WPA2 handshake to find the flag in the network name.",
+         CourseCategory.WIRELESS, DifficultyLevel.ADVANCED, "LUQI{WIFI_HANDSHAKE_CRACKED_2024}",
+         ["Monitor mode is required", "Look for a hidden SSID", "The password is in rockyou.txt"], 250),
+        ("ctf_soceng", "Phishing Simulation",
+         "Identify all phishing indicators in the provided emails to construct the flag.",
+         CourseCategory.SOCIAL, DifficultyLevel.BEGINNER, "LUQI{PHISH_SPOTTER_2024}",
+         ["Check email headers", "Look for spoofed domains", "Each email reveals a part of the flag"], 100),
+        ("ctf_telecom", "SIM Trace",
+         "Trace a fraudulent SIM swap through telecom logs to identify the attacker and flag.",
+         CourseCategory.TELECOM, DifficultyLevel.INTERMEDIATE, "LUQI{SIM_TRACE_COMPLETE_2024}",
+         ["Check HLR logs for unusual SIM updates", "Correlate with customer support calls", "The insider ID is the flag"], 200),
+        ("ctf_devsecops", "Pipeline Poison",
+         "Find and exploit a vulnerability in a CI/CD pipeline to extract the flag.",
+         CourseCategory.DEVSECOPS, DifficultyLevel.ADVANCED, "LUQI{PIPELINE_SECURED_2024}",
+         ["Check for command injection in build scripts", "Look for exposed secrets in environment variables", "The flag is in the deployment credentials"], 250),
+        ("ctf_threat", "APT Attribution",
+         "Analyze threat intel to attribute an attack to the correct APT group and find the flag.",
+         CourseCategory.THREAT_INTEL, DifficultyLevel.ADVANCED, "LUQI{APT_ATTRIBUTED_2024}",
+         ["Map TTPs to MITRE ATT&CK", "Compare with known group profiles", "The group name is the flag suffix"], 250),
+    ]
+    for cid, title, desc, cat, diff, flag, hints, pts in ctf_data:
+        _ctf_challenges[cid] = CTFChallenge(id=cid, title=title, description=desc, category=cat,
+                                             difficulty=diff, flag=flag, hints=hints, points=pts)
+
+    # Initialize empty leaderboard
+    global _leaderboard
+    _leaderboard = []
+
+# Build courses on module import
+_build_courses()
+
+
+
+# ============================================================================
+# CORE FUNCTIONS
+# ============================================================================
+
+def get_all_courses() -> List[dict]:
+    """Return all 15 security training courses with their full content.
+
+    Returns:
+        List[dict]: List of all course dictionaries with modules, lessons,
+            labs, and quizzes.
+
+    Example:
+        >>> courses = get_all_courses()
+        >>> len(courses)
+        15
+    """
+    return [course.to_dict() for course in _courses.values()]
+
+
+def get_course(course_id: str) -> dict:
+    """Get a specific course by its ID.
+
+    Args:
+        course_id: The unique course identifier (e.g., 'network_security').
+
+    Returns:
+        dict: Course dictionary with all modules, lessons, labs, and quizzes.
+
+    Raises:
+        CourseNotFoundError: If the course ID does not exist.
+
+    Example:
+        >>> course = get_course('network_security')
+        >>> course['title']
+        'Network Security Fundamentals'
+    """
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found. Available: {list(_courses.keys())}")
+    return _courses[course_id].to_dict()
+
+
+def enroll_user(user_id: str, course_id: str) -> dict:
+    """Enroll a user in a security training course.
+
+    Creates a new UserProgress entry to track the user's journey through
+    the course. Initializes skill tree if not present.
+
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course to enroll in.
+
+    Returns:
+        dict: Enrollment confirmation with progress details.
+
+    Raises:
+        CourseNotFoundError: If the course does not exist.
+        ValueError: If user_id or course_id is empty.
+
+    Example:
+        >>> result = enroll_user('user_123', 'network_security')
+        >>> result['status']
+        'enrolled'
+    """
+    if not user_id or not course_id:
+        raise ValueError("user_id and course_id are required")
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found")
+
+    progress_key = f"{user_id}:{course_id}"
+    now = datetime.utcnow()
+
+    if progress_key not in _user_progress:
+        _user_progress[progress_key] = UserProgress(
+            user_id=user_id,
+            course_id=course_id,
+            enrolled_at=now,
+            status="enrolled",
+            last_accessed=now,
+        )
+
+    # Initialize skill tree if needed
+    if user_id not in _skill_trees:
+        _skill_trees[user_id] = SkillTree(user_id=user_id)
+
+    progress = _user_progress[progress_key]
+    return {
+        "status": "success",
+        "message": f"User {user_id} enrolled in {course_id}",
+        "enrolled_at": progress.enrolled_at.isoformat(),
+        "user_id": user_id,
+        "course_id": course_id,
+        "progress": progress.to_dict(),
+    }
+
+
+def get_user_progress(user_id: str, course_id: str) -> dict:
+    """Get a user's progress in a specific course.
+
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course.
+
+    Returns:
+        dict: User progress including completed lessons, scores, and status.
+
+    Raises:
+        UserNotEnrolledError: If the user is not enrolled in the course.
+        CourseNotFoundError: If the course does not exist.
+
+    Example:
+        >>> progress = get_user_progress('user_123', 'network_security')
+        >>> progress['status']
+        'enrolled'
+    """
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found")
+
+    progress_key = f"{user_id}:{course_id}"
+    if progress_key not in _user_progress:
+        raise UserNotEnrolledError(f"User {user_id} is not enrolled in {course_id}")
+
+    progress = _user_progress[progress_key]
+    progress.last_accessed = datetime.utcnow()
+    return progress.to_dict()
+
+
+def update_lesson_progress(user_id: str, course_id: str, module_id: str,
+                           lesson_id: str, time_spent_min: int = 0) -> dict:
+    """Mark a lesson as completed and update user progress.
+
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course.
+        module_id: ID of the module containing the lesson.
+        lesson_id: ID of the lesson to mark complete.
+        time_spent_min: Optional time spent on the lesson in minutes.
+
+    Returns:
+        dict: Updated progress with completion status.
+
+    Raises:
+        UserNotEnrolledError: If user is not enrolled.
+        CourseNotFoundError: If course does not exist.
+        ValueError: If lesson_id is empty.
+
+    Example:
+        >>> result = update_lesson_progress('user_123', 'network_security',
+        ...                                  'netsec_001', 'netsec_l1')
+        >>> result['completed']
+        True
+    """
+    if not lesson_id:
+        raise ValueError("lesson_id is required")
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found")
+
+    progress_key = f"{user_id}:{course_id}"
+    if progress_key not in _user_progress:
+        raise UserNotEnrolledError(f"User {user_id} is not enrolled in {course_id}")
+
+    progress = _user_progress[progress_key]
+    now = datetime.utcnow()
+
+    if lesson_id not in progress.completed_lessons:
+        progress.completed_lessons.append(lesson_id)
+
+    progress.last_accessed = now
+    if time_spent_min:
+        progress.total_time_minutes += time_spent_min
+
+    # Calculate overall progress
+    course = _courses[course_id]
+    total_lessons = sum(len(m.lessons) for m in course.modules)
+    if total_lessons > 0:
+        lesson_progress = len(progress.completed_lessons) / total

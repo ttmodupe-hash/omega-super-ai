@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luqi Labs - Virtual Science Lab for African Schools</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e1a;--panel:rgba(20,30,50,.85);--accent:#00d4ff;--text:#e0e8f0;--muted:#8899aa;--border:rgba(0,212,255,.2);--green:#00ff88;--red:#ff4444;--yellow:#ffcc00}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;display:flex}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--accent);border-radius:3px}
+.sidebar{width:220px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;backdrop-filter:blur(10px);z-index:10}
+.logo{padding:16px;text-align:center;border-bottom:1px solid var(--border)}
+.logo h1{font-size:1.3rem;color:var(--accent);letter-spacing:2px}
+.logo span{font-size:.65rem;color:var(--muted);display:block;margin-top:2px}
+.nav{padding:8px;flex:1;overflow-y:auto}
+.nav-item{padding:12px 14px;margin:4px 0;border-radius:8px;cursor:pointer;transition:all .2s;font-size:.85rem;display:flex;align-items:center;gap:10px;border:1px solid transparent}
+.nav-item:hover{background:rgba(0,212,255,.1);border-color:var(--border)}
+.nav-item.active{background:rgba(0,212,255,.2);border-color:var(--accent);color:var(--accent)}
+.nav-item .icon{font-size:1.1rem}
+.sub-lab{padding:8px 14px 8px 36px;font-size:.78rem;color:var(--muted);cursor:pointer;border-radius:6px;margin:2px 0;transition:all .2s;display:none}
+.sub-lab:hover{color:var(--accent);background:rgba(0,212,255,.05)}
+.sub-lab.active{color:var(--accent);background:rgba(0,212,255,.1)}
+.lab-section.open .sub-lab{display:block}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:48px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;backdrop-filter:blur(10px)}
+.topbar h2{font-size:1rem;font-weight:500;color:var(--accent)}
+.topbar-buttons{display:flex;gap:8px}
+.btn{padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:rgba(0,212,255,.1);color:var(--text);cursor:pointer;font-size:.8rem;transition:all .2s}
+.btn:hover{background:rgba(0,212,255,.2)}
+.btn.active{background:var(--accent);color:#000;font-weight:600}
+.content{flex:1;display:flex;overflow:hidden}
+.canvas-area{flex:1;position:relative;background:linear-gradient(135deg,#0a0e1a 0%,#0f1525 100%);overflow:hidden}
+.canvas-area canvas{display:block;width:100%;height:100%}
+.overlay{position:absolute;top:10px;left:10px;background:var(--panel);padding:10px 14px;border-radius:8px;border:1px solid var(--border);font-size:.8rem;max-width:250px;backdrop-filter:blur(10px);z-index:5}
+.right-panel{width:280px;background:var(--panel);border-left:1px solid var(--border);padding:12px;overflow-y:auto;backdrop-filter:blur(10px)}
+.control-group{margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(0,212,255,.1)}
+.control-group label{display:block;font-size:.75rem;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.control-group input[type=range]{width:100%;margin:4px 0;-webkit-appearance:none;height:6px;background:rgba(0,212,255,.2);border-radius:3px;outline:none}
+.control-group input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--accent);border-radius:50%;cursor:pointer}
+.control-group select{width:100%;padding:6px;border-radius:6px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-size:.8rem}
+.control-group input[type=number],.control-group input[type=text]{width:100%;padding:6px;border-radius:6px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-size:.8rem}
+.val-display{display:inline-block;color:var(--accent);font-weight:600;min-width:40px;text-align:right}
+.bottom-panel{max-height:160px;background:var(--panel);border-top:1px solid var(--border);padding:12px 16px;overflow-y:auto;backdrop-filter:blur(10px);transition:max-height .3s}
+.bottom-panel.collapsed{max-height:32px;overflow:hidden}
+.bottom-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.bottom-header h3{font-size:.85rem;color:var(--accent)}
+.tabs{display:flex;gap:4px;margin-bottom:8px}
+.tab{padding:4px 10px;border-radius:4px;font-size:.75rem;cursor:pointer;border:1px solid transparent;transition:all .2s}
+.tab:hover{background:rgba(0,212,255,.1)}
+.tab.active{background:rgba(0,212,255,.2);border-color:var(--accent);color:var(--accent)}
+.tab-content{font-size:.82rem;line-height:1.5;color:var(--muted);display:none}
+.tab-content.active{display:block}
+.quiz-option{display:block;width:100%;padding:8px 12px;margin:4px 0;border-radius:6px;border:1px solid var(--border);background:rgba(0,0,0,.2);color:var(--text);cursor:pointer;text-align:left;transition:all .2s;font-size:.8rem}
+.quiz-option:hover{border-color:var(--accent)}
+.quiz-option.correct{background:rgba(0,255,136,.2);border-color:var(--green)}
+.quiz-option.wrong{background:rgba(255,68,68,.2);border-color:var(--red)}
+.gate{display:inline-block;width:60px;height:40px;border:2px solid var(--accent);border-radius:6px;margin:4px;text-align:center;line-height:36px;cursor:pointer;font-size:.8rem;font-weight:700;transition:all .2s;background:rgba(0,212,255,.1)}
+.gate.on{background:rgba(0,255,136,.3);border-color:var(--green);color:var(--green)}
+.periodic-table{display:grid;grid-template-columns:repeat(18,1fr);gap:2px;font-size:.6rem}
+.element{padding:4px 2px;text-align:center;border-radius:3px;cursor:pointer;transition:all .2s;font-weight:600;min-height:40px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.element:hover{transform:scale(1.3);z-index:10;position:relative}
+.element .sym{font-size:.9rem}
+.element .num{font-size:.55rem;opacity:.7}
+.alkali{background:rgba(255,100,100,.3)}.alkaline{background:rgba(255,180,100,.3)}.transition{background:rgba(255,255,150,.3)}.halogen{background:rgba(150,255,150,.3)}.noble{background:rgba(150,200,255,.3)}.other{background:rgba(200,200,200,.2)}
+.pt-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:.65rem}
+.pt-legend span{padding:2px 6px;border-radius:3px}
+.molecule-view{display:flex;justify-content:center;align-items:center;height:200px;background:rgba(0,0,0,.3);border-radius:8px;margin:8px 0;position:relative;overflow:hidden}
+.sort-bar{display:inline-block;width:20px;margin:0 1px;background:var(--accent);border-radius:2px 2px 0 0;transition:height .3s}
+.math-input{font-family:monospace;background:rgba(0,0,0,.4);border:1px solid var(--border);color:var(--accent);padding:8px;border-radius:6px;width:100%;margin:4px 0;font-size:.85rem}
+@media(max-width:768px){.sidebar{width:180px}.right-panel{width:200px}.overlay{max-width:180px;font-size:.7rem}}
+.cell-organelle{fill:rgba(0,212,255,.3);stroke:var(--accent);stroke-width:1.5;cursor:pointer;transition:all .3s}
+.cell-organelle:hover{fill:rgba(0,212,255,.5)}
+.heart-chamber{fill:rgba(255,68,68,.4);stroke:#ff6666;stroke-width:2;cursor:pointer}
+.heart-chamber:hover{fill:rgba(255,68,68,.6)}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.pulse{animation:pulse 1s infinite}
+.wave-path{fill:none;stroke:var(--accent);stroke-width:2}
+.ray{stroke:var(--green);stroke-width:2;fill:none}
+.load-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity .5s;animation:loaderFade 2.5s forwards}
+@keyframes loaderFade{0%,70%{opacity:1;pointer-events:all}100%{opacity:0;pointer-events:none}}
+.load-bar{width:200px;height:4px;background:rgba(0,212,255,.2);border-radius:2px;margin-top:16px;overflow:hidden}
+.load-fill{height:100%;background:var(--accent);width:0%;transition:width .3s;border-radius:2px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="load-overlay" id="loader"><h1 style="color:var(--accent);font-size:2rem">Luqi Labs</h1><span style="color:var(--muted);font-size:.8rem;margin-top:8px">Loading Virtual Science Lab...</span><div class="load-bar"><div class="load-fill" id="loadFill"></div></div></div>
+
+<div class="sidebar">
+<div class="logo"><h1>LUQI LABS</h1><span>Virtual Science Lab</span></div>
+<div class="nav" id="nav">
+<div class="lab-section open" data-lab="physics">
+<div class="nav-item active" onclick="selectLab('physics',this)"><span class="icon">&#9889;</span>Physics</div>
+<div class="sub-lab active" onclick="selectSub('ohms',this)">Ohm's Law</div>
+<div class="sub-lab" onclick="selectSub('projectile',this)">Projectile</div>
+<div class="sub-lab" onclick="selectSub('waves',this)">Waves</div>
+<div class="sub-lab" onclick="selectSub('optics',this)">Optics</div>
+<div class="sub-lab" onclick="selectSub('pendulum',this)">Pendulum</div>
+<div class="sub-lab" onclick="selectSub('spring',this)">Spring</div>
+</div>
+<div class="lab-section" data-lab="chemistry">
+<div class="nav-item" onclick="selectLab('chemistry',this)"><span class="icon">&#9878;</span>Chemistry</div>
+<div class="sub-lab" onclick="selectSub('periodic',this)">Periodic Table</div>
+<div class="sub-lab" onclick="selectSub('reaction',this)">Reactions</div>
+<div class="sub-lab" onclick="selectSub('titration',this)">Titration</div>
+<div class="sub-lab" onclick="selectSub('molecule',this)">Molecules</div>
+<div class="sub-lab" onclick="selectSub('balance',this)">Balance Equations</div>
+</div>
+<div class="lab-section" data-lab="biology">
+<div class="nav-item" onclick="selectLab('biology',this)"><span class="icon">&#127793;</span>Biology</div>
+<div class="sub-lab" onclick="selectSub('cell',this)">Cell Explorer</div>
+<div class="sub-lab" onclick="selectSub('dna',this)">DNA Replication</div>
+<div class="sub-lab" onclick="selectSub('photosynthesis',this)">Photosynthesis</div>
+<div class="sub-lab" onclick="selectSub('heart',this)">Heart Simulator</div>
+<div class="sub-lab" onclick="selectSub('ecosystem',this)">Ecosystem</div>
+</div>
+<div class="lab-section" data-lab="math">
+<div class="nav-item" onclick="selectLab('math',this)"><span class="icon">&#128300;</span>Math</div>
+<div class="sub-lab" onclick="selectSub('graph',this)">Graph Plotter</div>
+<div class="sub-lab" onclick="selectSub('geometry',this)">Geometry</div>
+<div class="sub-lab" onclick="selectSub('trig',this)">Trigonometry</div>
+<div class="sub-lab" onclick="selectSub('stats',this)">Statistics</div>
+<div class="sub-lab" onclick="selectSub('calculus',this)">Calculus</div>
+</div>
+<div class="lab-section" data-lab="earth">
+<div class="nav-item" onclick="selectLab('earth',this)"><span class="icon">&#127758;</span>Earth Science</div>
+<div class="sub-lab" onclick="selectSub('solar',this)">Solar System</div>
+<div class="sub-lab" onclick="selectSub('weather',this)">Weather</div>
+<div class="sub-lab" onclick="selectSub('geology',this)">Geology</div>
+<div class="sub-lab" onclick="selectSub('water',this)">Water Cycle</div>
+</div>
+<div class="lab-section" data-lab="cs">
+<div class="nav-item" onclick="selectLab('cs',this)"><span class="icon">&#128187;</span>Computer Science</div>
+<div class="sub-lab" onclick="selectSub('logic',this)">Logic Gates</div>
+<div class="sub-lab" onclick="selectSub('sort',this)">Sorting</div>
+<div class="sub-lab" onclick="selectSub('crypto',this)">Cryptography</div>
+<div class="sub-lab" onclick="selectSub('automata',this)">Automata</div>
+</div>
+</div>
+</div>
+
+<div class="main">
+<div class="topbar">
+<h2 id="labTitle">Ohm's Law</h2>
+<div class="topbar-buttons">
+<button class="btn" id="playBtn" onclick="toggleSim()">&#9654; Play</button>
+<button class="btn" onclick="resetSim()">&#8635; Reset</button>
+<button class="btn" onclick="togglePanel()">&#9776; Panel</button>
+</div>
+</div>
+<div class="content">
+<div class="canvas-area" id="canvasArea"><canvas id="simCanvas"></canvas>
+<div class="overlay" id="overlay"><strong>Ohm's Law</strong><br>V = I x R<br><span style="color:var(--muted)">Adjust voltage and resistance to see current change.</span></div>
+</div>
+<div class="right-panel" id="rightPanel">
+<div id="controls"></div>
+</div>
+</div>
+<div class="bottom-panel" id="bottomPanel">
+<div class="bottom-header" onclick="this.parentElement.classList.toggle('collapsed')"><h3>Learning & Quiz</h3><span style="color:var(--muted);font-size:.8rem">&#9660;</span></div>
+<div class="tabs" id="quizTabs"></div>
+<div id="quizContent"></div>
+</div>
+</div>
+
+<script>
+const canvas=document.getElementById('simCanvas'),ctx=canvas.getContext('2d');
+let W,H,currentLab='physics',currentSub='ohms',running=false,time=0,animId=null;
+let simData={};
+
+function resize(){const a=document.getElementById('canvasArea');W=canvas.width=a.clientWidth;H=canvas.height=a.clientHeight}
+window.addEventListener('resize',resize);
+resize();
+
+let loadProg=0;
+const loadInt=setInterval(()=>{loadProg+=10;document.getElementById('loadFill').style.width=loadProg+'%';if(loadProg>=100)clearInterval(loadInt)},100);
+
+function selectLab(lab,el){
+  currentLab=lab;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.sub-lab').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.lab-section').forEach(n=>n.classList.remove('open'));
+  el.classList.add('active');
+  el.parentElement.classList.add('open');
+  const firstSub=el.parentElement.querySelector('.sub-lab');
+  if(firstSub){firstSub.classList.add('active');selectSub(firstSub.textContent.toLowerCase().replace(/\s+/g,''),firstSub)}
+}
+function selectSub(sub,el){
+  currentSub=sub;
+  document.querySelectorAll('.sub-lab').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  resetSim();
+  setupControls();
+  setupQuiz();
+}
+function toggleSim(){running=!running;document.getElementById('playBtn').innerHTML=running?'&#10074;&#10074; Pause':'&#9654; Play';if(running)loop()}
+function resetSim(){running=false;time=0;cancelAnimationFrame(animId);document.getElementById('playBtn').innerHTML='&#9654; Play';ctx.clearRect(0,0,W,H);simData={}}
+function togglePanel(){document.getElementById('rightPanel').classList.toggle('hidden')}
+function loop(){if(!running)return;time+=0.016;draw();animId=requestAnimationFrame(loop)}
+
+function setupControls(){
+  const c=document.getElementById('controls');
+  const s=currentSub;
+  if(s==='ohms')c.innerHTML=ctrl('Voltage (V)','voltage',1,20,10,'V')+ctrl('Resistance (R)','resistance',1,100,10,'&#937;')+readout('Current: <span id=curVal class=val-display>1.00</span> A');
+  else if(s==='projectile')c.innerHTML=ctrl('Velocity','vel',10,100,50,'m/s')+ctrl('Angle','angle',0,90,45,'deg')+ctrl('Gravity','grav',1,20,9.8,'m/s&#178;');
+  else if(s==='waves')c.innerHTML=ctrl('Amplitude','amp',10,100,50,'px')+ctrl('Frequency','freq',1,10,2,'Hz')+ctrl('Wavelength','wlen',50,300,150,'px');
+  else if(s==='optics')c.innerHTML=ctrl('Angle of Incidence','incAngle',0,89,45,'deg')+ctrl('Refractive Index n1','n1',1,3,1)+ctrl('Refractive Index n2','n2',1,3,1.5);
+  else if(s==='pendulum')c.innerHTML=ctrl('Length','plen',0.5,5,2,'m')+ctrl('Gravity','pgrav',1,20,9.8,'m/s&#178;')+ctrl('Amplitude','pamp',5,60,30,'deg');
+  else if(s==='spring')c.innerHTML=ctrl('Spring Constant','k',10,200,100,'N/m')+ctrl('Mass','mass',0.1,5,1,'kg')+ctrl('Damping','damp',0,0.9,0.1,'');
+  else if(s==='periodic')c.innerHTML='<div class=control-group><label>Click an element for details</label><div id=ptInfo style=padding:8px;background:rgba(0,0,0,.3);border-radius:6px;font-size:.8rem>Select any element...</div></div>';
+  else if(s==='cell')c.innerHTML='<div class=control-group><label>Click organelles to explore</label><div id=cellInfo style=padding:8px;background:rgba(0,0,0,.3);border-radius:6px;font-size:.8rem>Explore the cell...</div></div>';
+  else if(s==='heart')c.innerHTML=ctrl('Heart Rate','hrate',40,180,72,'BPM')+ctrl('Blood Volume','bvol',4,7,5,'L');
+  else if(s==='dna')c.innerHTML='<div class=control-group><label>DNA Sequence</label><input type=text id=dnaSeq class=math-input value=ATGCGTAC value=ATGCGTACCATGGATC></div><button class=btn onclick=animateDNA()>Replicate</button>';
+  else if(s==='graph')c.innerHTML='<div class=control-group><label>Function y=</label><input type=text id=funcInput class=math-input value=Math.sin(x)></div><button class=btn onclick=plotGraph()>Plot</button>';
+  else if(s==='logic')c.innerHTML='<div class=control-group><label>Logic Gates</label><div id=gateCanvas style=height:150px;background:rgba(0,0,0,.3);border-radius:8px></div></div><div class=control-group><label>Input A</label><button class=btn id=inA onclick=toggleInput(\'A\')'>0</button></div><div class=control-group><label>Input B</label><button class=btn id=inB onclick=toggleInput(\'B\')'>0</button></div><div class=control-group><label>Gate</label><select id=gateType onchange=drawLogic()><option>AND</option><option>OR</option><option>XOR</option><option>NAND</option><option>NOR</option></select></div>';
+  else c.innerHTML='<div class=control-group><label>Controls</label><p style=color:var(--muted);font-size:.8rem>Use the canvas to interact with this simulation.</p></div>';
+}
+
+function ctrl(label,id,min,max,val,unit){
+  return '<div class=control-group><label>'+label+': <span id=val_'+id+' class=val-display>'+val+'</span> '+unit+'</label><input type=range id='+id+' min='+min+' max='+max+' value='+val+' step='+((max-min)/100)+' oninput="document.getElementById(\'val_'+id+'\').textContent=this.value;draw()"></div>'
+}
+function readout(html){return '<div class=control-group>'+html+'</div>'}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const s=currentSub;
+  if(s==='ohms')drawOhms();
+  else if(s==='projectile')drawProjectile();
+  else if(s==='waves')drawWaves();
+  else if(s==='optics')drawOptics();
+  else if(s==='pendulum')drawPendulum();
+  else if(s==='spring')drawSpring();
+  else if(s==='periodic')drawPeriodic();
+  else if(s==='cell')drawCell();
+  else if(s==='heart')drawHeart();
+  else if(s==='dna')drawDNA();
+  else if(s==='graph')drawGraph();
+  else if(s==='logic')drawLogic();
+  else if(s==='solar')drawSolar();
+  else if(s==='sort')drawSort();
+  else{ctx.fillStyle='var(--text)';ctx.font='16px sans-serif';ctx.fillText(s.toUpperCase()+' SIMULATION',W/2-60,H/2)}
+}
+
+// Ohm's Law
+function drawOhms(){
+  const v=parseFloat(document.getElementById('voltage')?.value||10);
+  const r=parseFloat(document.getElementById('resistance')?.value||10);
+  const i=v/r;
+  document.getElementById('curVal')&&(document.getElementById('curVal').textContent=i.toFixed(2));
+  const cx=W/2,cy=H/2;
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(cx-120,cy-60);ctx.lineTo(cx+120,cy-60);ctx.lineTo(cx+120,cy+60);ctx.lineTo(cx-120,cy+60);ctx.closePath();ctx.stroke();
+  ctx.fillStyle='var(--accent)';ctx.font='bold 18px sans-serif';ctx.textAlign='center';
+  ctx.fillText('R = '+r+' &#937;',cx,cy+6);
+  ctx.strokeStyle='var(--green)';ctx.lineWidth=4;
+  ctx.beginPath();ctx.moveTo(cx,cy-100);ctx.lineTo(cx,cy-60);ctx.stroke();
+  ctx.fillStyle='var(--green)';ctx.font='14px sans-serif';
+  ctx.fillText('V = '+v+'V',cx,cy-110);
+  ctx.fillStyle='var(--yellow)';ctx.font='14px sans-serif';
+  ctx.fillText('I = '+i.toFixed(2)+'A',cx+140,cy+6);
+  for(let j=0;j<5;j++){
+    const t=(time*2+j/5)%1;
+    ctx.fillStyle='var(--yellow)';ctx.beginPath();
+    ctx.arc(cx+120*t,cy+6,4,0,Math.PI*2);ctx.fill();
+  }
+}
+
+// Projectile
+function drawProjectile(){
+  const v0=parseFloat(document.getElementById('vel')?.value||50);
+  const ang=parseFloat(document.getElementById('angle')?.value||45)*Math.PI/180;
+  const g=parseFloat(document.getElementById('grav')?.value||9.8);
+  const tMax=2*v0*Math.sin(ang)/g;
+  const t=time%tMax;
+  const x=v0*Math.cos(ang)*t;
+  const y=v0*Math.sin(ang)*t-0.5*g*t*t;
+  const scale=Math.min(W/(v0*v0*Math.sin(2*ang)/g+50),H/(v0*v0*Math.sin(ang)*Math.sin(ang)/(2*g)+50));
+  const ox=50,oy=H-50;
+  ctx.strokeStyle='var(--muted)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(W-20,oy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(ox,oy);ctx.lineTo(ox,20);ctx.stroke();
+  ctx.strokeStyle='rgba(0,212,255,.3)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(ox,oy);
+  for(let ti=0;ti<=tMax;ti+=0.02){
+    const xi=v0*Math.cos(ang)*ti;
+    const yi=v0*Math.sin(ang)*ti-0.5*g*ti*ti;
+    ctx.lineTo(ox+xi*scale,oy-yi*scale);
+  }
+  ctx.stroke();
+  ctx.fillStyle='var(--accent)';
+  ctx.beginPath();
+  ctx.arc(ox+x*scale,oy-y*scale,8,0,Math.PI*2);ctx.fill();
+}
+
+// Waves
+function drawWaves(){
+  const amp=parseFloat(document.getElementById('amp')?.value||50);
+  const freq=parseFloat(document.getElementById('freq')?.value||2);
+  const wlen=parseFloat(document.getElementById('wlen')?.value||150);
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;
+  ctx.beginPath();
+  for(let x=0;x<W;x++){
+    const y=H/2+amp*Math.sin(2*Math.PI*(x/wlen-freq*time));
+    if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.strokeStyle='rgba(0,212,255,.2)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+}
+
+// Optics
+function drawOptics(){
+  const ia=parseFloat(document.getElementById('incAngle')?.value||45);
+  const n1=parseFloat(document.getElementById('n1')?.value||1);
+  const n2=parseFloat(document.getElementById('n2')?.value||1.5);
+  const cx=W/2,cy=H/2;
+  ctx.fillStyle='rgba(0,212,255,.1)';ctx.fillRect(0,0,cx,H);
+  ctx.fillStyle='rgba(0,255,136,.1)';ctx.fillRect(cx,0,cx,H);
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+  const rad=ia*Math.PI/180;
+  ctx.strokeStyle='var(--yellow)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(cx-200*Math.cos(rad),cy-200*Math.sin(rad));ctx.lineTo(cx,cy);ctx.stroke();
+  const sinR=n1*Math.sin(rad)/n2;
+  if(Math.abs(sinR)<=1){
+    const r2=Math.asin(sinR);
+    ctx.strokeStyle='var(--green)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+200*Math.cos(r2),cy+200*Math.sin(r2));ctx.stroke();
+  }
+  ctx.fillStyle='var(--accent)';ctx.font='14px sans-serif';ctx.textAlign='center';
+  ctx.fillText('n1='+n1,cx-80,cy-20);ctx.fillText('n2='+n2,cx+80,cy-20);
+  ctx.fillText('&#952;i='+ia+'&#176;',cx-80,cy+20);
+}
+
+// Pendulum
+function drawPendulum(){
+  const l=parseFloat(document.getElementById('plen')?.value||2);
+  const g=parseFloat(document.getElementById('pgrav')?.value||9.8);
+  const amp=parseFloat(document.getElementById('pamp')?.value||30);
+  const T=2*Math.PI*Math.sqrt(l/g);
+  const theta=amp*Math.cos(2*Math.PI*time/T)*Math.PI/180;
+  const cx=W/2,cy=60;
+  const px=cx+200*Math.sin(theta);
+  const py=cy+200*Math.cos(theta);
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(px,py);ctx.stroke();
+  ctx.fillStyle='var(--accent)';
+  ctx.beginPath();ctx.arc(px,py,15,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='var(--muted)';ctx.font='12px sans-serif';
+  ctx.fillText('T='+T.toFixed(2)+'s',cx,40);
+}
+
+// Spring
+function drawSpring(){
+  const k=parseFloat(document.getElementById('k')?.value||100);
+  const m=parseFloat(document.getElementById('mass')?.value||1);
+  const d=parseFloat(document.getElementById('damp')?.value||0.1);
+  const w0=Math.sqrt(k/m);
+  const x=100*Math.exp(-d*w0*time)*Math.cos(w0*time);
+  const cx=W/2,cy=H/2;
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cx-100,cy-100);
+  for(let i=0;i<=20;i++){
+    const sx=cx-100+x+(200*i/20);
+    const sy=cy-100+10*Math.sin(i*Math.PI);
+    ctx.lineTo(sx,sy);
+  }
+  ctx.stroke();
+  ctx.fillStyle='var(--accent)';
+  ctx.fillRect(cx-100+x-10,cy-100-10,20,20);
+}
+
+// Periodic Table
+function drawPeriodic(){
+  if(simData.ptDrawn)return;
+  simData.ptDrawn=true;
+  const elements=[
+    {s:'H',n:1,c:'other',x:1,y:1},{s:'He',n:2,c:'noble',x:18,y:1},
+    {s:'Li',n:3,c:'alkali',x:1,y:2},{s:'Be',n:4,c:'alkaline',x:2,y:2},{s:'B',n:5,c:'other',x:13,y:2},{s:'C',n:6,c:'other',x:14,y:2},{s:'N',n:7,c:'other',x:15,y:2},{s:'O',n:8,c:'other',x:16,y:2},{s:'F',n:9,c:'halogen',x:17,y:2},{s:'Ne',n:10,c:'noble',x:18,y:2},
+    {s:'Na',n:11,c:'alkali',x:1,y:3},{s:'Mg',n:12,c:'alkaline',x:2,y:3},{s:'Al',n:13,c:'other',x:13,y:3},{s:'Si',n:14,c:'other',x:14,y:3},{s:'P',n:15,c:'other',x:15,y:3},{s:'S',n:16,c:'other',x:16,y:3},{s:'Cl',n:17,c:'halogen',x:17,y:3},{s:'Ar',n:18,c:'noble',x:18,y:3},
+    {s:'K',n:19,c:'alkali',x:1,y:4},{s:'Ca',n:20,c:'alkaline',x:2,y:4},{s:'Fe',n:26,c:'transition',x:8,y:4},{s:'Cu',n:29,c:'transition',x:11,y:4},{s:'Zn',n:30,c:'transition',x:12,y:4},{s:'Ag',n:47,c:'transition',x:11,y:5},{s:'Au',n:79,c:'transition',x:11,y:6},
+  ];
+  const pw=W-40,ph=H-40,ew=pw/18,eh=ph/7;
+  ctx.clearRect(0,0,W,H);
+  elements.forEach(e=>{
+    const ex=20+(e.x-1)*ew,ey=20+(e.y-1)*eh;
+    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--'+e.c);
+    ctx.fillRect(ex,ey,ew-2,eh-2);
+    ctx.fillStyle='var(--text)';ctx.font='bold '+(ew*0.25)+'px sans-serif';ctx.textAlign='center';
+    ctx.fillText(e.s,ex+ew/2,ey+eh/2+2);
+    ctx.fillStyle='var(--muted)';ctx.font=(ew*0.15)+'px sans-serif';
+    ctx.fillText(e.n,ex+ew/2,ey+eh/2+eh*0.3);
+  });
+}
+
+// Cell
+function drawCell(){
+  if(simData.cellDrawn)return;
+  simData.cellDrawn=true;
+  const cx=W/2,cy=H/2;
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.ellipse(cx,cy,180,120,0,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='rgba(0,212,255,.2)';ctx.fill();
+  ctx.strokeStyle='#4488ff';ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(cx,cy,60,40,0,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='rgba(68,136,255,.3)';ctx.fill();
+  ctx.fillStyle='var(--text)';ctx.font='14px sans-serif';ctx.textAlign='center';
+  ctx.fillText('NUCLEUS',cx,cy+5);
+  ctx.fillStyle='var(--green)';
+  ctx.beginPath();ctx.ellipse(cx-100,cy-30,25,15,0.5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='var(--text)';ctx.font='11px sans-serif';
+  ctx.fillText('MITOCHONDRION',cx-100,cy-28);
+  ctx.strokeStyle='var(--yellow)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cx-50,cy+40);ctx.quadraticCurveTo(cx,cy+80,cx+50,cy+40);ctx.stroke();
+  ctx.fillStyle='var(--text)';ctx.font='11px sans-serif';
+  ctx.fillText('GOLGI APPARATUS',cx,cy+90);
+}
+
+// Heart
+function drawHeart(){
+  const hr=parseFloat(document.getElementById('hrate')?.value||72);
+  const cx=W/2,cy=H/2;
+  const beat=Math.sin(time*hr*Math.PI/30);
+  const s=1+0.05*beat;
+  ctx.save();ctx.translate(cx,cy);ctx.scale(s,s);ctx.translate(-cx,-cy);
+  ctx.fillStyle='rgba(255,68,68,.6)';
+  ctx.beginPath();
+  ctx.moveTo(cx,cy+40);
+  ctx.bezierCurveTo(cx,cy-20,cx-70,cy-40,cx-70,cy+10);
+  ctx.bezierCurveTo(cx-70,cy+50,cx,cy+80,cx,cy+100);
+  ctx.bezierCurveTo(cx,cy+80,cx+70,cy+50,cx+70,cy+10);
+  ctx.bezierCurveTo(cx+70,cy-40,cx,cy-20,cx,cy+40);
+  ctx.fill();
+  ctx.strokeStyle='#ff8888';ctx.lineWidth=2;ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle='var(--text)';ctx.font='14px sans-serif';ctx.textAlign='center';
+  ctx.fillText(hr+' BPM',cx,40);
+}
+
+// DNA
+function drawDNA(){
+  const seq=(document.getElementById('dnaSeq')?.value||'ATGCGTAC').toUpperCase().replace(/[^ATCG]/g,'');
+  const cx=W/2,cy=H/2;
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;
+  for(let i=0;i<seq.length;i++){
+    const y=cy-100+i*20;
+    const x1=cx-40+20*Math.sin(time*2+i*0.5);
+    const x2=cx+40-20*Math.sin(time*2+i*0.5);
+    ctx.strokeStyle=baseColor(seq[i]);ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();
+    ctx.fillStyle='var(--text)';ctx.font='12px sans-serif';ctx.textAlign='center';
+    ctx.fillText(seq[i],x1-15,y+4);ctx.fillText(compBase(seq[i]),x2+15,y+4);
+  }
+}
+function baseColor(b){return b==='A'?'#ff4444':b==='T'?'#00ff88':b==='C'?'#4488ff':'#ffcc00'}
+function compBase(b){return b==='A'?'T':b==='T'?'A':b==='C'?'G':'C'}
+
+// Graph
+function drawGraph(){
+  const fn=document.getElementById('funcInput')?.value||'Math.sin(x)';
+  ctx.strokeStyle='var(--muted)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;
+  ctx.beginPath();
+  for(let px=0;px<W;px+=2){
+    const x=(px-W/2)*0.02;
+    let y;try{y=eval(fn)}catch(e){y=0}
+    const py=H/2-y*50;
+    if(px===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+}
+
+// Solar
+function drawSolar(){
+  const cx=W/2,cy=H/2;
+  ctx.fillStyle='#ffcc00';
+  ctx.beginPath();ctx.arc(cx,cy,30,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='var(--yellow)';ctx.font='12px sans-serif';ctx.textAlign='center';
+  ctx.fillText('SUN',cx,cy+50);
+  const planets=[{r:60,s:8,c:'#888',n:'Mercury',p:0.24},{r:90,s:12,c:'#e8a',n:'Venus',p:0.62},{r:130,s:13,c:'#48f',n:'Earth',p:1},{r:170,s:10,c:'#f44',n:'Mars',p:1.88}];
+  planets.forEach(pl=>{
+    const a=time*0.5/pl.p;
+    const px=cx+pl.r*Math.cos(a);
+    const py=cy+pl.r*Math.sin(a);
+    ctx.strokeStyle='rgba(0,212,255,.2)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(cx,cy,pl.r,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle=pl.c;
+    ctx.beginPath();ctx.arc(px,py,pl.s,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='var(--text)';ctx.font='10px sans-serif';
+    ctx.fillText(pl.n,px,py+pl.s+12);
+  });
+}
+
+// Logic
+let inA=0,inB=0;
+function toggleInput(i){
+  if(i==='A'){inA=1-inA;document.getElementById('inA').textContent=inA}
+  else{inB=1-inB;document.getElementById('inB').textContent=inB}
+  drawLogic();
+}
+function drawLogic(){
+  const gate=document.getElementById('gateType')?.value||'AND';
+  let out=0;
+  if(gate==='AND')out=inA&inB;else if(gate==='OR')out=inA|inB;else if(gate==='XOR')out=inA^inB;
+  else if(gate==='NAND')out=~(inA&inB)&1;else if(gate==='NOR')out=~(inA|inB)&1;
+  const c=document.getElementById('gateCanvas');
+  if(!c)return;
+  const g=c.getContext('2d');
+  c.width=c.clientWidth;c.height=c.clientHeight;
+  const W2=c.width,H2=c.height;
+  g.clearRect(0,0,W2,H2);
+  g.strokeStyle='var(--accent)';g.lineWidth=2;
+  g.beginPath();g.moveTo(20,H2/3);g.lineTo(60,H2/3);g.lineTo(60,H2/3-10);g.lineTo(100,H2/3-10);g.lineTo(100,H2/3+10);g.lineTo(60,H2/3+10);g.closePath();g.stroke();
+  g.beginPath();g.moveTo(20,2*H2/3);g.lineTo(60,2*H2/3);g.stroke();
+  g.beginPath();g.moveTo(100,H2/2);g.lineTo(140,H2/2);g.stroke();
+  g.fillStyle='var(--text)';g.font='14px sans-serif';g.textAlign='center';
+  g.fillText(gate,80,H2/2+5);
+  g.fillText(inA,30,H2/3+5);g.fillText(inB,30,2*H2/3+5);g.fillText(out,150,H2/2+5);
+}
+
+// Sorting
+function drawSort(){
+  if(!simData.arr){simData.arr=Array.from({length:30},()=>Math.random()*100);simData.i=0}
+  const arr=simData.arr;
+  const barW=(W-60)/arr.length;
+  const maxH=H-100;
+  arr.forEach((v,idx)=>{
+    const h=(v/100)*maxH;
+    ctx.fillStyle=idx===simData.i?'var(--green)':'var(--accent)';
+    ctx.fillRect(30+idx*barW,H-50-h,barW-2,h);
+  });
+  if(running&&simData.i<arr.length-1){
+    let minIdx=simData.i;
+    for(let j=simData.i+1;j<arr.length;j++)if(arr[j]<arr[minIdx])minIdx=j;
+    [arr[simData.i],arr[minIdx]]=[arr[minIdx],arr[simData.i]];
+    simData.i++;
+  }
+}
+
+function setupQuiz(){
+  const tabs=document.getElementById('quizTabs');
+  const content=document.getElementById('quizContent');
+  if(!tabs||!content)return;
+  const quizzes={
+    ohms:{q:'What is the current when V=12V and R=4&#937;?',options:['2A','3A','4A','6A'],correct:1},
+    projectile:{q:'At 45&#176; launch, what angle maximizes range?',options:['30&#176;','45&#176;','60&#176;','90&#176;'],correct:1},
+    waves:{q:'What happens to wavelength when frequency increases?',options:['Increases','Decreases','Stays same','Becomes zero'],correct:1},
+  };
+  const quiz=quizzes[currentSub];
+  if(!quiz){tabs.innerHTML='';content.innerHTML='<div class="tab-content active" style="display:block"><p style="color:var(--muted)">Select a lab with quiz support.</p></div>';return}
+  tabs.innerHTML='<div class="tab active" onclick="showTab(0)">Quiz</div><div class="tab" onclick="showTab(1)">Theory</div>';
+  content.innerHTML='<div class="tab-content active" id="tab0"><p style="margin-bottom:8px"><strong>'+quiz.q+'</strong></p>'+quiz.options.map((o,i)=>'<button class="quiz-option" onclick="checkAnswer(this,'+i+','+quiz.correct+')">'+o+'</button>').join('')+'</div><div class="tab-content" id="tab1"><p>Use the simulation controls to explore concepts. Adjust parameters and observe results.</p></div>';
+}
+function showTab(n){document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===n))}
+function checkAnswer(el,idx,correct){document.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);el.classList.add(idx===correct?'correct':'wrong')}
+
+setupControls();
+setupQuiz();
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+Category,Service / API,Role in Luqi-AI,Pricing Model,Docs Endpoint
+Core AI Brain,Google Gemini 1.5 Pro,"Long-term memory layer for Jarvis; 2M-token context tracks student history, performance, learning quirks",$1.25 / 1M input tokens; $5.00 / 1M output tokens,ai.google.dev
+Core AI Brain,Anthropic Claude 3.5 Sonnet,"Self-healing loops & coding agents: refactoring, network diagnostics, autonomous patching",$3.00 / 1M input tokens; $15.00 / 1M output tokens,docs.anthropic.com
+Voice Synthesis,Hume AI EVI,"Real-time emotional intelligence: detects frustration/confusion from voice, adapts tone",$0.07 / minute of active voice streaming,dev.hume.ai
+Voice Synthesis,ElevenLabs Custom Voice,Hosts licensed Mandela-cadence foundational voice models (Madiba / Nomzamo),Pro from $22.00/month; usage-based volume pricing at scale,elevenlabs.io/docs
+Virtual Environments,Docker Engine API,Spins up isolated Linux lab containers on regional nodes (AWS Cape Town),Open-source; pay only for underlying cloud compute,docs.docker.com/engine/api
+Virtual Environments,Three.js & WebXR,Client-side 3D/4D rendering via WebAssembly hardware acceleration on cheap smartphones,Open-source / free,threejs.org/docs
+Payments - East Africa,Safaricom M-Pesa Daraja,Instant mobile-money checkout for Kenya & Tanzania students,< 0.5% per transaction,developer.safaricom.co.ke
+Payments - West Africa,Flutterwave / Paystack,Unified banking terminal for Nigeria & Ghana: bank transfers + card clearing,1.4% - 3.9% per transaction,flutterwave.com/docs; paystack.com/docs
+Payments - Southern Africa,Ozow / PayFast,Instant EFT & institutional procurement billing for SA universities & TVET colleges,Flat micro-fees ~R1.00-R2.00 per authorization,ozow.com; payfast.co.za
+Payments - Global,Stripe,Collects USD/EUR/GBP from premium international users; funds the African subsidy,2.9% + $0.30 per transaction,stripe.com/docs

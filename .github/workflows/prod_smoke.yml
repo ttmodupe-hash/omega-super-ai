@@ -1,0 +1,29 @@
+name: Production Smoke Verification
+
+# Runs the full 65-check route matrix against your LIVE deployment, on demand.
+# Railway auto-deploys on every push natively (GitHub integration) - this
+# workflow only VERIFIES. The pasted "broker" workflow was rejected: it had a
+# syntax error, a broken API host, and would have created a new Railway project
+# on EVERY push. Never reintroduce it.
+on:
+  workflow_dispatch:
+    inputs:
+      prod_url:
+        description: "Production base URL, e.g. https://your-app.up.railway.app"
+        required: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -r requirements.txt
+      - name: Run smoke matrix against production
+        env:
+          PROD_URL: ${{ inputs.prod_url }}
+          PROD_ADMIN_SECRET: ${{ secrets.PROD_ADMIN_SECRET }}
+        run: python tools/prod_smoke.py

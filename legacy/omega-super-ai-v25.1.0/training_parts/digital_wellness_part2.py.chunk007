@@ -1,0 +1,227 @@
+age patterns and generates insights.
+
+    Provides daily, weekly, and monthly reports with personalized insights
+    based on usage patterns, fatigue trends, and break compliance.
+    """
+
+    def __init__(
+        self,
+        session_tracker: SessionTracker,
+        fatigue_calculator: FatigueCalculator,
+    ) -> None:
+        """Initialize usage analytics.
+
+        Args:
+            session_tracker: The session tracker for activity data.
+            fatigue_calculator: The fatigue calculator for scoring.
+        """
+        self._tracker = session_tracker
+        self._fatigue_calc = fatigue_calculator
+        self._fatigue_history: Dict[str, Deque[Tuple[datetime, int]]] = (
+            defaultdict(lambda: deque(maxlen=1000))
+        )
+
+    def record_fatigue_score(self, user_id: str, score: int) -> None:
+        """Record a fatigue score for trend analysis.
+
+        Args:
+            user_id: The user identifier.
+            score: The fatigue score (0-100).
+        """
+        self._fatigue_history[user_id].append((datetime.utcnow(), score))
+
+    def generate_report(
+        self,
+        user_id: str,
+        period: str = "today",
+    ) -> UsageReport:
+        """Generate a usage analytics report.
+
+        Args:
+            user_id: The user to generate the report for.
+            period: Report period (today, weekly, monthly).
+
+        Returns:
+            UsageReport with analytics and insights.
+
+        Raises:
+            ValueError: If period is not recognized.
+        """
+        if period == "today":
+            window_minutes = 1440
+        elif period == "weekly":
+            window_minutes = 10080
+        elif period == "monthly":
+            window_minutes = 43200
+        else:
+            raise ValueError(
+                f"Unknown period: {period}. Use 'today', 'weekly', or 'monthly'."
+            )
+
+        total_minutes = self._tracker.get_screen_time_minutes(
+            user_id, window_minutes
+        )
+        feature_breakdown = self._tracker.get_feature_breakdown(
+            user_id, window_minutes
+        )
+        peak_hours = self._tracker.get_peak_hours(user_id, window_minutes)
+        avg_session = self._tracker.get_average_session_minutes(
+            user_id, window_minutes
+        )
+        longest_session = self._tracker.get_longest_session_minutes(
+            user_id, window_minutes
+        )
+        breaks_taken = self._tracker._breaks_taken.get(user_id, 0)
+        breaks_suggested = self._tracker._breaks_suggested.get(user_id, 0)
+        compliance_rate = self._tracker.get_break_compliance_rate(user_id)
+        avg_fatigue = self._get_average_fatigue(user_id, window_minutes)
+        fatigue_trend = self._analyze_fatigue_trend(user_id)
+        insights = self._generate_insights(
+            user_id,
+            total_minutes,
+            avg_session,
+            compliance_rate,
+            avg_fatigue,
+            feature_breakdown,
+        )
+
+        return UsageReport(
+            period=period,
+            total_screen_time_minutes=total_minutes,
+            feature_breakdown=feature_breakdown,
+            peak_hours=peak_hours,
+            average_session_minutes=round(avg_session, 1),
+            longest_session_minutes=longest_session,
+            breaks_taken=breaks_taken,
+            breaks_suggested=breaks_suggested,
+            break_compliance_rate=round(compliance_rate, 2),
+            average_fatigue_score=round(avg_fatigue, 1),
+            fatigue_trend=fatigue_trend,
+            insights=insights,
+        )
+
+    def _get_average_fatigue(
+        self, user_id: str, window_minutes: int
+    ) -> float:
+        """Get average fatigue score over a time window.
+
+        Args:
+            user_id: The user to query.
+            window_minutes: Lookback window in minutes.
+
+        Returns:
+            Average fatigue score.
+        """
+        cutoff = datetime.utcnow() - timedelta(minutes=window_minutes)
+        scores = [
+            s for t, s in self._fatigue_history.get(user_id, deque())
+            if t >= cutoff
+        ]
+        if not scores:
+            return 25.0
+        return statistics.mean(scores)
+
+    def _analyze_fatigue_trend(self, user_id: str) -> str:
+        """Analyze fatigue score trend.
+
+        Args:
+            user_id: The user to analyze.
+
+        Returns:
+            Human-readable trend description.
+        """
+        history = list(self._fatigue_history.get(user_id, deque()))
+        if len(history) < 5:
+            return "insufficient_data"
+
+        # Compare first half vs second half
+        mid = len(history) // 2
+        first_half = [s for _, s in history[:mid]]
+        second_half = [s for _, s in history[mid:]]
+
+        first_avg = statistics.mean(first_half)
+        second_avg = statistics.mean(second_half)
+
+        diff = second_avg - first_avg
+        if diff < -10:
+            return "improving"
+        elif diff < -5:
+            return "slightly_improving"
+        elif diff > 10:
+            return "worsening"
+        elif diff > 5:
+            return "slightly_worsening"
+        else:
+            return "stable"
+
+    def _generate_insights(
+        self,
+        user_id: str,
+        total_minutes: int,
+        avg_session: float,
+        compliance_rate: float,
+        avg_fatigue: float,
+        feature_breakdown: Dict[str, int],
+    ) -> List[str]:
+        """Generate personalized insights based on usage patterns.
+
+        Args:
+            user_id: The user to generate insights for.
+            total_minutes: Total screen time in minutes.
+            avg_session: Average session length in minutes.
+            compliance_rate: Break compliance rate.
+            avg_fatigue: Average fatigue score.
+            feature_breakdown: Screen time by feature.
+
+        Returns:
+            List of insight strings.
+        """
+        insights: List[str] = []
+
+        # Screen time insights
+        hours = total_minutes / 60.0
+        if hours > 10:
+            insights.append(
+                f"Your screen time is {hours:.1f} hours. Consider setting a daily limit and scheduling more offline activities."
+            )
+        elif hours > 6:
+            insights.append(
+                f"Your screen time is {hours:.1f} hours, which is within a typical range. Keep listening to your body's signals."
+            )
+        elif hours > 0:
+            insights.append(
+                f"Your screen time is {hours:.1f} hours. Great balance between digital engagement and rest!"
+            )
+
+        # Session length insights
+        if avg_session > 90:
+            insights.append(
+                f"Your average session length is {avg_session:.0f} minutes. Try taking breaks every 60 minutes to maintain focus and reduce fatigue."
+            )
+        elif avg_session > 45:
+            insights.append(
+                f"Your average session length is {avg_session:.0f} minutes. You are doing well at maintaining focused work periods."
+            )
+        elif avg_session > 0:
+            insights.append(
+                f"Your average session length is {avg_session:.0f} minutes. Great job taking regular breaks!"
+            )
+
+        # Break compliance insights
+        if compliance_rate < 0.3:
+            insights.append(
+                f"Your break compliance is {compliance_rate:.0%}. Taking even short breaks can significantly improve your well-being and productivity."
+            )
+        elif compliance_rate < 0.6:
+            insights.append(
+                f"Your break compliance is {compliance_rate:.0%}. You are doing okay, but there is room for improvement. Your future self will thank you!"
+            )
+        elif compliance_rate >= 0.6:
+            insights.append(
+                f"Your break compliance is {compliance_rate:.0%}. Excellent job prioritizing your well-being!"
+            )
+
+        # Fatigue insights
+        if avg_fatigue > 60:
+            insights.append(
+                f"Your average fatigue score is {avg_fatigue:.0f}. Consider incor

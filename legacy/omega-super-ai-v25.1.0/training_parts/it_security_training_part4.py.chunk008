@@ -1,0 +1,235 @@
+ime_limit_minutes,
+    }
+
+
+def generate_certificate(user_id: str, course_id: str) -> dict:
+    """Generate a completion certificate with verification hash.
+
+    Creates a cryptographically signed certificate when a user completes
+    a course with sufficient overall score (>= 70%).
+
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the completed course.
+
+    Returns:
+        dict: Certificate details with verification hash and download info.
+
+    Raises:
+        CourseNotFoundError: If course does not exist.
+        UserNotEnrolledError: If user is not enrolled.
+        SecurityTrainingError: If course completion criteria not met.
+
+    Example:
+        >>> cert = generate_certificate('user_123', 'network_security')
+        >>> cert['verified']
+        True
+    """
+    if course_id not in _courses:
+        raise CourseNotFoundError(f"Course '{course_id}' not found")
+
+    progress_key = f"{user_id}:{course_id}"
+    if progress_key not in _user_progress:
+        raise UserNotEnrolledError(f"User {user_id} is not enrolled in {course_id}")
+
+    progress = _user_progress[progress_key]
+    if progress.overall_score < 70:
+        raise SecurityTrainingError(
+            f"Course completion requires 70% overall score. Current: {progress.overall_score}%"
+        )
+
+    course = _courses[course_id]
+    cert_id = f"LUQI-CERT-{uuid.uuid4().hex[:12].upper()}"
+    issued_at = datetime.utcnow()
+    expiry_date = issued_at + timedelta(days=730)  # 2 years
+
+    # Generate verification hash
+    hash_input = f"{user_id}:{course_id}:{cert_id}:{issued_at.isoformat()}:LUQIAIv24.4.0"
+    verification_hash = hashlib.sha256(hash_input.encode()).hexdigest()
+
+    cert = UserCertificate(
+        user_id=user_id,
+        course_id=course_id,
+        certificate_id=cert_id,
+        issued_at=issued_at,
+        expiry_date=expiry_date,
+        verification_hash=verification_hash,
+        verified=True,
+    )
+
+    cert_key = f"{user_id}:{course_id}"
+    _certificates[cert_key] = cert
+
+    # Award badge for course completion
+    badge_map = {
+        "network_security": "badge_netsec",
+        "web_app_security": "badge_webapp",
+        "cryptography": "badge_crypto",
+        "ethical_hacking": "badge_hacker",
+        "incident_response": "badge_ir",
+        "cloud_security": "badge_cloud",
+        "malware_analysis": "badge_malware",
+        "digital_forensics": "badge_forensics",
+        "compliance_governance": "badge_compliance",
+        "mobile_security": "badge_mobile",
+        "wireless_security": "badge_wireless",
+        "social_engineering": "badge_se",
+        "africa_telecom_security": "badge_telecom",
+        "devsecops": "badge_devsecops",
+        "threat_intelligence": "badge_threat",
+    }
+    badge_id = badge_map.get(course_id)
+    if badge_id and user_id in _skill_trees:
+        if badge_id not in _skill_trees[user_id].badges:
+            _skill_trees[user_id].badges.append(badge_id)
+
+    return {
+        "status": "success",
+        "certificate_id": cert_id,
+        "user_id": user_id,
+        "course_id": course_id,
+        "course_title": course.title,
+        "issued_at": issued_at.isoformat(),
+        "expiry_date": expiry_date.isoformat(),
+        "verification_hash": verification_hash,
+        "verification_url": f"/api/security/certificates/verify/{cert_id}",
+        "verified": True,
+    }
+
+
+def get_skill_tree(user_id: str) -> dict:
+    """Get a user's skill tree with levels, points, and badges.
+
+    Args:
+        user_id: Unique identifier for the user.
+
+    Returns:
+        dict: Skill tree with levels, badges, skills, and title.
+
+    Example:
+        >>> tree = get_skill_tree('user_123')
+        >>> tree['level']
+        1
+    """
+    if user_id not in _skill_trees:
+        _skill_trees[user_id] = SkillTree(user_id=user_id)
+
+    tree = _skill_trees[user_id]
+    badge_details = []
+    for badge_id in tree.badges:
+        if badge_id in _badges:
+            badge_details.append(_badges[badge_id].to_dict())
+
+    # Calculate level based on total points
+    tree.level = max(1, tree.total_points // 500 + 1)
+    level_titles = {
+        1: "Security Novice", 2: "Security Apprentice", 3: "Security Analyst",
+        4: "Security Professional", 5: "Security Expert", 6: "Security Master",
+        7: "Cyber Guardian", 8: "Elite Defender", 9: "Security Grandmaster",
+        10: "Cyber Legend",
+    }
+    tree.title = level_titles.get(min(tree.level, 10), "Cyber Legend")
+
+    return {
+        "user_id": user_id,
+        "level": tree.level,
+        "title": tree.title,
+        "total_points": tree.total_points,
+        "skills": tree.skills,
+        "badges_earned": len(tree.badges),
+        "badges": badge_details,
+        "next_level_points": tree.level * 500,
+    }
+
+
+def _update_skill_tree(user_id: str, course_id: str, action: str,
+                       item_id: str, score: float = 0) -> None:
+    """Update user's skill tree based on learning activity.
+
+    Internal function to track skill progression when users complete
+    lessons, labs, and quizzes.
+
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course being worked on.
+        action: Type of activity ('lesson_complete', 'lab_complete', 'quiz_complete').
+        item_id: ID of the completed item.
+        score: Score earned for the activity (0-100).
+    """
+    if user_id not in _skill_trees:
+        _skill_trees[user_id] = SkillTree(user_id=user_id)
+
+    tree = _skill_trees[user_id]
+
+    # Map course to skill category
+    skill_map = {
+        "network_security": "networking",
+        "web_app_security": "web_security",
+        "cryptography": "cryptography",
+        "ethical_hacking": "pentesting",
+        "incident_response": "incident_response",
+        "cloud_security": "cloud_security",
+        "malware_analysis": "malware_analysis",
+        "digital_forensics": "forensics",
+        "compliance_governance": "compliance",
+        "mobile_security": "mobile_security",
+        "wireless_security": "wireless_security",
+        "social_engineering": "social_engineering",
+        "africa_telecom_security": "telecom_security",
+        "devsecops": "devsecops",
+        "threat_intelligence": "threat_intelligence",
+    }
+
+    skill = skill_map.get(course_id, "general")
+
+    if action == "lesson_complete":
+        tree.skills[skill] = tree.skills.get(skill, 0) + 10
+        tree.total_points += 10
+    elif action == "lab_complete":
+        points = int(score / 10)
+        tree.skills[skill] = tree.skills.get(skill, 0) + points
+        tree.total_points += points
+    elif action == "quiz_complete":
+        points = int(score / 10)
+        tree.skills[skill] = tree.skills.get(skill, 0) + points
+        tree.total_points += points
+
+
+
+def get_leaderboard(course_id: Optional[str] = None, limit: int = 50) -> List[dict]:
+    """Get global or course-specific leaderboard ranked by score.
+
+    Args:
+        course_id: Optional course ID to filter leaderboard. If None,
+            returns global leaderboard across all courses.
+        limit: Maximum number of entries to return (default 50, max 100).
+
+    Returns:
+        List[dict]: Ranked list of user entries with scores and badges.
+
+    Example:
+        >>> board = get_leaderboard('network_security', limit=10)
+        >>> board[0]['rank']
+        1
+    """
+    limit = min(limit, 100)
+
+    # Build scores from user progress
+    scores: Dict[str, dict] = {}
+
+    for key, progress in _user_progress.items():
+        if course_id and progress.course_id != course_id:
+            continue
+
+        uid = progress.user_id
+        if uid not in scores:
+            scores[uid] = {
+                "user_id": uid,
+                "total_score": 0,
+                "courses_completed": 0,
+                "labs_completed": 0,
+                "quizzes_completed": 0,
+            }
+        scores[uid]["total_score"] += progress.overall_score
+        if progress.status == "completed":
+            scores[uid]["courses_c

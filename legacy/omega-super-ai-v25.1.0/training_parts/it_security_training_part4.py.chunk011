@@ -1,0 +1,96 @@
+nges are loaded.
+
+    Returns:
+        dict: Platform initialization status and statistics.
+    """
+    if not _courses:
+        _build_courses()
+
+    return get_platform_stats()
+
+
+# Auto-initialize on module import
+_platform_stats = initialize_platform()
+
+
+# ============================================================================
+# MODULE ENTRY POINT
+# ============================================================================
+
+if __name__ == "__main__":
+    # Self-test when run directly
+    print("=" * 70)
+    print("Luqi AI v24.4.0 - IT Security Training Academy")
+    print("Limitless Telecoms - Self-Test Mode")
+    print("=" * 70)
+
+    stats = get_platform_stats()
+    print(f"\nPlatform Statistics:")
+    for key, value in stats.items():
+        print(f"  {key}: {value}")
+
+    print(f"\nCourses ({stats['total_courses']}):")
+    for course in get_all_courses():
+        print(f"  {course['icon']} {course['title']} ({course['difficulty']}) - "
+              f"{course['total_lessons']} lessons, {course['total_labs']} labs")
+
+    print(f"\nCertification Tracks:")
+    for track in get_certification_tracks():
+        print(f"  {track['name']}: {track['total_courses']} courses, "
+              f"{track['estimated_hours']} hours")
+
+    # Test enrollment
+    print("\n--- Testing Enrollment ---")
+    result = enroll_user("test_user_001", "network_security")
+    print(f"Enrollment: {result['status']}")
+
+    # Test progress tracking
+    print("\n--- Testing Progress Tracking ---")
+    result = update_lesson_progress("test_user_001", "network_security",
+                                     "netsec_001", "netsec_l1", 30)
+    print(f"Lesson complete: {result['completed']}, Score: {result['overall_score']}")
+
+    # Test quiz submission
+    print("\n--- Testing Quiz Submission ---")
+    quiz_answers = {f"nq{i}": 1 for i in range(1, 16)}
+    result = submit_quiz("test_user_001", "netsec_q1", quiz_answers)
+    print(f"Quiz: {result['status']}, Score: {result['score']}%")
+
+    # Test lab submission
+    print("\n--- Testing Lab Submission ---")
+    lab_submission = {"answers": {f"task{i}": f"Completed task {i}" for i in range(1, 9)}}
+    result = submit_lab("test_user_001", "netsec_lab1", lab_submission)
+    print(f"Lab: Score {result['score']}%, Points: {result['points_earned']}")
+
+    # Test skill tree
+    print("\n--- Testing Skill Tree ---")
+    tree = get_skill_tree("test_user_001")
+    print(f"Level: {tree['level']}, Title: {tree['title']}, Points: {tree['total_points']}")
+
+    # Test CTF
+    print("\n--- Testing CTF ---")
+    ctf = create_ctf_challenge("intermediate", "network")
+    print(f"CTF Challenge: {ctf['title']} ({ctf['difficulty']})")
+    result = verify_ctf_flag(ctf['id'], "LUQI{WRONG_FLAG}")
+    print(f"Wrong flag result: {result['correct']}")
+
+    # Test search
+    print("\n--- Testing Search ---")
+    results = search_courses("firewall", category="network")
+    print(f"Search 'firewall' in network: {len(results)} results")
+
+    # Test recommendations
+    print("\n--- Testing Recommendations ---")
+    recs = get_recommended_courses("test_user_001")
+    print(f"Recommendations: {len(recs)} courses")
+    for rec in recs[:3]:
+        print(f"  {rec['title']} (match: {rec['match_score']})")
+
+    # Test leaderboard
+    print("\n--- Testing Leaderboard ---")
+    board = get_leaderboard(limit=5)
+    print(f"Leaderboard entries: {len(board)}")
+
+    print("\n" + "=" * 70)
+    print("All self-tests completed successfully!")
+    print("=" * 70)

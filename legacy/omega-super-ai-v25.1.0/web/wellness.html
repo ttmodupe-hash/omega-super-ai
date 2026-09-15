@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luqi AI - Digital Wellness Dashboard v24.4.0</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #4f46e5, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        header p { color: var(--text-muted); margin-top: 5px; }
+        .grid { display: grid; gap: 20px; }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .icon { font-size: 24px; }
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+        }
+        .stat-label { color: var(--text-muted); font-size: 14px; }
+        .stat-change {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            width: fit-content;
+        }
+        .stat-change.up { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .stat-change.down { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .progress-fill.primary { background: linear-gradient(90deg, var(--primary), #06b6d4); }
+        .progress-fill.success { background: var(--success); }
+        .progress-fill.warning { background: var(--warning); }
+        .progress-fill.danger { background: var(--danger); }
+        .activity-list { list-style: none; }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .activity-icon.blue { background: rgba(59, 130, 246, 0.2); }
+        .activity-icon.green { background: rgba(16, 185, 129, 0.2); }
+        .activity-icon.orange { background: rgba(245, 158, 11, 0.2); }
+        .activity-icon.red { background: rgba(239, 68, 68, 0.2); }
+        .activity-icon.purple { background: rgba(139, 92, 246, 0.2); }
+        .activity-content { flex: 1; }
+        .activity-title { font-weight: 500; font-size: 14px; }
+        .activity-time { font-size: 12px; color: var(--text-muted); }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-primary { background: rgba(79, 70, 229, 0.2); color: #818cf8; }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .tips-grid { display: grid; gap: 12px; }
+        .tip-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 16px;
+            border-left: 3px solid var(--primary);
+        }
+        .tip-card h4 { font-size: 14px; margin-bottom: 6px; }
+        .tip-card p { font-size: 13px; color: var(--text-muted); }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); }
+        .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .chart-placeholder {
+            height: 200px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .score-ring {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .score-ring svg { transform: rotate(-90deg); }
+        .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .score-label {
+            text-align: center;
+            margin-top: 10px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+            .container { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Luqi AI Digital Wellness</h1>
+            <p>Comprehensive wellness monitoring and digital health insights - v24.4.0</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Key Metrics -->
+        <div class="grid grid-4" style="margin-bottom: 30px;">
+            <div class="card">
+                <div class="stat">
+                    <span class="stat-label">Wellness Score</span>
+                    <span class="stat-value" style="color: var(--success);">87</span>
+                    <span class="stat-change up">+5% from last week</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill success" style="width: 87%"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat">
+                    <span class="stat-label">Screen Time (Today)</span>
+                    <span class="stat-value" style="color: var(--warning);">6h 24m</span>
+                    <span class="stat-change down">-12% vs average</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill warning" style="width: 64%"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat">
+                    <span class="stat-label">Focus Sessions</span>
+                    <span class="stat-value" style="color: var(--primary);">4</span>
+                    <span class="stat-change up">+2 from yesterday</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill primary" style="width: 80%"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="stat">
+                    <span class="stat-label">Break Reminders</span>
+                    <span class="stat-value" style="color: var(--info);">12</span>
+                    <span class="stat-change up">100% acknowledged</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%; background: var(--info);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-2" style="margin-bottom: 30px;">
+            <!-- Digital Wellness Score -->
+            <div class="card">
+                <h2><span class="icon">&#127942;</span> Digital Wellness Score</h2>
+                <div class="score-ring">
+                    <svg width="120" height="120" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="var(--border)" stroke-width="8"/>
+                        <circle cx="60" cy="60" r="54" fill="none" stroke="var(--success)" stroke-width="8"
+                            stroke-dasharray="339.292" stroke-dashoffset="44.108" stroke-linecap="round"/>
+                    </svg>
+                    <div class="score-value" style="color: var(--success);">87</div>
+                </div>
+                <div class="score-label">Excellent digital wellness habits</div>
+                <div class="tips-grid" style="margin-top: 20px;">
+                    <div class="tip-card" style="border-left-color: var(--success);">
+                        <h4>&#128170; Strong Posture Habits</h4>
+                        <p>You've maintained good posture for 85% of your sessions today.</p>
+                    </div>
+                    <div class="tip-card" style="border-left-color: var(--warning);">
+                        <h4>&#128064; Screen Distance Alert</h4>
+                        <p>Try to maintain 20+ inches from your screen. Current average: 18 inches.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Timeline -->
+            <div class="card">
+                <h2><span class="icon">&#128197;</span> Today's Activity</h2>
+                <ul class="activity-list">
+                    <li class="activity-item">
+                        <div class="activity-icon blue">&#128187;</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Deep work session completed</div>
+                            <div class="activity-time">2 hours ago - 90 minutes</div>
+                        </div>
+                        <span class="badge badge-success">Productive</span>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon green">&#127939;</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Movement break taken</div>
+                            <div class="activity-time">3 hours ago - 5 minutes</div>
+                        </div>
+                        <span class="badge badge-primary">Wellness</span>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon orange">&#128161;</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Eye strain warning acknowledged</div>
+                            <div class="activity-time">4 hours ago - 20-20-20 rule applied</div>
+                        </div>
+                        <span class="badge badge-warning">Alert</span>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon purple">&#128218;</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Security training module completed</div>
+                            <div class="activity-time">5 hours ago - Network Security</div>
+                        </div>
+                        <span class="badge badge-success">Learning</span>
+                    </li>
+                    <li class="activity-item">
+                        <div class="activity-icon red">&#9889;</div>
+                        <div class="activity-content">
+                            <div class="activity-title">High screen time alert</div>
+                            <div class="activity-time">6 hours ago - 2h continuous use</div>
+                        </div>
+                        <span class="badge badge-danger">Warning</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Tips & Recommendations -->
+        <div class="grid grid-3" style="margin-bottom: 30px;">
+            <div class="card">
+                <h2><span class="icon">&#128161;</span> Eye Care Tips</h2>
+                <div class="tips-grid">
+                    <div class="tip-card">
+                        <h4>20-20-20 Rule</h4>
+                        <p>Every 20 minutes, look at something 20 feet away for 20 seconds.</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>Blink More Often</h4>
+                        <p>We blink 66% less when using screens. Make a conscious effort to blink.</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>Adjust Brightness</h4>
+                        <p>Match your screen brightness to the ambient light in your environment.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2><span class="icon">&#128170;</span> Posture Guide</h2>
+                <div class="tips-grid">
+                    <div class="tip-card">
+                        <h4>Screen at Eye Level</h4>
+                        <p>Position your screen so the top is at or slightly below eye level.</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>Feet Flat on Floor</h4>
+                        <p>Keep both feet flat on the floor with knees at a 90-degree angle.</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>Take Standing Breaks</h4>
+                        <p>Stand up and stretch for 2-3 minutes every 30 minutes of sitting.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2><span class="icon">&#127775;</span> Focus Techniques</h2>
+                <div class="tips-grid">
+                    <div class="tip-card">
+                        <h4>Pomodoro Technique</h4>
+                        <p>25 minutes of focused work followed by a 5-minute break.</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>Time Blocking</h4>
+                        <p>Schedule specific blocks of time for different types of work.</p>
+                    </div>
+                    <div class="tip-card">
+                        <h4>Single-Tasking</h4>
+                        <p>Focus on one task at a time. Multitasking reduces productivity by 40%.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Usage Analytics -->
+        <div class="grid grid-2" style="margin-bottom: 30px;">
+            <div class="card">
+                <h2><span class="icon">&#128202;</span> Weekly Screen Time Trends</h2>
+                <div class="chart-placeholder">
+                    [Chart: Daily screen time over past 7 days]<br>
+                    Mon: 5.2h | Tue: 6.1h | Wed: 5.8h | Thu: 7.2h | Fri: 6.4h | Sat: 4.1h | Sun: 3.8h
+                </div>
+            </div>
+            <div class="card">
+                <h2><span class="icon">&#127919;</span> Application Usage</h2>
+                <div class="chart-placeholder">
+                    [Chart: Top applications by usage time]<br>
+                    Browser: 35% | IDE: 25% | Terminal: 15% | Chat: 12% | Email: 8% | Other: 5%
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2><span class="icon">&#9881;</span> Quick Actions</h2>
+            <div class="actions">
+                <button class="btn btn-primary" onclick="startFocusSession()">&#127793; Start Focus Session</button>
+                <button class="btn btn-outline" onclick="takeBreak()">&#127939; Take a Break</button>
+                <button class="btn btn-outline" onclick="eyeExercise()">&#128064; Eye Exercises</button>
+                <button class="btn btn-outline" onclick="viewSettings()">&#128295; Wellness Settings</button>
+                <button class="btn btn-outline" onclick="exportData()">&#128229; Export Data</button>
+            </div>
+        </div>
+
+        <!-- Security Training Progress -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2><span class="icon">&#128274;</span> Security Training Progress</h2>
+            <div class="grid grid-4" style="margin-top: 20px;">
+                <div class="stat">
+                    <span class="stat-value" style="color: var(--primary); font-size: 28px;">3/15</span>
+                    <span class="stat-label">Courses Completed</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill primary" style="width: 20%"></div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" style="color: var(--success); font-size: 28px;">12</span>
+                    <span class="stat-label">Labs Completed</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill success" style="width: 23%"></div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" style="color: var(--warning); font-size: 28px;">8</span>
+                    <span class="stat-label">Quizzes Passed</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill warning" style="width: 36%"></div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" style="color: var(--info); font-size: 28px;">2,450</span>
+                    <span class="stat-label">Total Points</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 24%; background: var(--info);"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="actions" style="margin-top: 20px;">
+                <a href="/training" class="btn btn-primary">&#127891; Continue Training</a>
+                <a href="/ctf" class="btn btn-outline">&#127942; CTF Challenges</a>
+                <a href="/leaderboard" class="btn btn-outline">&#127941; Leaderboard</a>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align: center; padding: 40px 20px; color: var(--text-muted); border-top: 1px solid var(--border); margin-top: 40px;">
+        <p>Luqi AI Digital Wellness Dashboard v24.4.0 - Part of Limitless Telecoms</p>
+        <p style="margin-top: 10px; font-size: 12px;">Your wellness data is processed locally and never shared without consent.</p>
+    </footer>
+
+    <script>
+        function startFocusSession() {
+            alert('Starting 25-minute Pomodoro focus session...\n\n- Notifications silenced\n- Break reminders enabled\n- Posture monitoring active');
+        }
+        function takeBreak() {
+            alert('Break time!\n\n1. Stand up and stretch\n2. Walk around for 2 minutes\n3. Look at something 20 feet away\n4. Drink some water');
+        }
+        function eyeExercise() {
+            alert('Eye Exercise Routine:\n\n1. 20-20-20 rule: Look 20ft away for 20 seconds\n2. Blink deliberately 10 times\n3. Close eyes and roll them slowly\n4. Palming: Cover eyes with palms for 30 seconds');
+        }
+        function viewSettings() {
+            alert('Wellness Settings:\n\n- Break interval: 30 minutes\n- Eye strain threshold: 20 minutes\n- Posture reminders: ON\n- Focus session length: 25 minutes\n- Daily screen time goal: 6 hours');
+        }
+        function exportData() {
+            alert('Exporting wellness data...\n\nData includes:\n- Screen time history\n- Posture scores\n- Focus session logs\n- Break compliance\n- Training progress');
+        }
+
+        // Animate progress bars on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const bars = document.querySelectorAll('.progress-fill');
+            bars.forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
+                setTimeout(() => { bar.style.width = width; }, 100);
+            });
+        });
+    </script>
+</body>
+</html>

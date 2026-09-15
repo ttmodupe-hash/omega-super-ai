@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0f19"><title>Luqi-AI // Load Shedding Preparedness</title>
+<link rel="manifest" href="/manifest.json">
+<style>
+body{margin:0;background:#0b0f19;color:#f1f5f9;font-family:system-ui,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+h1{color:#f59e0b;font-size:20px}.sub{color:#64748b;font-size:12px;margin-bottom:14px}
+.card{background:#0d1222;border:1px solid #1e293b;border-radius:8px;padding:12px;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:#64748b;text-align:left;padding:6px;border-bottom:1px solid #1e293b;font-size:11px;text-transform:uppercase}
+td{padding:6px;border-bottom:1px solid rgba(255,255,255,.03)}
+.sev{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold}
+.s-low{background:rgba(16,185,129,.15);color:#10b981}.s-med{background:rgba(245,158,11,.15);color:#f59e0b}
+.s-high{background:rgba(249,115,22,.15);color:#f97316}.s-crit{background:rgba(239,68,68,.15);color:#ef4444}
+.item{display:flex;gap:10px;padding:8px;border-radius:6px;cursor:pointer;background:#121824;margin-bottom:4px;font-size:13px;align-items:center}
+.item.done{background:rgba(16,185,129,.08);text-decoration:line-through;color:#64748b}
+.item .box{width:16px;height:16px;border:2px solid #475569;border-radius:4px;flex-shrink:0}
+.item.done .box{background:#059669;border-color:#059669}
+.pri{margin-left:auto;font-size:10px;padding:2px 6px;border-radius:8px}
+.p-high{background:rgba(239,68,68,.15);color:#ef4444}.p-med{background:rgba(245,158,11,.15);color:#f59e0b}.p-low{background:rgba(16,185,129,.15);color:#10b981}
+.note{font-size:11px;color:#f59e0b;border-left:3px solid #f59e0b;padding:8px 10px;background:rgba(245,158,11,.06);border-radius:4px;margin-bottom:12px}
+a.back{color:#60a5fa;font-size:12px;text-decoration:none}
+.inp{background:#121824;border:1px solid #1e293b;border-radius:6px;color:#fff;padding:8px;font-size:13px;width:120px}
+.btn{background:#059669;border:none;color:#fff;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer}
+</style></head><body><div class="wrap">
+<h1>&#9889; Load Shedding Preparedness</h1>
+<div class="sub">Reference + checklist &middot; <a class="back" href="/">&larr; Portal</a> &middot; works offline once loaded</div>
+<div class="note">Honesty note: this is a <b>preparedness guide</b>. Eskom has no keyless official schedule API, so no live "real-time tracker" here - schedules are published per municipality. Enter your next slot manually below (stored on-device) and the guide + checklist do the rest. The React app's "real-time" mock has been deliberately not ported.</div>
+
+<div class="card"><b>Next outage (manual entry, stored on-device)</b><br><br>
+Start <input class="inp" id="ns" type="time" value="18:00"> End <input class="inp" id="ne" type="time" value="20:30">
+<button class="btn" onclick="saveSlot()">Save</button>
+<div id="cd" style="margin-top:10px;font-size:24px;font-weight:800;color:#f59e0b"></div></div>
+
+<div class="card"><b>Stage reference</b> (each stage = 1,000 MW shed nationally, rotating by area)
+<table><tr><th>Stage</th><th>Offline</th><th>Hours/day</th><th>Slots/day</th><th>Severity</th></tr>
+<tr><td>1</td><td>1,000 MW</td><td>2h</td><td>1</td><td><span class='sev s-low'>LOW</span></td></tr><tr><td>2</td><td>2,000 MW</td><td>4h</td><td>2</td><td><span class='sev s-low'>LOW</span></td></tr><tr><td>3</td><td>3,000 MW</td><td>6h</td><td>3</td><td><span class='sev s-med'>MED</span></td></tr><tr><td>4</td><td>4,000 MW</td><td>8h</td><td>4</td><td><span class='sev s-med'>MED</span></td></tr><tr><td>5</td><td>5,000 MW</td><td>10h</td><td>5</td><td><span class='sev s-high'>HIGH</span></td></tr><tr><td>6</td><td>6,000 MW</td><td>12h</td><td>6</td><td><span class='sev s-high'>HIGH</span></td></tr><tr><td>7</td><td>7,000 MW</td><td>14h</td><td>7</td><td><span class='sev s-crit'>CRIT</span></td></tr><tr><td>8</td><td>8,000 MW</td><td>16h</td><td>8</td><td><span class='sev s-crit'>CRIT</span></td></tr>
+</table></div>
+
+<div class="card"><b>Preparedness checklist</b> <span id="prog" style="color:#10b981"></span>
+<div style="margin:8px 0"><small style="color:#64748b">Tap to toggle - progress persists on this device.</small></div>
+<div class='item' data-id='CHK-001' onclick="toggle('CHK-001')"><div class='box'></div>Charge all devices<span class='pri p-high'>high</span></div><div class='item' data-id='CHK-002' onclick="toggle('CHK-002')"><div class='box'></div>Fill water bottles<span class='pri p-high'>high</span></div><div class='item' data-id='CHK-003' onclick="toggle('CHK-003')"><div class='box'></div>Prepare torches (battery over candles)<span class='pri p-high'>high</span></div><div class='item' data-id='CHK-004' onclick="toggle('CHK-004')"><div class='box'></div>Cook meals in advance<span class='pri p-med'>med</span></div><div class='item' data-id='CHK-005' onclick="toggle('CHK-005')"><div class='box'></div>Set fridge/freester coldest<span class='pri p-med'>med</span></div><div class='item' data-id='CHK-006' onclick="toggle('CHK-006')"><div class='box'></div>Fill gas bottle if applicable<span class='pri p-med'>med</span></div><div class='item' data-id='CHK-007' onclick="toggle('CHK-007')"><div class='box'></div>Locate candles and matches as backup<span class='pri p-low'>low</span></div><div class='item' data-id='CHK-008' onclick="toggle('CHK-008')"><div class='box'></div>Fill buckets for flushing<span class='pri p-low'>low</span></div><div class='item' data-id='CHK-009' onclick="toggle('CHK-009')"><div class='box'></div>Unplug non-essential appliances<span class='pri p-high'>high</span></div><div class='item' data-id='CHK-010' onclick="toggle('CHK-010')"><div class='box'></div>Keep fridge/freezer doors closed<span class='pri p-high'>high</span></div><div class='item' data-id='CHK-011' onclick="toggle('CHK-011')"><div class='box'></div>Battery lights, not candles where possible<span class='pri p-med'>med</span></div><div class='item' data-id='CHK-012' onclick="toggle('CHK-012')"><div class='box'></div>Check on elderly neighbours<span class='pri p-med'>med</span></div><div class='item' data-id='CHK-013' onclick="toggle('CHK-013')"><div class='box'></div>Avoid opening electric gates manually<span class='pri p-low'>low</span></div><div class='item' data-id='CHK-014' onclick="toggle('CHK-014')"><div class='box'></div>Wait 10 min before geyser back on<span class='pri p-high'>high</span></div><div class='item' data-id='CHK-015' onclick="toggle('CHK-015')"><div class='box'></div>Check fridge food for spoilage<span class='pri p-med'>med</span></div><div class='item' data-id='CHK-016' onclick="toggle('CHK-016')"><div class='box'></div>Recharge all battery packs<span class='pri p-high'>high</span></div><div class='item' data-id='CHK-017' onclick="toggle('CHK-017')"><div class='box'></div>Report surges/faults to municipality<span class='pri p-med'>med</span></div><div class='item' data-id='CHK-018' onclick="toggle('CHK-018')"><div class='box'></div>Reset timers and clocks<span class='pri p-low'>low</span></div>
+<button class="btn" style="background:#1e293b" onclick="resetChecklist()">Reset</button></div>
+
+<div class="card"><b>Appliance wattage guide</b> (what to switch off first)
+<table><tr><th>Appliance</th><th>Watts</th><th>Priority</th></tr>
+<tr><td>Geyser</td><td>3000W</td><td><span class='pri p-high'>high</span></td></tr><tr><td>Air conditioner</td><td>2500W</td><td><span class='pri p-high'>high</span></td></tr><tr><td>Stove/Oven</td><td>2400W</td><td><span class='pri p-high'>high</span></td></tr><tr><td>Tumble dryer</td><td>2500W</td><td><span class='pri p-high'>high</span></td></tr><tr><td>Kettle</td><td>2200W</td><td><span class='pri p-med'>med</span></td></tr><tr><td>Hairdryer</td><td>1800W</td><td><span class='pri p-med'>med</span></td></tr><tr><td>Microwave</td><td>1200W</td><td><span class='pri p-med'>med</span></td></tr><tr><td>Iron</td><td>1500W</td><td><span class='pri p-med'>med</span></td></tr><tr><td>Fridge</td><td>150W</td><td><span class='pri p-low'>low</span></td></tr><tr><td>TV</td><td>150W</td><td><span class='pri p-low'>low</span></td></tr><tr><td>Laptop</td><td>65W</td><td><span class='pri p-low'>low</span></td></tr><tr><td>WiFi router</td><td>15W</td><td><span class='pri p-low'>low</span></td></tr>
+</table></div>
+
+<div class="card"><b>Backup power options</b>
+<table><tr><th>Solution</th><th>Runtime</th><th>Typical price</th><th>Best for</th></tr>
+<tr><td>UPS</td><td>10-30 min</td><td>R1,500-R5,000</td><td>PC, WiFi, alarm</td></tr><tr><td>Inverter + battery</td><td>2-8 hrs</td><td>R8,000-R25,000</td><td>Lights, TV, fridge</td></tr><tr><td>Portable power station</td><td>4-12 hrs</td><td>R5,000-R30,000</td><td>Camping, remote work</td></tr><tr><td>Petrol generator</td><td>Unlimited</td><td>R5,000-R50,000</td><td>Whole house</td></tr><tr><td>Solar + battery</td><td>Continuous</td><td>R50,000-R200,000</td><td>Long-term off-grid</td></tr>
+</table>
+<div class="note" style="margin-top:10px">Wait 5-10 minutes after power returns before switching geysers/stoves/aircons back on - surge damage is the most common post-outage cost.</div></div>
+<script>
+const KEY="luqi_ls_v1";
+let state = JSON.parse(localStorage.getItem(KEY) || "{}");
+if (!state.checked) state.checked = {};
+function saveSlot(){ state.slot = {s: document.getElementById("ns").value, e: document.getElementById("ne").value}; localStorage.setItem(KEY, JSON.stringify(state)); }
+if (state.slot){ document.getElementById("ns").value = state.slot.s; document.getElementById("ne").value = state.slot.e; }
+function toggle(id){ state.checked[id] = !state.checked[id]; localStorage.setItem(KEY, JSON.stringify(state)); renderChecks(); }
+function resetChecklist(){ state.checked = {}; localStorage.setItem(KEY, JSON.stringify(state)); renderChecks(); }
+function renderChecks(){
+  document.querySelectorAll(".item").forEach(el => {
+    el.classList.toggle("done", !!state.checked[el.dataset.id]);
+  });
+  const total = document.querySelectorAll(".item").length;
+  const done = Object.values(state.checked).filter(Boolean).length;
+  document.getElementById("prog").innerText = " - " + Math.round(done/total*100) + "% (" + done + "/" + total + ")";
+}
+renderChecks();
+setInterval(() => {
+  if (!state.slot){ document.getElementById("cd").innerText = "set your slot above"; return; }
+  const [h,m] = state.slot.s.split(":").map(Number);
+  const t = new Date(); t.setHours(h, m, 0, 0);
+  if (t <= new Date()) t.setDate(t.getDate() + 1);
+  const d = t - new Date();
+  document.getElementById("cd").innerText =
+    Math.floor(d/3600000) + "h " + Math.floor(d%3600000/60000) + "m " + Math.floor(d%60000/1000) + "s until outage";
+}, 1000);
+</script></div></body></html>

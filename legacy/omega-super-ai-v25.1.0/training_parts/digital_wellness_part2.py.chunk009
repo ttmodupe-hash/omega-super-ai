@@ -1,0 +1,256 @@
+           )
+        else:
+            next_break_estimate = max(
+                0, Constants.SHORT_BREAK_INTERVAL - current_session
+            )
+
+        # Check wind-down and focus
+        wind_down = self._wind_down_manager.is_active(user_id)
+        focus_active = self._focus_manager.is_focus_active(user_id)
+
+        return WellnessStatus(
+            fatigue_score=fatigue_score,
+            fatigue_level=fatigue_level,
+            screen_time_minutes=screen_time_today,
+            current_session_minutes=current_session,
+            last_break_minutes_ago=last_break,
+            eye_strain_compliance=round(eye_compliance, 2),
+            break_suggested=break_suggested,
+            break_urgency=break_urgency,
+            message=message,
+            next_break_estimate_minutes=next_break_estimate,
+            wind_down_active=wind_down,
+            focus_mode_active=focus_active,
+        )
+
+    def get_break_suggestion(self, user_id: str) -> BreakSuggestion:
+        """Get personalized break suggestion.
+
+        Args:
+            user_id: The user to get a suggestion for.
+
+        Returns:
+            BreakSuggestion tailored to the user's current state.
+        """
+        status = self.get_status(user_id)
+        suggestion = self._break_engine.get_suggestion(
+            fatigue_score=status.fatigue_score,
+            current_session_minutes=status.current_session_minutes,
+            last_break_minutes_ago=status.last_break_minutes_ago,
+            wind_down_active=status.wind_down_active,
+        )
+        self._session_tracker.record_break_suggested(user_id)
+        return suggestion
+
+    def record_break_taken(self, user_id: str) -> None:
+        """Record that a user took a break.
+
+        Args:
+            user_id: The user who took a break.
+        """
+        self._session_tracker.record_break_taken(user_id)
+
+    def get_wellness_tip(
+        self,
+        user_id: str,
+        category: Optional[str] = None,
+    ) -> WellnessTip:
+        """Get a contextual wellness tip.
+
+        Args:
+            user_id: The user to get a tip for.
+            category: Optional preferred tip category.
+
+        Returns:
+            A contextually selected WellnessTip.
+        """
+        status = self.get_status(user_id)
+        return self._tips_engine.get_tip(
+            user_id=user_id,
+            fatigue_score=status.fatigue_score,
+            category=category,
+        )
+
+    def get_usage_report(
+        self, user_id: str, period: str = "today"
+    ) -> UsageReport:
+        """Get usage analytics for a time period.
+
+        Args:
+            user_id: The user to get the report for.
+            period: Report period (today, weekly, monthly).
+
+        Returns:
+            UsageReport with analytics and insights.
+        """
+        return self._usage_analytics.generate_report(user_id, period)
+
+    def set_goals(self, user_id: str, goals: ScreenTimeGoals) -> None:
+        """Set screen time goals.
+
+        Args:
+            user_id: The user to set goals for.
+            goals: ScreenTimeGoals object with desired limits.
+        """
+        self._goals_manager.set_goals(user_id, goals)
+
+    def get_goals(self, user_id: str) -> ScreenTimeGoals:
+        """Get current screen time goals.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            ScreenTimeGoals object.
+        """
+        return self._goals_manager.get_goals(user_id)
+
+    def check_goal_progress(self, user_id: str) -> Dict[str, Any]:
+        """Check progress against screen time goals.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            Dictionary with progress information.
+        """
+        return self._goals_manager.check_progress(user_id)
+
+    def toggle_focus_mode(self, user_id: str, enabled: bool) -> None:
+        """Toggle focus mode.
+
+        Args:
+            user_id: The user to toggle focus mode for.
+            enabled: Whether to enable or disable focus mode.
+        """
+        self._focus_manager.toggle_focus(user_id, enabled)
+
+    def get_focus_status(self, user_id: str) -> FocusStatus:
+        """Get focus mode status and Pomodoro timer.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            FocusStatus with current state and timer information.
+        """
+        return self._focus_manager.get_status(user_id)
+
+    def start_pomodoro(self, user_id: str, preset: str = "classic") -> None:
+        """Start a Pomodoro session.
+
+        Args:
+            user_id: The user to start the session for.
+            preset: Pomodoro preset (classic, long, short).
+        """
+        self._focus_manager.start_pomodoro(user_id, preset)
+
+    def stop_pomodoro(self, user_id: str) -> None:
+        """Stop the current Pomodoro session.
+
+        Args:
+            user_id: The user to stop the session for.
+        """
+        self._focus_manager.stop_pomodoro(user_id)
+
+    def get_eye_strain_reminder(self, user_id: str) -> Optional[str]:
+        """Get a 20-20-20 eye strain reminder if due.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            Reminder message if one is due, None otherwise.
+        """
+        if self._eye_tracker.record_screen_time(user_id, 0):
+            return self._eye_tracker.get_reminder_message(user_id)
+        return None
+
+    def record_eye_break(self, user_id: str) -> None:
+        """Record that the user took an eye break.
+
+        Args:
+            user_id: The user who took the eye break.
+        """
+        self._eye_tracker.record_compliance(user_id)
+
+    def get_wind_down_status(self, user_id: str) -> Dict[str, Any]:
+        """Get wind-down mode status and suggestions.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            Dictionary with wind-down status and suggestions.
+        """
+        active = self._wind_down_manager.is_active(user_id)
+        return {
+            "active": active,
+            "suggestions": (
+                self._wind_down_manager.get_suggestions() if active else []
+            ),
+            "tip": (
+                self._wind_down_manager.get_tip() if active else ""
+            ),
+        }
+
+    def get_wellness_preferences(
+        self, user_id: str
+    ) -> WellnessPreferences:
+        """Get wellness preferences for a user.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            WellnessPreferences object.
+        """
+        return self._preferences_manager.get_preferences(user_id)
+
+    def update_wellness_preferences(
+        self, user_id: str, updates: Dict[str, Any]
+    ) -> WellnessPreferences:
+        """Update wellness preferences for a user.
+
+        Args:
+            user_id: The user to update.
+            updates: Dictionary of preference fields to update.
+
+        Returns:
+            Updated WellnessPreferences object.
+        """
+        return self._preferences_manager.update_preferences(user_id, updates)
+
+    def get_tip_categories(self) -> List[str]:
+        """Get all available wellness tip categories.
+
+        Returns:
+            List of category name strings.
+        """
+        return self._tips_engine.get_categories()
+
+    def get_tips_by_category(
+        self, category: str
+    ) -> List[WellnessTip]:
+        """Get all tips in a specific category.
+
+        Args:
+            category: Category to filter by.
+
+        Returns:
+            List of WellnessTip objects.
+        """
+        return self._tips_engine.get_tips_by_category(category)
+
+    def clear_user_data(self, user_id: str) -> None:
+        """Clear all wellness data for a user.
+
+        Args:
+            user_id: The user whose data to clear.
+        """
+        self._session_tracker.clear_user_data(user_id)
+        self._tips_engine.clear_history(user_id)
+        self._preferences_manager.reset_preferences(user_id)
+        logger.info("Cleared all wellness data for user %s", user_id)
+
+    # ==========================================================

@@ -1,0 +1,202 @@
+_lessons * 50
+        lab_progress = sum(progress.lab_scores.values()) / (len(_labs) * 100) * 25 if _labs else 0
+        quiz_progress = sum(progress.quiz_scores.values()) / (len(_quizzes) * 100) * 25 if _quizzes else 0
+        progress.overall_score = min(100, round(lesson_progress + lab_progress + quiz_progress, 2))
+
+    # Update status
+    if progress.overall_score >= 90:
+        progress.status = "completed"
+    elif progress.overall_score > 0:
+        progress.status = "in_progress"
+
+    # Update skill tree
+    _update_skill_tree(user_id, course_id, "lesson_complete", lesson_id)
+
+    return {
+        "status": "success",
+        "lesson_id": lesson_id,
+        "completed": True,
+        "total_completed_lessons": len(progress.completed_lessons),
+        "overall_score": progress.overall_score,
+        "course_status": progress.status,
+    }
+
+
+def submit_lab(user_id: str, lab_id: str, submission: dict) -> dict:
+    """Submit a lab exercise for auto-grading with feedback.
+
+    Auto-grades lab submissions by comparing submitted answers against
+    expected solutions. Provides detailed feedback on correctness.
+
+    Args:
+        user_id: Unique identifier for the user.
+        lab_id: ID of the lab being submitted.
+        submission: Dictionary containing 'answers' (dict of task_id -> answer)
+            and optional 'time_spent_min'.
+
+    Returns:
+        dict: Grading results with score, feedback, and hints.
+
+    Raises:
+        LabNotFoundError: If the lab does not exist.
+        InvalidSubmissionError: If submission format is invalid.
+        UserNotEnrolledError: If user is not enrolled in the course.
+
+    Example:
+        >>> result = submit_lab('user_123', 'netsec_lab1',
+        ...                     {'answers': {'task1': 'iptables -P INPUT DROP'}})
+        >>> result['score']
+        85.0
+    """
+    if lab_id not in _labs:
+        raise LabNotFoundError(f"Lab '{lab_id}' not found")
+    if not submission or "answers" not in submission:
+        raise InvalidSubmissionError("Submission must contain 'answers' dict")
+
+    lab = _labs[lab_id]
+    answers = submission.get("answers", {})
+    time_spent = submission.get("time_spent_min", 0)
+
+    # Find the course for this lab
+    module = _modules.get(lab.module_id)
+    if not module:
+        raise LabNotFoundError(f"Module for lab '{lab_id}' not found")
+
+    course_id = module.course_id
+    progress_key = f"{user_id}:{course_id}"
+
+    # Auto-grade by comparing with solution keywords
+    feedback = {}
+    correct_count = 0
+    total_tasks = len(lab.tasks)
+    solution_lower = lab.solution.lower()
+
+    for task_idx, answer in answers.items():
+        answer_lower = str(answer).lower().strip()
+        # Simple keyword matching - production would use more sophisticated grading
+        if answer_lower and len(answer_lower) > 3:
+            # Check if answer contains meaningful content (not just "done")
+            keywords_match = any(keyword in answer_lower for keyword in
+                               ["iptables", "nmap", "sql", "union", "payload",
+                                "firewall", "encrypt", "hash", "certificate",
+                                "frida", "hook", "pinning", "terraform", "checkov",
+                                "misp", "stix", "yara", "volatility", "wireshark",
+                                "metasploit", "msfconsole", "privilege", "sudo"])
+            is_done_only = answer_lower in ["done", "completed", "yes", "ok"]
+            if keywords_match or not is_done_only:
+                correct_count += 1
+                feedback[task_idx] = {"correct": True, "comment": "Good work!"}
+            else:
+                feedback[task_idx] = {
+                    "correct": False,
+                    "comment": "Please provide a more detailed answer with specific commands or configurations.",
+                    "hint": lab.hints[min(int(task_idx.replace('task', '0')), len(lab.hints)-1)] if lab.hints else "",
+                }
+        else:
+            feedback[task_idx] = {
+                "correct": False,
+                "comment": "Answer too short or empty.",
+                "hint": lab.hints[min(int(task_idx.replace('task', '0')), len(lab.hints)-1)] if lab.hints else "",
+            }
+
+    score = round((correct_count / max(total_tasks, 1)) * 100, 2)
+
+    # Update progress
+    if progress_key in _user_progress:
+        _user_progress[progress_key].lab_scores[lab_id] = score
+        if time_spent:
+            _user_progress[progress_key].total_time_minutes += time_spent
+        _update_skill_tree(user_id, course_id, "lab_complete", lab_id, score)
+
+    return {
+        "status": "graded",
+        "lab_id": lab_id,
+        "lab_title": lab.title,
+        "score": score,
+        "points_earned": round(lab.points * (score / 100)),
+        "total_tasks": total_tasks,
+        "correct_tasks": correct_count,
+        "feedback": feedback,
+        "solution_preview": lab.solution[:200] + "..." if len(lab.solution) > 200 else lab.solution,
+        "hints_available": len(lab.hints),
+    }
+
+
+def submit_quiz(user_id: str, quiz_id: str, answers: dict) -> dict:
+    """Submit quiz answers for grading and track attempts.
+
+    Grades multiple-choice quiz submissions and provides detailed
+    feedback with explanations for each question.
+
+    Args:
+        user_id: Unique identifier for the user.
+        quiz_id: ID of the quiz being submitted.
+        answers: Dictionary mapping question_id -> selected_answer_index (0-based).
+
+    Returns:
+        dict: Grading results with score, correct/incorrect breakdown,
+            and detailed feedback.
+
+    Raises:
+        QuizNotFoundError: If the quiz does not exist.
+        InvalidSubmissionError: If answers format is invalid.
+
+    Example:
+        >>> result = submit_quiz('user_123', 'netsec_q1',
+        ...                      {'nq1': 1, 'nq2': 1, 'nq3': 1})
+        >>> result['score']
+        100.0
+    """
+    if quiz_id not in _quizzes:
+        raise QuizNotFoundError(f"Quiz '{quiz_id}' not found")
+    if not answers or not isinstance(answers, dict):
+        raise InvalidSubmissionError("Answers must be a dict mapping question_id -> answer_index")
+
+    quiz = _quizzes[quiz_id]
+    correct_count = 0
+    total_questions = len(quiz.questions)
+    feedback = []
+
+    for question in quiz.questions:
+        user_answer = answers.get(question.id)
+        is_correct = user_answer == question.correct_answer
+        if is_correct:
+            correct_count += 1
+
+        feedback.append({
+            "question_id": question.id,
+            "question": question.text,
+            "your_answer": user_answer,
+            "correct_answer": question.correct_answer,
+            "correct": is_correct,
+            "explanation": question.explanation if is_correct else f"Correct: {question.options[question.correct_answer]}. {question.explanation}",
+        })
+
+    score = round((correct_count / max(total_questions, 1)) * 100, 2)
+    passed = score >= quiz.passing_score
+
+    # Find course and update progress
+    module = _modules.get(quiz.module_id)
+    if module:
+        course_id = module.course_id
+        progress_key = f"{user_id}:{course_id}"
+        if progress_key in _user_progress:
+            progress = _user_progress[progress_key]
+            # Track best score
+            current_best = progress.quiz_scores.get(quiz_id, 0)
+            if score > current_best:
+                progress.quiz_scores[quiz_id] = score
+            progress.quiz_attempts[quiz_id] = progress.quiz_attempts.get(quiz_id, 0) + 1
+            _update_skill_tree(user_id, course_id, "quiz_complete", quiz_id, score)
+
+    return {
+        "status": "passed" if passed else "failed",
+        "quiz_id": quiz_id,
+        "quiz_title": quiz.title,
+        "score": score,
+        "passing_score": quiz.passing_score,
+        "passed": passed,
+        "correct_answers": correct_count,
+        "total_questions": total_questions,
+        "feedback": feedback,
+        "time_limit_minutes": quiz.t

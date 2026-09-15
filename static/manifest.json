@@ -1,0 +1,15 @@
+{
+  "short_name": "Luqi-AI",
+  "name": "Luqi-AI Global Virtual Lab Platform",
+  "icons": [
+    { "src": "/icons/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ],
+  "start_url": "/?utm_source=pwa",
+  "background_color": "#05070c",
+  "theme_color": "#0b0f19",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "categories": ["education", "utilities"],
+  "description": "Africa's elite global platform for 4D interactive labs, AI tutoring, and simulated technical skills development."
+}

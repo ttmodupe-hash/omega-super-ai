@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luqi-AI // Master Operations Cockpit</title>
+    <style>
+        :root { --bg-deep:#060913; --panel-bg:#0d1222; --panel-border:#1e293b;
+                --text-primary:#f8fafc; --text-secondary:#94a3b8;
+                --status-green:#10b981; --status-amber:#f59e0b; --status-blue:#3b82f6; --status-red:#ef4444; }
+        body { margin:0; background:var(--bg-deep); color:var(--text-primary);
+               font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+               display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+        .top-bar { background:var(--panel-bg); border-bottom:1px solid var(--panel-border);
+                   padding:15px 24px; display:flex; justify-content:space-between; align-items:center; }
+        .top-bar h1 { margin:0; font-size:18px; font-weight:700; letter-spacing:1px;
+                      color:var(--status-green); display:flex; align-items:center; gap:8px; }
+        .system-pulse { width:10px; height:10px; background:var(--status-green); border-radius:50%;
+                        box-shadow:0 0 8px var(--status-green); animation:pulse 2s infinite; display:inline-block; }
+        .system-pulse.degraded { background:var(--status-amber); box-shadow:0 0 8px var(--status-amber); }
+        @keyframes pulse { 0%{transform:scale(.95)} 70%{transform:scale(1)} 100%{transform:scale(.95)} }
+        .dashboard-grid { flex:1; display:grid; grid-template-columns:repeat(12,1fr); grid-template-rows:repeat(6,1fr);
+                          gap:16px; padding:16px; box-sizing:border-box; overflow-y:auto; }
+        .card { background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:8px;
+                padding:16px; display:flex; flex-direction:column; }
+        .card-header { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+                       color:var(--text-secondary); margin-bottom:12px;
+                       border-bottom:1px solid rgba(255,255,255,.05); padding-bottom:6px; }
+        .col-4{grid-column:span 4}.col-8{grid-column:span 8}.row-2{grid-row:span 2}.row-4{grid-row:span 4}
+        .giant-number { font-size:36px; font-weight:800; margin:8px 0; }
+        .subtext { font-size:12px; color:var(--text-secondary); }
+        .gate-queue { width:100%; border-collapse:collapse; font-size:13px; }
+        .gate-queue th { text-align:left; color:var(--text-secondary); padding:8px; border-bottom:1px solid var(--panel-border); }
+        .gate-queue td { padding:8px; border-bottom:1px solid rgba(255,255,255,.02); }
+        .badge { padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; text-transform:uppercase; }
+        .badge-pending { background:rgba(245,158,11,.15); color:var(--status-amber); }
+        .action-link { background:var(--status-blue); color:#fff; border:none; padding:4px 8px;
+                       border-radius:4px; cursor:pointer; font-size:12px; margin-right:4px; }
+        .action-link.reject { background:var(--status-red); }
+        .action-link:hover { filter:brightness(1.15); }
+        #log-display { background:#060913; border:1px solid var(--panel-border); font-family:monospace;
+                       font-size:11px; padding:8px; flex:1; overflow-y:auto; border-radius:4px; color:var(--status-green); }
+        .offline { color:var(--status-red); font-size:12px; }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h1><span class="system-pulse" id="pulse-dot"></span> LUQI-AI // CENTRAL OPERATIONS COCKPIT</h1>
+        <div class="subtext" id="clock-display">Connecting...</div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="card col-4 row-2">
+            <div class="card-header">&#129504; Kimi K3 Gateway Health</div>
+            <div class="giant-number" id="api-roundtrip">&mdash;</div>
+            <div class="subtext">API round-trip (measured) &middot; Active model: <strong id="kimi-model">?</strong></div>
+            <div class="subtext" style="margin-top:4px;">Reasoning: <strong id="kimi-effort">?</strong> &middot; Context: <strong>1M tokens</strong></div>
+        </div>
+
+        <div class="card col-4 row-2">
+            <div class="card-header">&#129514; Active Lab Sandboxes</div>
+            <div class="giant-number" id="sandbox-count">&mdash;</div>
+            <div class="subtext">Capacity: <strong id="capacity-left">&mdash;</strong></div>
+            <div class="subtext" id="sandbox-error" style="margin-top:4px;"></div>
+        </div>
+
+        <div class="card col-4 row-2">
+            <div class="card-header">&#128737;&#65039; 30% Human Gate</div>
+            <div class="giant-number" id="gate-count">&mdash;</div>
+            <div class="subtext">Transactions halted awaiting human sign-off</div>
+            <div class="subtext" style="margin-top:4px;">Node: <strong id="sovereignty-node">?</strong></div>
+        </div>
+
+        <div class="card col-8 row-4">
+            <div class="card-header">&#128737;&#65039; Human Intervention Gate Queue</div>
+            <div style="overflow-x:auto; flex:1;">
+                <table class="gate-queue">
+                    <thead><tr>
+                        <th>Task ID</th><th>Tier</th><th>Action</th><th>Item</th><th>Status</th><th>Admin Action</th>
+                    </tr></thead>
+                    <tbody id="queue-body">
+                        <tr><td colspan="6" class="subtext">Awaiting first poll...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card col-4 row-4">
+            <div class="card-header">&#129302; Cockpit Activity Log</div>
+            <div id="log-display"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- Admin key: prompted once, kept for the session only (never persisted to disk) ---
+        let adminKey = sessionStorage.getItem('luqi_admin_key') || '';
+        if (!adminKey) {
+            adminKey = prompt('Enter your X-Luqi-Admin-Auth key to open the cockpit:') || '';
+            sessionStorage.setItem('luqi_admin_key', adminKey);
+        }
+        const authHeaders = { 'X-Luqi-Admin-Auth': adminKey };
+
+        function log(msg) {
+            const el = document.getElementById('log-display');
+            const t = new Date().toLocaleTimeString();
+            el.innerHTML += `[${t}] ${msg}<br>`;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        async function refreshTelemetry() {
+            const t0 = performance.now();
+            try {
+                const res = await fetch('/v1/monitor/telemetry', { headers: authHeaders });
+                const ms = Math.round(performance.now() - t0);
+                document.getElementById('api-roundtrip').innerText = ms + 'ms';
+
+                if (!res.ok) {
+                    document.getElementById('sandbox-error').innerHTML =
+                        '<span class="offline">Auth failed or engine unreachable (' + res.status + ')</span>';
+                    log('Telemetry poll failed: HTTP ' + res.status);
+                    return;
+                }
+                const d = await res.json();
+
+                document.getElementById('pulse-dot').className =
+                    'system-pulse' + (d.system_status === 'healthy' ? '' : ' degraded');
+                document.getElementById('kimi-model').innerText = d.kimi_gateway_model;
+                document.getElementById('kimi-effort').innerText = d.kimi_reasoning_effort;
+                document.getElementById('sovereignty-node').innerText = d.data_sovereignty_node;
+                document.getElementById('gate-count').innerText = d.pending_human_gate_count;
+
+                if (d.active_sandbox_containers === null) {
+                    document.getElementById('sandbox-count').innerText = 'offline';
+                    document.getElementById('capacity-left').innerText = 'engine unavailable';
+                    document.getElementById('sandbox-error').innerHTML =
+                        '<span class="offline">' + (d.sandbox_engine_error || 'Docker engine unreachable') + '</span>';
+                } else {
+                    document.getElementById('sandbox-count').innerText = d.active_sandbox_containers;
+                    document.getElementById('capacity-left').innerText =
+                        (d.max_capacity_limit - d.active_sandbox_containers) + ' / ' + d.max_capacity_limit;
+                    document.getElementById('sandbox-error').innerText = '';
+                }
+            } catch (e) {
+                log('Telemetry network error: ' + e);
+            }
+        }
+
+        async function refreshGateQueue() {
+            try {
+                const res = await fetch('/v1/monitor/gate-queue', { headers: authHeaders });
+                if (!res.ok) return;
+                const d = await res.json();
+                const body = document.getElementById('queue-body');
+                if (!d.pending.length) {
+                    body.innerHTML = '<tr><td colspan="6" class="subtext">Gate clear - no pending approvals.</td></tr>';
+                    return;
+                }
+                body.innerHTML = d.pending.map(t => `
+                    <tr>
+                        <td><code>${t.task_id.slice(0, 8)}</code></td>
+                        <td>${t.student_tier}</td>
+                        <td>${t.action_type}</td>
+                        <td>${t.item}</td>
+                        <td><span class="badge badge-pending">${t.status.replace(/_/g, ' ')}</span></td>
+                        <td>
+                            <button class="action-link" onclick="processGateOverride('${t.task_id}', true)">Approve</button>
+                            <button class="action-link reject" onclick="processGateOverride('${t.task_id}', false)">Reject</button>
+                        </td>
+                    </tr>`).join('');
+            } catch (e) { log('Gate queue error: ' + e); }
+        }
+
+        async function processGateOverride(taskId, approve) {
+            try {
+                const res = await fetch(`/v1/human/override/${taskId}?approve=${approve}`,
+                                        { method: 'POST', headers: authHeaders });
+                const d = await res.json();
+                log(`Gate ${approve ? 'APPROVED' : 'REJECTED'} task ${taskId.slice(0, 8)} -> ${d.status} (HTTP ${res.status})`);
+            } catch (e) { log('Override failed: ' + e); }
+            refreshGateQueue();
+            refreshTelemetry();
+        }
+
+        function tickClock() {
+            document.getElementById('clock-display').innerText =
+                'System Time: ' + new Date().toLocaleTimeString() + ' | Live Node Connected';
+        }
+
+        log('Cockpit initialised. Polling live engine feeds...');
+        tickClock(); refreshTelemetry(); refreshGateQueue();
+        setInterval(tickClock, 1000);
+        setInterval(refreshTelemetry, 3000);
+        setInterval(refreshGateQueue, 3000);
+    </script>
+</body>
+</html>

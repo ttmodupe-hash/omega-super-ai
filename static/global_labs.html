@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luqi-AI // Global Science & Engineering Matrix</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        :root { --bg:#04060b; --panel:#0c111e; --line:#1e293b; --green:#10b981; --blue:#3b82f6; --amber:#f59e0b; --text:#f8fafc; }
+        body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; }
+        .wrap { max-width:1200px; margin:20px auto; padding:16px; display:flex; flex-direction:column; gap:16px; }
+        .banner { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; }
+        .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+        .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
+        .title { font-size:11px; font-weight:bold; text-transform:uppercase; color:#94a3b8; letter-spacing:.5px; }
+        .metric { font-size:28px; font-weight:800; margin-top:4px; }
+        .log { background:#020306; border:1px solid #131a26; border-radius:6px; padding:14px; font-family:monospace; font-size:12px; color:var(--green); height:180px; overflow-y:auto; line-height:1.6; }
+        a.back { color:#60a5fa; font-size:12px; text-decoration:none; }
+        .tag { display:inline-block; font-size:10px; padding:2px 8px; border-radius:10px; background:rgba(59,130,246,.12); color:var(--blue); margin-top:8px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="banner">
+            <h2 style="margin:0;color:var(--green);">&#127760; SOVEREIGN GLOBAL SCIENCE MATRIX</h2>
+            <div style="font-size:12px;color:var(--blue);">Model: <strong id="model">?</strong> &middot;
+                <a class="back" href="/sovereign.html">Bio-Mineral &rarr;</a> <a class="back" href="/dashboard.html">Cockpit &rarr;</a> <a class="back" href="/">&larr; Portal</a></div>
+        </div>
+
+        <div class="grid">
+            <div class="card"><div class="title">&#129518; Methodology Lens 1</div>
+                <div style="font-size:14px;font-weight:700;margin-top:6px;">Mathematical Rigor</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">Optimization, geometry proofs, algorithmic depth</div>
+                <span class="tag">framework persona</span></div>
+            <div class="card"><div class="title">&#127959;&#65039; Methodology Lens 2</div>
+                <div style="font-size:14px;font-weight:700;margin-top:6px;">Industrial Scaling</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">Solar networks, manufacturing, high-efficiency systems</div>
+                <span class="tag">framework persona</span></div>
+            <div class="card"><div class="title">&#129302; Methodology Lens 3</div>
+                <div style="font-size:14px;font-weight:700;margin-top:6px;">Precision Automation</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">High-precision robotics, clean spatial mechanics</div>
+                <span class="tag">framework persona</span></div>
+        </div>
+
+        <div class="grid">
+            <div class="card"><div class="title">Pedagogy Runs (this boot)</div><div class="metric" style="color:var(--green);" id="runs">&mdash;</div></div>
+            <div class="card"><div class="title">Pedagogy Failures</div><div class="metric" style="color:var(--amber);" id="fails">&mdash;</div></div>
+            <div class="card"><div class="title">Pending Gate Approvals</div><div class="metric" style="color:var(--blue);" id="pending">&mdash;</div></div>
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let key = sessionStorage.getItem('luqi_admin_key') || '';
+        if (!key) { key = prompt('Admin key:') || ''; sessionStorage.setItem('luqi_admin_key', key); }
+        const H = { 'X-Luqi-Admin-Auth': key };
+        const log = m => { const el = document.getElementById('log');
+            el.innerHTML += `[${new Date().toLocaleTimeString()}] ${m}<br>`; el.scrollTop = el.scrollHeight; };
+
+        async function refresh() {
+            try {
+                const tel = await fetch('/v1/monitor/telemetry', { headers: H });
+                if (tel.ok) {
+                    const t = await tel.json();
+                    document.getElementById('model').innerText = t.kimi_gateway_model;
+                    document.getElementById('pending').innerText = t.pending_human_gate_count;
+                }
+                const stats = await fetch('/v1/pedagogy/stats');
+                if (stats.ok) {
+                    const s = await stats.json();
+                    document.getElementById('runs').innerText = s.runs;
+                    document.getElementById('fails').innerText = s.failures;
+                }
+            } catch (e) { log('poll error: ' + e); }
+        }
+        log('Global science matrix online. All metrics LIVE - methodology cards are framework personas, not telemetry.');
+        refresh(); setInterval(refresh, 3000);
+    </script>
+</body>
+</html>

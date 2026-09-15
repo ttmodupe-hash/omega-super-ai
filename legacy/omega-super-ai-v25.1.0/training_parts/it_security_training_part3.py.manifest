@@ -1,0 +1,28 @@
+# Luqi AI v24.4.0 -- Part 3 Manifest
+# ==========================================
+# Original file: it_security_training_part3.py
+# Total size: 99,825 bytes
+# Chunks: 13 (000-012)
+# Chunk size: ~8,000 bytes each
+# Courses: 7-13 (Malware Analysis, Digital Forensics, Compliance & Governance,
+#                 Mobile Security, Wireless Security, Social Engineering,
+#                 Africa Telecom & Mobile Money Security)
+
+CHUNK_COUNT=13
+CHUNK_FILES=(
+  training_parts/it_security_training_part3.py.chunk000  # 7,999 bytes
+  training_parts/it_security_training_part3.py.chunk001  # 8,000 bytes
+  training_parts/it_security_training_part3.py.chunk002  # 8,001 bytes
+  training_parts/it_security_training_part3.py.chunk003  # 7,999 bytes
+  training_parts/it_security_training_part3.py.chunk004  # 8,000 bytes
+  training_parts/it_security_training_part3.py.chunk005  # 8,000 bytes
+  training_parts/it_security_training_part3.py.chunk006  # 8,000 bytes
+  training_parts/it_security_training_part3.py.chunk007  # 8,000 bytes
+  training_parts/it_security_training_part3.py.chunk008  # 8,001 bytes
+  training_parts/it_security_training_part3.py.chunk009  # 8,000 bytes
+  training_parts/it_security_training_part3.py.chunk010  # 8,000 bytes
+  training_parts/it_security_training_part3.py.chunk011  # 3,824 bytes
+  training_parts/it_security_training_part3.py.chunk012  # 6,246 bytes
+)
+
+# To reconstruct: cat ${CHUNK_FILES[@]} > it_security_training_part3.py

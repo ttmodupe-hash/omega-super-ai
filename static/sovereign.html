@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luqi-AI // Sovereign Bio-Mineral Terminal</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        :root { --bg:#04060a; --panel:#0c111d; --line:#1e293b; --green:#10b981; --blue:#3b82f6; --amber:#f59e0b; --red:#ef4444; --text:#f1f5f9; }
+        body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; }
+        .wrap { max-width:1200px; margin:20px auto; padding:16px; display:flex; flex-direction:column; gap:16px; }
+        .banner { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; }
+        .grid { display:grid; grid-template-columns:1.4fr 1fr; gap:14px; }
+        .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:10px; }
+        .inp { background:#121824; border:1px solid var(--line); border-radius:6px; color:#fff; padding:11px; font-size:13px; outline:none; }
+        .btn { background:var(--green); color:#fff; border:none; border-radius:6px; padding:12px; font-weight:bold; font-size:13px; cursor:pointer; }
+        .btn:hover { filter:brightness(1.1); }
+        .view { background:#010305; border:1px solid #121824; border-radius:6px; padding:14px; font-family:monospace; font-size:12px; color:var(--green); height:300px; overflow-y:auto; line-height:1.6; white-space:pre-wrap; }
+        label { font-size:11px; font-weight:bold; color:#64748b; text-transform:uppercase; }
+        .disclaimer { font-size:11px; color:#94a3b8; border-left:3px solid var(--amber); padding:8px 10px; background:rgba(245,158,11,.06); border-radius:4px; }
+        a.back { color:#60a5fa; font-size:12px; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="banner">
+            <h2 style="margin:0;color:var(--green);font-size:18px;">&#127760; SOVEREIGN BIO-MINERAL TERMINAL</h2>
+            <div style="font-size:12px;">Compiles: <strong id="compiles">&mdash;</strong> &middot;
+                <a class="back" href="/global_labs.html">Science Matrix &rarr;</a> <a class="back" href="/">&larr; Portal</a></div>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <label>Output Viewport</label>
+                <div class="view" id="view"><span style="color:#64748b;">// Enter parameters. Compiles return immediately; deployment intent locks at the 30% gate.</span></div>
+                <div class="disclaimer">Research assistance only. Not medical, legal, or engineering certification. Deployment is proposal-only: a human executes after review.</div>
+            </div>
+            <div class="card">
+                <label>Exploration Vector</label>
+                <select id="vector" class="inp">
+                    <option value="botanical_medicine">&#127807; Indigenous Botanical Medicine Research</option>
+                    <option value="robotic_metallurgy">&#129302; Mechatronics & Mineral Processing</option>
+                </select>
+                <label>Target Objective</label>
+                <input id="objective" class="inp" placeholder="e.g., model extraction of antiviral compounds from Hypoxis...">
+                <label>Raw Material Inputs (comma-separated)</label>
+                <input id="materials" class="inp" placeholder="e.g., Sutherlandia, Lithium ore, Cobalt">
+                <label style="display:flex;align-items:center;gap:6px;text-transform:none;">
+                    <input type="checkbox" id="deploy"> Request deployment (locks at 30% gate)
+                </label>
+                <button class="btn" onclick="runSovereignCompile()">Compile Production Blueprint</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Endpoint is AUTH-GATED (JWT) - the pasted version sent no token and would 401 forever
+        let token = sessionStorage.getItem('luqi_user_token') || '';
+        if (!token) { token = prompt('Paste your auth token (from /v1/auth/login):') || '';
+                      sessionStorage.setItem('luqi_user_token', token); }
+        const view = document.getElementById('view');
+
+        async function refreshStats() {
+            try {
+                const r = await fetch('/v1/sovereign/stats');
+                if (r.ok) { const s = await r.json();
+                    document.getElementById('compiles').innerText = s.compiles; }
+            } catch (e) {}
+        }
+
+        async function runSovereignCompile() {
+            const objective = document.getElementById('objective').value.trim();
+            if (!objective) { alert('Target objective cannot be blank.'); return; }
+            view.innerHTML = '<span style="color:#3b82f6;">[link] PII filter -> Kimi K3 multipolar swarm...</span>';
+            try {
+                const res = await fetch('/v1/sovereign/compile-blueprint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        exploration_type: document.getElementById('vector').value,
+                        target_objective: objective,
+                        raw_material_inputs: document.getElementById('materials').value.split(',').map(s => s.trim()).filter(Boolean),
+                        request_deployment: document.getElementById('deploy').checked,
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    view.innerHTML = `<span style="color:#ef4444;">Engine error (${res.status}): ${data.detail || JSON.stringify(data)}</span>`;
+                    return;
+                }
+                let out = `<span style="color:#10b981;">\u2714 COMPILED</span>  ${data.exploration_type}\n\n`;
+                out += JSON.stringify(data.blueprint, null, 2).replace(/</g, '&lt;');
+                if (data.deployment_intent) {
+                    out += `\n\n<span style="color:#f59e0b;">\u26a0 DEPLOYMENT INTENT</span> -> gate task ${data.deployment_intent.gate_task_id.slice(0,8)}\n`;
+                    out += data.deployment_intent.message;
+                }
+                view.innerHTML = out;
+            } catch (e) {
+                view.innerHTML = '<span style="color:#ef4444;">Network error reaching the engine.</span>';
+            }
+            refreshStats();
+        }
+
+        refreshStats(); setInterval(refreshStats, 5000);
+    </script>
+</body>
+</html>

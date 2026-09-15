@@ -1,59 +1,33 @@
-# ============================================================
-# Luqi AI v24.4.0 — Python Backend Dependencies
-# ============================================================
+# ==============================================================================
+# LUQI-AI MASTER PRODUCTION RUNTIME - DEPENDENCY MANIFEST
+# Pinned for reproducible staging builds. Floors were previously >= ; the one
+# conflict found in the pasted manifest (uvicorn 0.28 vs our 0.29 floor) is
+# reconciled below. Unused deps (pydantic-settings, cryptography) removed.
+# ==============================================================================
 
-# --- Web Framework ---
-fastapi>=0.110.0
-uvicorn[standard]>=0.29.0
-python-multipart>=0.0.9
+# Web server core
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+httpx==0.27.0
+websockets==12.0          # also bundled by uvicorn[standard], pinned explicitly
 
-# --- Authentication & Security ---
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
-email-validator>=2.1.0
+# Agent engines & orchestration
+requests==2.31.0
+pydantic==2.6.4
 
-# --- Database ---
-aiosqlite>=0.20.0
+# Persistence (PostgreSQL default; MySQL via env DATABASE_URL dialect)
+SQLAlchemy==2.0.28
+psycopg2-binary==2.9.9
+alembic==1.13.1
+PyMySQL==1.1.0            # only required when DATABASE_URL uses mysql+pymysql
 
-# --- Caching & Pub/Sub ---
-redis>=5.0.0
+# Auth & session revocation (PyJWT is imported lazily - engine boots without it)
+PyJWT==2.8.0
+redis==5.0.3              # only required when STATE_BACKEND=redis
 
-# --- HTTP Client ---
-httpx>=0.27.0
+# Sandboxes
+docker==7.0.0             # only required on nodes running lab terminals/compiles
 
-# --- WebSockets ---
-websockets>=12.0
-
-# --- Data Validation ---
-pydantic>=2.6.0
-pydantic-settings>=2.2.0
-
-# --- Environment ---
-python-dotenv>=1.0.0
-
-# --- Payments ---
-stripe>=8.0.0
-
-# --- LiveKit WebRTC ---
-livekit>=0.11.0
-livekit-api>=0.6.0
-
-# --- AI/ML & Data ---
-openai>=1.35.0
-numpy>=1.26.0
-chromadb>=0.5.0
-Pillow>=10.2.0
-requests>=2.31.0
-
-# --- Email Templates ---
-jinja2>=3.1.0
-
-# --- CLI & UI ---
-rich>=13.7.0
-
-# --- System Monitoring (v24.4.0 - Health Monitor) ---
-psutil>=5.9.0
-
-# --- Training (optional) ---
-# torch>=2.1.0
-# transformers>=4.35.0
+# QA
+pytest==8.1.1
+pytest-asyncio==0.23.5    # reserved for future native-async tests (suites are sync TestClient)

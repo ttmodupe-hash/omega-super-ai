@@ -1,0 +1,179 @@
+s: Current session length in minutes.
+            last_break_minutes_ago: Minutes since last break.
+
+        Returns:
+            Score between 0 and 100.
+        """
+        # Score based on the longer of current session or time since break
+        effective_minutes = max(session_minutes, last_break_minutes_ago)
+
+        if effective_minutes <= 30:
+            return effective_minutes * 0.5  # 0-15
+        elif effective_minutes <= 120:
+            return 15 + (effective_minutes - 30) * 0.5  # 15-60
+        else:
+            return min(60 + (effective_minutes - 120) * 0.5, 100.0)
+
+    @classmethod
+    def _time_of_day_score(cls) -> float:
+        """Calculate time-of-day fatigue component.
+
+        Fatigue accumulates faster late at night. Score peaks between
+        2 AM and 4 AM, and is lowest mid-morning.
+
+        Returns:
+            Score between 0 and 100.
+        """
+        hour = datetime.utcnow().hour
+
+        # Lowest fatigue at 10 AM (hour 10), highest at 3 AM (hour 3)
+        # Use a sinusoidal model shifted to peak at 3 AM
+        # Convert hour to angle (0-23 mapped to 0-2pi)
+        angle = (hour / 24.0) * 2 * math.pi
+        # Shift so peak is at 3 AM (3/24 * 2pi = pi/4)
+        shift = (3 / 24.0) * 2 * math.pi
+        # Cosine peaks at 0, so shift to make it peak at 3 AM
+        score = 50 + 50 * math.cos(angle - shift)
+
+        return max(0.0, min(100.0, score))
+
+    @classmethod
+    def _interaction_frequency_score(cls, freq_per_hour: float) -> float:
+        """Calculate interaction frequency fatigue component.
+
+        Rapid context switching is cognitively draining.
+
+        Args:
+            freq_per_hour: Number of activities per hour.
+
+        Returns:
+            Score between 0 and 100.
+        """
+        # 0-20 activities/hour is normal, 20-60 is elevated, 60+ is extreme
+        if freq_per_hour <= 20:
+            return freq_per_hour * 1.5  # 0-30
+        elif freq_per_hour <= 60:
+            return 30 + (freq_per_hour - 20) * 1.75  # 30-100
+        else:
+            return 100.0
+
+    @classmethod
+    def interpret_score(cls, score: int) -> str:
+        """Convert a numeric fatigue score to a human-readable level.
+
+        Args:
+            score: Fatigue score (0-100).
+
+        Returns:
+            Human-readable fatigue level string.
+        """
+        for level, (low, high) in cls.THRESHOLDS.items():
+            if low <= score <= high:
+                return level
+        return FatigueLevel.CRITICAL.value
+
+    @classmethod
+    def get_status_message(cls, score: int) -> str:
+        """Get a gentle, positive status message for a fatigue score.
+
+        Args:
+            score: Fatigue score (0-100).
+
+        Returns:
+            Gentle, encouraging message.
+        """
+        messages = {
+            FatigueLevel.FRESH.value: (
+                "You are feeling great! Your energy is optimal for focused work."
+            ),
+            FatigueLevel.MILD.value: (
+                "You are doing well. A micro-break soon would help you stay refreshed."
+            ),
+            FatigueLevel.MODERATE.value: (
+                "You have been working hard. A short break would do wonders for your focus."
+            ),
+            FatigueLevel.HIGH.value: (
+                "Your mind deserves a rest. A proper break will help you come back stronger."
+            ),
+            FatigueLevel.CRITICAL.value: (
+                "You have been at it for a while. Your well-being comes first. "
+                "Please take a meaningful break."
+            ),
+        }
+        level = cls.interpret_score(score)
+        return messages.get(
+            level, "Listen to your body and take breaks when you need them."
+        )
+
+
+# ---------------------------------------------------------------------------
+# Break Engine
+# ---------------------------------------------------------------------------
+
+
+class BreakEngine:
+    """Generates personalized break suggestions based on user state.
+
+    The BreakEngine analyzes the user's current fatigue score, recent activity
+    patterns, and break history to recommend the most appropriate type of
+    break with a gentle, positive message.
+    """
+
+    MICRO_BREAK_ACTIVITIES: ClassVar[List[Dict[str, str]]] = [
+        {
+            "title": "Eye Rest",
+            "description": "Close your eyes gently and take 5 slow, deep breaths. Let your eye muscles fully relax.",
+            "benefit": "Closing your eyes for just 20 seconds reduces eye strain by allowing your ciliary muscles to reset their focus.",
+        },
+        {
+            "title": "Gentle Neck Rolls",
+            "description": "Slowly roll your head in a circle: drop chin to chest, roll to the right shoulder, back, then left. Repeat 3 times each direction.",
+            "benefit": "Neck rolls release tension in the cervical spine and improve blood flow to the brain, reducing headaches.",
+        },
+        {
+            "title": "Shoulder Shrugs",
+            "description": "Lift both shoulders up toward your ears, hold for 3 seconds, then let them drop. Repeat 5 times.",
+            "benefit": "Shoulder shrugs release upper body tension that builds from forward posture during screen work.",
+        },
+        {
+            "title": "Finger and Wrist Stretch",
+            "description": "Extend your arms forward, spread your fingers wide, then make a fist. Rotate your wrists 5 times each direction.",
+            "benefit": "These movements prevent repetitive strain injury and improve circulation to your hands and forearms.",
+        },
+        {
+            "title": "Deep Breathing Reset",
+            "description": "Place one hand on your belly. Inhale deeply through your nose for 4 counts, feeling your belly rise. Exhale slowly for 6 counts. Repeat 5 times.",
+            "benefit": "Deep diaphragmatic breathing activates your parasympathetic nervous system, reducing stress in under 60 seconds.",
+        },
+        {
+            "title": "Desk Stretch",
+            "description": "Interlace your fingers and reach your arms overhead with palms up. Stretch tall, hold for 10 seconds, then gently lean side to side.",
+            "benefit": "Overhead stretching decompresses the spine and counteracts the compressive effects of sitting.",
+        },
+        {
+            "title": "Palming",
+            "description": "Rub your palms together to warm them, then gently cup them over your closed eyes. Relax for 20-30 seconds.",
+            "benefit": "The warmth and darkness help relax the eye muscles and stimulate tear production, relieving dry eyes.",
+        },
+        {
+            "title": "Ankle Circles",
+            "description": "Lift one foot slightly off the ground and rotate your ankle 10 times in each direction. Switch feet.",
+            "benefit": "Ankle circles improve lower leg circulation and help prevent blood pooling from prolonged sitting.",
+        },
+        {
+            "title": "Jaw Relaxation",
+            "description": "Let your jaw hang loose, gently massage your jaw muscles in small circles, then open and close your mouth slowly 5 times.",
+            "benefit": "Many people unconsciously clench their jaw while focusing. This release reduces tension headaches.",
+        },
+        {
+            "title": "Gentle Spinal Twist",
+            "description": "Sit tall, place your right hand on your left knee, and gently twist your torso to the left. Hold for 10 seconds, then switch sides.",
+            "benefit": "Spinal twists relieve tension in the lower back and improve spinal mobility after sitting.",
+        },
+    ]
+
+    SHORT_BREAK_ACTIVITIES: ClassVar[List[Dict[str, str]]] = [
+        {
+            "title": "Take a Walk",
+            "description": "Step away from your screen and walk around your space, or step outside if possible. Notice the sights and sounds around you.",
+            "benefit": "Walking increases blood flow to the brain, boosts creative thinking by 60%, and counteracts the effects of pr

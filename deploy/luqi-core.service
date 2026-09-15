@@ -1,0 +1,34 @@
+[Unit]
+Description=OMEGA-LUQI Unified AI Engine
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+# Dedicated service user - NOT root. Create first:
+#   useradd -r -s /usr/sbin/nologin luqi
+#   usermod -aG docker luqi        # docker group grants socket access
+#   chown -R luqi:luqi /opt/omega-luqi-ai-engine
+User=luqi
+Group=docker
+WorkingDirectory=/opt/omega-luqi-ai-engine
+EnvironmentFile=/opt/omega-luqi-ai-engine/.env
+
+# Multi-worker is now safe: set STATE_BACKEND=redis + REDIS_URL in .env first.
+# Each uvicorn worker has its OWN in-memory STATE_DB, so a payment halted at
+# the 30% gate on worker 1 is INVISIBLE to workers 2-4 - the gate loses
+# consistency and the ironclad property is void.
+ExecStart=/usr/local/bin/uvicorn core.main:app --host 0.0.0.0 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips=127.0.0.1
+
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/omega-luqi-ai-engine
+
+[Install]
+WantedBy=multi-user.target

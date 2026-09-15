@@ -1,0 +1,148 @@
+("num_samples", 0),
+        }
+    except Exception as e:
+        results["telemetry"] = {"status": "FAIL", "error": str(e)}
+
+    try:
+        # 7. Quiz
+        quiz = get_quiz("1.1", DIFFICULTY_BEGINNER)
+        results["quiz_engine"] = {
+            "status": "PASS",
+            "quiz_id": quiz.get("quiz_id", ""),
+            "num_questions": len(quiz.get("questions", [])),
+        }
+    except Exception as e:
+        results["quiz_engine"] = {"status": "FAIL", "error": str(e)}
+
+    try:
+        # 8. AI Mentor
+        mentor = mentor_chat(
+            test_student,
+            "How does BGP work?",
+            {"current_module": "1.2", "difficulty": DIFFICULTY_BEGINNER, "topic": "bgp"},
+        )
+        results["ai_mentor"] = {
+            "status": "PASS",
+            "has_response": len(mentor.get("response", "")) > 0,
+            "confidence": mentor.get("confidence_level", ""),
+        }
+    except Exception as e:
+        results["ai_mentor"] = {"status": "FAIL", "error": str(e)}
+
+    try:
+        # 9. Concept Explanation
+        explanation = explain_concept("VXLAN", DIFFICULTY_INTERMEDIATE)
+        results["concept_explanation"] = {
+            "status": "PASS",
+            "has_explanation": len(explanation.get("explanation", "")) > 0,
+        }
+    except Exception as e:
+        results["concept_explanation"] = {"status": "FAIL", "error": str(e)}
+
+    try:
+        # 10. Progress
+        prog = get_progress(test_student)
+        results["progress_tracker"] = {
+            "status": "PASS",
+            "student_found": "error" not in prog,
+        }
+    except Exception as e:
+        results["progress_tracker"] = {"status": "FAIL", "error": str(e)}
+
+    try:
+        # 11. Leaderboard
+        board = get_leaderboard(10)
+        results["leaderboard"] = {
+            "status": "PASS",
+            "entries": len(board),
+        }
+    except Exception as e:
+        results["leaderboard"] = {"status": "FAIL", "error": str(e)}
+
+    try:
+        # 12. Certificate
+        cert = generate_certificate(test_student, TRACK_NETWORK_ENGINEER)
+        results["certificate"] = {
+            "status": "PASS",
+            "requirements_met": cert.get("requirements_met", False),
+        }
+    except Exception as e:
+        results["certificate"] = {"status": "FAIL", "error": str(e)}
+
+    # Summary
+    passed = sum(1 for r in results.values() if r.get("status") == "PASS")
+    total = len(results)
+    results["summary"] = {
+        "total_tests": total,
+        "passed": passed,
+        "failed": total - passed,
+        "all_passed": passed == total,
+    }
+
+    return results
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MODULE EXPORTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+__all__ = [
+    # Curriculum Engine
+    "get_curriculum",
+    "get_module",
+    "get_lesson",
+    "search_curriculum",
+    "list_all_modules",
+    "get_next_learning_path",
+    # Topology Generator
+    "generate_topology",
+    # Scenario Engine
+    "inject_scenario",
+    "verify_fix",
+    "get_scenario_catalog",
+    # Grading Engine
+    "grade_submission",
+    # Lab Session Manager
+    "start_lab",
+    "get_lab_status",
+    "submit_lab",
+    "get_hint",
+    "get_lab_catalog",
+    # Telemetry Simulator
+    "get_telemetry",
+    "inject_anomaly",
+    # Quiz Engine
+    "get_quiz",
+    "grade_quiz",
+    # AI Mentor
+    "mentor_chat",
+    "explain_concept",
+    # Certificate Generator
+    "generate_certificate",
+    # Progress Tracker
+    "get_progress",
+    "get_leaderboard",
+    "export_student_report",
+    "reset_student_progress",
+    "get_module_stats",
+    # Utilities
+    "self_test",
+    # Constants
+    "DIFFICULTY_BEGINNER",
+    "DIFFICULTY_INTERMEDIATE",
+    "DIFFICULTY_ADVANCED",
+    "PLATFORM_CONTAINERLAB",
+    "PLATFORM_GNS3",
+    "PLATFORM_CUSTOM",
+    "SCENARIO_TYPES",
+    "TRACK_NETWORK_ENGINEER",
+    "TRACK_AI_INFRASTRUCTURE_ENGINEER",
+    "TRACK_NETWORK_AI_SPECIALIST",
+    "MODULE_VERSION",
+]
+
+
+if __name__ == "__main__":
+    # Run self-test when executed directly
+    logging.basicConfig(level=logging.INFO)
+    print(json.dumps(self_test(), indent=2))

@@ -1,0 +1,188 @@
+# Changelog
+
+## [5.35.0] - 2026-09-15
+- Spatial telemetry: server-side physics for client-rendered 3D labs (pure load evaluation,
+  safety envelope). Passing simulations earn real skill credit via the engine (unlocks, certificates).
+
+## [5.34.0] - 2026-09-15
+- Submission consensus: three independent checks (validator, structural quality, safety) must agree;
+  disagreement routes to human review. No hardcoded skills, JWT auth, works across all trades.
+
+## [5.33.0] - 2026-09-15
+- Certificate dashboard (static/credentials.html): skills, hours, certificates with public verify links.
+- GET /v1/skills/certificates (per-user listing).
+- Real-time unlock alerts: WhatsApp via Twilio (env-gated) with SMS fallback; never blocks the unlock.
+
+## [5.32.0] - 2026-09-15
+- Public credential verification: GET /v1/credentials/verify/{serial} checks the real cert ledger
+  (employer-facing, read-only). External provider registry listed honestly as PENDING_INTEGRATION.
+
+## [5.31.5] - 2026-09-15
+- Cross-artifact consistency audits: router wiring (no orphaned APIRouters in core/,
+  30+ mounted) and secret inventory (every *_KEY/*_SECRET/*_TOKEN in the env template
+  is represented on the token board).
+
+## [5.31.4] - 2026-09-15
+- Production smoke advanced: stale-deploy detection (live /v1/health version must equal the pushed
+  commit's version) and GitHub-Secrets admin auth (PROD_ADMIN_SECRET).
+
+## [5.31.3] - 2026-09-15
+- Production smoke workflow (prod_smoke.yml + tools/prod_smoke.py): runs the route matrix against a
+  live deployment on demand. Rejected the pasted "deployment broker" (syntax error, broken API host,
+  created a new Railway project per push; Railway auto-deploys natively).
+
+## [5.31.2] - 2026-09-15
+- start.sh boot wrapper: Alembic migrations run automatically before serving (conditional on
+  DATABASE_URL, loud failure on real migration errors). Railway deployments need no manual migration step.
+
+## [5.31.1] - 2026-09-15
+- Railway deployment layer: railway.toml (Nixpacks override of the lab Dockerfile, uvicorn start,
+  /v1/health check), RAILWAY_DEPLOYMENT.md (browser-only runbook: Postgres plugin, variables,
+  migration one-shot, custom domain), runbook host-choice pointer.
+
+## [5.31.0] - 2026-09-15
+- Migration 004: dead_man_switch_registry persisted to Postgres (FORCE RLS, corrected GUC, heartbeat trigger on user_skill_profiles); ORM on shared Base.
+- Ops-channel legacy alerts via the existing throttled broadcaster - honest wording (gate task registered, no execution claimed).
+
+## [5.30.0] - 2026-09-15
+- Data portability: GET /v1/user/export compiles the caller's own data (POPIA s23 / GDPR Art.20 access-request package, JSON download).
+- Digital legacy guard (dead man's switch): inactivity tracking wired to login, trusted-contact configuration, admin /check registers 30%-gate tasks + SMS alerts on breach. No autonomous action - the gate applies to death too.
+- Corrected false external claims: no GitHub push has occurred (repo HEAD verified unchanged since July); archive at 310/351 at time of writing.
+
+## [5.29.2] - 2026-09-15
+- AGENTS.md assistant-onboarding blueprint at repo root (repo-as-source-of-truth for any future AI session).
+
+## [5.29.1] - 2026-09-15
+- Monolith consolidation: original omega-super-ai repo (v25.1.0, 351 files) archived at
+  legacy/omega-super-ai-v25.1.0/; capability gap analysis published
+  (docs/OMEGA_SUPERAI_GAP_ANALYSIS.md) with ranked port candidates
+  (dead_mans_switch, data_portability, accessibility_deaf lead).
+
+All notable changes to the OMEGA-LUQI engine. One line per version: what it
+lets you do that you couldn't before.
+
+## [5.29.0] - 2026-09-15
+- Hume EVI ingestion hooks: HMAC-verified webhooks, distress intervention routes to the real crisis line + mentor alert. Client subscription remains the integration step.
+- Daily context-sync cron workflow (fixed action key, `python -m core.context_sync` runner, daily cadence).
+
+## [5.28.1] - 2026-09-15
+- Drift alerts: Slack/Discord webhooks, throttled one per marker per day, delivery failures never break the audit.
+
+## [5.28.0] - 2026-09-15
+- Context sync auditor: GitHub commits + coverage-ledger reconciliation; corrected API host; fail-closed token; admin `/v1/sync/audit`.
+
+## [5.27.1] - 2026-09-15
+- Languages phrasebook: Emergency category with crisis lines; ISO-639-3 codes displayed. Deployment runbook restored + guarded.
+
+## [5.27.0] - 2026-09-15
+- African languages phrasebook (22 phrases x 10 languages, pronunciation, speech playback, honest no-translator design).
+- Load shedding preparedness guide (stage reference, persistent checklist, wattage guide, backup options, manual-slot countdown).
+
+## [5.26.0] - 2026-09-15
+- Migration 003: persistent skill tables (FORCE RLS, correct GUC, 3-letter country codes, FK to students) + ORM on shared Base.
+- Accurate CHANGELOG.md; de-duplication governance protocol in CONTRIBUTING.md.
+
+## [5.25.1] - 2026-09-15
+- Shareable skill certificates: 100% live-readiness gate, env-only signing salt (fail-closed), public verification endpoint, JWT JS client.
+
+## [5.25.0] - 2026-09-15
+- Skill engine: TVET trade gap analysis with experience roadmaps; heuristic structured-submission checks (honestly labeled); credential hashes; versioned trade registry.
+
+## [5.24.1] - 2026-09-15
+- `ApiResponse` typed Pydantic model (ISO-8601, honest cached flag); `registry.query()` unified async dispatch front for the 8 keyless providers.
+
+## [5.24.0] - 2026-09-15
+- Centralized free-provider registry: uniform envelope, typed ProviderError kinds, concurrent health checks, estimated savings counter.
+
+## [5.23.0] - 2026-09-15
+- Free knowledge scatter-gather: Wikipedia/Open-Meteo/World Bank + OpenAlex behind circuit breakers and token buckets; per-query provenance hashing; SANS 10400 weather-safety note.
+
+## [5.22.0] - 2026-09-15
+- 20-query golden evaluation set (CI floor 90%, drove corpus + gate calibration); cost telemetry with 80% SMS budget alarm; institutional readiness pack; civil-engineering intent class.
+
+## [5.21.1] - 2026-09-15
+- Full health-API lessons encoded: served-version verifier, HTML-200 detector, empty-envelope flag, spl_version never trusted, assert_history_survives, per-source snapshot body retention.
+
+## [5.21.0] - 2026-09-15
+- Keyless health data layer (DailyMed/RxNorm/ClinicalTrials/PubChem/openFDA); append-only (id, version, sha256) snapshot store.
+
+## [5.20.0] - 2026-09-15
+- SQLite WAL pilot mode + pgloader migration scaffold; automated freeze gate helper; PWA live status pill; CloudFront static-asset distribution (APIs bypassed).
+
+## [5.19.0] - 2026-09-15
+- Terraform scaffold for af-south-1; feature flags (safety unflaggable); error-budget math + docs/SRE.md.
+
+## [5.18.1] - 2026-09-15
+- DORA-style ops metrics (deploy frequency, change failure rate, MTTR); static gate (every core module compiles on PR); SECURITY.md + docs/DEVOPS.md.
+
+## [5.18.0] - 2026-09-15
+- Hybrid engine v2: tiered per-intent confidence gates, Electrical/Mechanical N4-N6 classes, admin-gated live calibration, latency + pii_redacted telemetry.
+
+## [5.17.1] - 2026-09-15
+- CORE rate limiting (shared gate, daily quota, 429 honesty); open-source readiness: MIT LICENSE, CONTRIBUTING.md, Hacktoberfest topics.
+
+## [5.17.0] - 2026-09-15
+- Zero-dep knowledge base over repo docs (EULA included, sourced excerpts); engine output contracts (502 fail-closed on drift).
+
+## [5.16.0] - 2026-09-15
+- Hybrid AI front door: always-on regex guardrails (zero-dep), lazy sklearn ML, calibrated tiered thresholds, kill switch, 7 TVET intent classes.
+
+## [5.15.0] - 2026-09-15
+- Companion memory layer (per-user recall, scrubbed, capped); feedback loop capture with admin aggregates.
+
+## [5.14.0] - 2026-09-15
+- Executable verification harness: fixed cases + must-fail negatives run in-sandbox; honest `success_unverified` labeling.
+
+## [5.13.0] - 2026-09-15
+- Full keyless geocoding family (8 sources) with Nominatim→Photon fallback chain; extended tool-router signals (postcode, IP, health).
+
+## [5.12.0] - 2026-09-15
+- Nominatim geocoding (policy-compliant rate gate); deterministic tool router (when-to-use logic for free APIs).
+
+## [5.11.0] - 2026-09-15
+- Jarvis companion avatar (procedural, gate-reactive, four states); zero-key browser TTS fallback; public companion status endpoint.
+
+## [5.10.0] - 2026-09-15
+- Academic literature grounding: Crossref/OpenAlex/PubMed/arXiv (+CORE in .1), keyless, one-source-down resilience.
+
+## [5.9.x] - 2026-09-14
+- Multipolar model router (real Claude/Gemini adapters, Kimi fallback chains); seed migration 002; hardened secrets provisioning; corrected API map (Hume RESERVED); minimal .env active-set template.
+
+## [5.8.x] - 2026-09-14
+- All 9 Kimi engines unified behind core/kimi_client.py (one group); token status board (16 integrations, INSECURE/RESERVED states).
+
+## [5.7.x] - 2026-09-14
+- AES-256-GCM backup pipeline (stable key required, admin-gated); literature free-API family begins; import-safe db replication router (failover + failback).
+
+## [5.6.x] - 2026-09-14
+- Gate-lock SMS alerts (correct Africa's Talking endpoints) wired at all six freeze sites; Alembic single-head chain guard.
+
+## [5.5.x] - 2026-09-14
+- Ops cockpit + live dashboards; hardened nginx (HTTP/2, rate zones, streaming voice route); paste-overwrite guards; Terraform begins.
+
+## [5.4.x] - 2026-09-14
+- Code integrity engine (SHA-256 AST fingerprints); 100-thread failover stress suite; universal-learning companion with mandatory medical disclaimers.
+
+## [5.3.x] - 2026-09-14
+- Sovereign bio-mineral compiles (deployment intent gates at 30%); shared Kimi parser (crash bug eliminated structurally); audit snapshot size caps.
+
+## [5.2.x] - 2026-09-14
+- Pedagogical convergence engine; failover/integrity stress suite at root; content-policy guard test (medical disclaimer locked in).
+
+## [5.1.x] - 2026-09-14
+- Alembic scaffold (baseline folds RLS + wallet DDL); voice playback endpoint; dev-agent sandbox compile phase.
+
+## [5.0.0] - 2026-09-14
+- Sovereign RPA kernel with SSRF guard; live automation terminal; unified engine milestone.
+
+## [4.x] - 2026-09-14
+- Auth (fail-closed JWT, pbkdf2, revocation, rate limits); production boot guards; Redis state store; wallet ledger with idempotent credit hook; multi-gateway routing; webhooks HMAC; free-tier caps; sandbox reaper; self-healing diagnostics.
+
+## [3.x] - 2026-09-14
+- Consumer shield, tax estimation engine (real 30% gate), consumer/medical EULA alignment, core consolidation.
+
+## [2.x] - 2026-09-14
+- Orchestrator + ironclad 30% human gate with audit trail; Docker sandbox; WebSocket terminal; PWA + offline layer; persistence schema.
+
+## [1.x] - 2026-09-14
+- OMEGA-LUQI merge: the OMEGA AI baseline unified with the Project Bug Fixes stream into the sovereign engine.

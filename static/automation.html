@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luqi-AI // Digital Automation Terminal</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        :root { --bg:#05070c; --panel:#0c111d; --line:#1e293b; --green:#10b981; --blue:#3b82f6; --amber:#f59e0b; --red:#ef4444; --text:#f1f5f9; }
+        body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; }
+        .wrap { max-width:1100px; margin:24px auto; padding:16px; display:flex; flex-direction:column; gap:16px; }
+        .banner { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; }
+        .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+        .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; text-align:center; }
+        .num { font-size:30px; font-weight:800; margin-top:6px; }
+        table { width:100%; border-collapse:collapse; font-size:13px; }
+        th { color:#64748b; text-align:left; padding:8px; border-bottom:1px solid var(--line); font-size:11px; text-transform:uppercase; }
+        td { padding:8px; border-bottom:1px solid rgba(255,255,255,.03); }
+        .badge { padding:2px 8px; border-radius:4px; font-size:11px; font-weight:bold; background:rgba(245,158,11,.15); color:var(--amber); }
+        .btn { background:var(--blue); color:#fff; border:none; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px; }
+        .btn.reject { background:var(--red); }
+        .log { background:#020305; border:1px solid #141b26; border-radius:6px; padding:12px; font-family:monospace; font-size:12px; color:var(--green); height:160px; overflow-y:auto; }
+        a.back { color:#60a5fa; font-size:12px; text-decoration:none; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="banner">
+            <h2 style="margin:0;color:var(--green);">&#129302; LUQI-AI AUTOMATION CORE</h2>
+            <div style="font-size:12px;color:var(--blue);">Engine: <strong id="model">?</strong> &middot; <a class="back" href="/dashboard.html">Ops Cockpit &rarr;</a> <a class="back" href="/">&larr; Portal</a></div>
+        </div>
+
+        <div class="grid">
+            <div class="card"><div style="font-size:11px;font-weight:bold;color:var(--amber);">FROZEN AT GATE</div><div class="num" style="color:var(--amber);" id="frozen">&mdash;</div></div>
+            <div class="card"><div style="font-size:11px;font-weight:bold;color:var(--green);">TRACKED TASKS</div><div class="num" style="color:var(--green);" id="tracked">&mdash;</div></div>
+            <div class="card"><div style="font-size:11px;font-weight:bold;color:var(--blue);">SSRF GUARD</div><div class="num" style="color:var(--blue);">ACTIVE</div></div>
+        </div>
+
+        <div class="card" style="text-align:left;">
+            <div style="font-size:11px;font-weight:bold;color:#64748b;text-transform:uppercase;margin-bottom:8px;">&#128737;&#65039; Gate Queue (all halted workflows)</div>
+            <table>
+                <thead><tr><th>Task</th><th>Type</th><th>Item</th><th>Status</th><th>Release</th></tr></thead>
+                <tbody id="queue"><tr><td colspan="5" style="color:#64748b;">Polling...</td></tr></tbody>
+            </table>
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let key = sessionStorage.getItem('luqi_admin_key') || '';
+        if (!key) { key = prompt('Admin key:') || ''; sessionStorage.setItem('luqi_admin_key', key); }
+        const H = { 'X-Luqi-Admin-Auth': key };
+        const log = m => { const el = document.getElementById('log'); el.innerHTML += `[${new Date().toLocaleTimeString()}] ${m}<br>`; el.scrollTop = el.scrollHeight; };
+
+        async function refresh() {
+            try {
+                const tel = await fetch('/v1/monitor/telemetry', { headers: H });
+                if (tel.ok) {
+                    const t = await tel.json();
+                    document.getElementById('frozen').innerText = t.pending_human_gate_count;
+                    document.getElementById('model').innerText = t.kimi_gateway_model;
+                }
+                const q = await fetch('/v1/monitor/gate-queue', { headers: H });
+                if (q.ok) {
+                    const d = await q.json();
+                    document.getElementById('tracked').innerText = d.pending.length;
+                    document.getElementById('queue').innerHTML = d.pending.length ? d.pending.map(t => `
+                        <tr><td><code>${t.task_id.slice(0,8)}</code></td><td>${t.action_type}</td><td>${t.item}</td>
+                        <td><span class="badge">${t.status.replace(/_/g,' ')}</span></td>
+                        <td><button class="btn" onclick="release('${t.task_id}',true)">Approve</button>
+                            <button class="btn reject" onclick="release('${t.task_id}',false)">Reject</button></td></tr>`).join('')
+                        : '<tr><td colspan="5" style="color:#64748b;">Gate clear.</td></tr>';
+                }
+            } catch (e) { log('poll error: ' + e); }
+        }
+
+        async function release(id, ok) {
+            const r = await fetch(`/v1/human/override/${id}?approve=${ok}`, { method: 'POST', headers: H });
+            const d = await r.json();
+            log(`gate ${ok ? 'APPROVED' : 'REJECTED'} ${id.slice(0,8)} -> ${d.status}`);
+            refresh();
+        }
+
+        log('Automation terminal online. Metrics are LIVE - no simulated values.');
+        refresh(); setInterval(refresh, 3000);
+    </script>
+</body>
+</html>

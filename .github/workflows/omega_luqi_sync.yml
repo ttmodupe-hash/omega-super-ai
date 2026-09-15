@@ -1,0 +1,105 @@
+name: OMEGA-LUQI Sync Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate_and_test:
+    runs-on: ubuntu-latest
+
+    services:
+      # Real PostgreSQL so the startup path and schema integrity are exercised
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: luqi
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: luqi_ai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U luqi"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+
+      - name: Initialize Python Runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Platform Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Apply Database Migrations (Alembic upgrade head)
+        env:
+          DATABASE_URL: "postgresql+psycopg2://luqi:testpass@localhost:5432/luqi_ai"
+        run: alembic upgrade head
+
+      - name: Run Automated Safety Gate Test Suite
+        env:
+          LUQI_ADMIN_SECRET: "TemporaryTestingSecretKey_2026!"
+          XI_API_KEY: "MockToken"
+          KIMI_API_KEY: "MockSyncVerificationTokenOnly"
+          # Points at the CI Postgres service - proves models.py schema builds cleanly
+          DATABASE_URL: "postgresql+psycopg2://luqi:testpass@localhost:5432/luqi_ai"
+        run: pytest -v test_orchestrator.py test_security_gates.py test_auth_hardening.py test_failover.py test_backup_and_gate.py test_wallet_integration.py
+
+  build_lab_image:
+    needs: validate_and_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Secure Laboratory Base Image
+        run: docker build -t luqi-lab-base:latest .
+
+      # Uncomment to push the lab image to your registry so cloud nodes pull it:
+      # - name: Log in to Container Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: <your-registry>
+      #     username: ${{ secrets.REGISTRY_USER }}
+      #     password: ${{ secrets.REGISTRY_TOKEN }}
+      # - name: Push Lab Image
+      #   run: |
+      #     docker tag luqi-lab-base:latest <your-registry>/luqi-lab-base:latest
+      #     docker push <your-registry>/luqi-lab-base:latest
+
+  deploy:
+    needs: build_lab_image
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Production Node (AWS af-south-1)
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PROD_SERVER_SSH_KEY }}
+          SERVER_IP: ${{ secrets.PROD_SERVER_IP }}
+        run: |
+          echo "Establishing secure production pipeline via SSH..."
+          # Replace with a real SSH/rsync action, e.g. appleboy/ssh-action:
+          #   appleboy/ssh-action@v1 with host/user/key + script:
+          #     cd /opt/luqi-core && git pull && pip install -r requirements.txt \
+          #       && systemctl restart luqi-core
+          echo "Luqi-AI production deployment placeholder - wire your SSH action here."

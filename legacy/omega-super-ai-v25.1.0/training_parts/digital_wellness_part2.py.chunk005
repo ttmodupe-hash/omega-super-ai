@@ -1,0 +1,238 @@
+etime] = {}
+        self._sessions_completed: Dict[str, int] = defaultdict(int)
+        self._daily_goal: Dict[str, int] = defaultdict(lambda: 8)
+
+    def toggle_focus(self, user_id: str, enabled: bool) -> None:
+        """Toggle focus mode for a user.
+
+        Args:
+            user_id: The user to toggle focus mode for.
+            enabled: Whether to enable or disable focus mode.
+        """
+        with self._lock:
+            if enabled:
+                self._focus_state[user_id] = FocusModeState.ACTIVE.value
+                self._pomodoro_phase[user_id] = PomodoroPhase.IDLE.value
+                self._phase_start_time[user_id] = datetime.utcnow()
+            else:
+                self._focus_state[user_id] = FocusModeState.INACTIVE.value
+                self._pomodoro_phase[user_id] = PomodoroPhase.IDLE.value
+
+        logger.info(
+            "Focus mode %s for user %s",
+            "enabled" if enabled else "disabled",
+            user_id,
+        )
+
+    def start_pomodoro(
+        self, user_id: str, preset: str = "classic"
+    ) -> None:
+        """Start a Pomodoro session.
+
+        Args:
+            user_id: The user to start the session for.
+            preset: Pomodoro preset name (classic, long, short).
+
+        Raises:
+            ValueError: If the preset is not recognized.
+        """
+        if preset not in self.PRESETS:
+            raise ValueError(
+                f"Unknown preset: {preset}. Available: {list(self.PRESETS.keys())}"
+            )
+
+        with self._lock:
+            self._focus_state[user_id] = FocusModeState.ACTIVE.value
+            self._pomodoro_phase[user_id] = PomodoroPhase.WORK.value
+            self._pomodoro_preset[user_id] = preset
+            self._phase_start_time[user_id] = datetime.utcnow()
+
+        logger.info(
+            "Pomodoro started for user %s with preset %s", user_id, preset
+        )
+
+    def stop_pomodoro(self, user_id: str) -> None:
+        """Stop the current Pomodoro session.
+
+        Args:
+            user_id: The user to stop the session for.
+        """
+        with self._lock:
+            self._pomodoro_phase[user_id] = PomodoroPhase.IDLE.value
+            self._focus_state[user_id] = FocusModeState.INACTIVE.value
+
+    def get_status(self, user_id: str) -> FocusStatus:
+        """Get the current focus mode status.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            FocusStatus with current state and timer information.
+        """
+        with self._lock:
+            state = self._focus_state.get(
+                user_id, FocusModeState.INACTIVE.value
+            )
+            phase = self._pomodoro_phase.get(
+                user_id, PomodoroPhase.IDLE.value
+            )
+            preset_name = self._pomodoro_preset.get(user_id, "classic")
+            work_min, break_min = self.PRESETS.get(
+                preset_name, Constants.POMODORO_CLASSIC
+            )
+            start_time = self._phase_start_time.get(user_id)
+            sessions = self._sessions_completed.get(user_id, 0)
+            goal = self._daily_goal.get(user_id, 8)
+
+        if start_time is not None and phase != PomodoroPhase.IDLE.value:
+            elapsed = int(
+                (datetime.utcnow() - start_time).total_seconds()
+            )
+            if phase == PomodoroPhase.WORK.value:
+                remaining = max(work_min * 60 - elapsed, 0)
+            else:
+                remaining = max(break_min * 60 - elapsed, 0)
+        else:
+            elapsed = 0
+            remaining = work_min * 60 if phase == PomodoroPhase.IDLE.value else 0
+
+        return FocusStatus(
+            state=state,
+            pomodoro_phase=phase,
+            pomodoro_work_minutes=work_min,
+            pomodoro_break_minutes=break_min,
+            elapsed_seconds=elapsed,
+            remaining_seconds=remaining,
+            sessions_completed=sessions,
+            daily_goal=goal,
+        )
+
+    def set_daily_goal(self, user_id: str, goal: int) -> None:
+        """Set the daily Pomodoro session goal.
+
+        Args:
+            user_id: The user to set the goal for.
+            goal: Number of sessions per day.
+
+        Raises:
+            ValueError: If goal is not positive.
+        """
+        if goal < 1:
+            raise ValueError("Daily goal must be at least 1")
+        with self._lock:
+            self._daily_goal[user_id] = goal
+
+    def complete_session(self, user_id: str) -> None:
+        """Record a completed Pomodoro session.
+
+        Args:
+            user_id: The user who completed a session.
+        """
+        with self._lock:
+            self._sessions_completed[user_id] += 1
+            # Switch to break phase
+            self._pomodoro_phase[user_id] = PomodoroPhase.BREAK.value
+            self._phase_start_time[user_id] = datetime.utcnow()
+
+    def complete_break(self, user_id: str) -> None:
+        """Record a completed break and return to work.
+
+        Args:
+            user_id: The user who completed a break.
+        """
+        with self._lock:
+            self._pomodoro_phase[user_id] = PomodoroPhase.WORK.value
+            self._phase_start_time[user_id] = datetime.utcnow()
+
+    def is_focus_active(self, user_id: str) -> bool:
+        """Check if focus mode is currently active.
+
+        Args:
+            user_id: The user to check.
+
+        Returns:
+            True if focus mode is active.
+        """
+        with self._lock:
+            return (
+                self._focus_state.get(user_id)
+                == FocusModeState.ACTIVE.value
+            )
+
+
+# ---------------------------------------------------------------------------
+# Wind-Down Mode Manager
+# ---------------------------------------------------------------------------
+
+
+class WindDownManager:
+    """Manages wind-down mode for evening sleep hygiene.
+
+    Wind-down mode activates during configurable evening hours and provides
+    gentle nudges toward restful activities and away from stimulating screen use.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the wind-down manager."""
+        self._user_start_hours: Dict[str, int] = {}
+        self._user_enabled: Dict[str, bool] = {}
+
+    def is_active(
+        self,
+        user_id: str,
+        default_start_hour: int = Constants.WIND_DOWN_START_HOUR,
+    ) -> bool:
+        """Check if wind-down mode should be active.
+
+        Wind-down is active from the start hour until the end hour
+        (default 9 PM to 7 AM).
+
+        Args:
+            user_id: The user to check.
+            default_start_hour: Default start hour if user has not set one.
+
+        Returns:
+            True if wind-down mode is active.
+        """
+        enabled = self._user_enabled.get(user_id, True)
+        if not enabled:
+            return False
+
+        start_hour = self._user_start_hours.get(user_id, default_start_hour)
+        current_hour = datetime.utcnow().hour
+
+        # Wind-down is active from start_hour through midnight until end_hour
+        if start_hour <= current_hour or current_hour < Constants.WIND_DOWN_END_HOUR:
+            return True
+        return False
+
+    def set_start_hour(self, user_id: str, hour: int) -> None:
+        """Set the wind-down start hour for a user.
+
+        Args:
+            user_id: The user to configure.
+            hour: Start hour in 24-hour format (0-23).
+
+        Raises:
+            ValueError: If hour is not in valid range.
+        """
+        if not 0 <= hour <= 23:
+            raise ValueError("Hour must be between 0 and 23")
+        self._user_start_hours[user_id] = hour
+
+    def set_enabled(self, user_id: str, enabled: bool) -> None:
+        """Enable or disable wind-down mode.
+
+        Args:
+            user_id: The user to configure.
+            enabled: Whether wind-down mode is enabled.
+        """
+        self._user_enabled[user_id] = enabled
+
+    def get_suggestions(self) -> List[str]:
+        """Get wind-down activity suggestions.
+
+        Returns:
+            List of calming activity suggestions.
+        """

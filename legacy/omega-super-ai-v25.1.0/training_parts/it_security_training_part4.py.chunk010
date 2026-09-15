@@ -1,0 +1,279 @@
+al_flag=False)
+
+
+def verify_ctf_flag(challenge_id: str, flag: str) -> dict:
+    """Verify a CTF flag submission with timing and attempt tracking.
+
+    Args:
+        challenge_id: ID of the CTF challenge.
+        flag: Submitted flag string (e.g., 'LUQI{...}').
+
+    Returns:
+        dict: Verification result with correctness, points, and hints.
+
+    Raises:
+        CTFChallengeNotFoundError: If the challenge does not exist.
+        InvalidSubmissionError: If flag is empty.
+
+    Example:
+        >>> result = verify_ctf_flag('ctf_netsec', 'LUQI{NETSCAN_MASTERY_2024}')
+        >>> result['correct']
+        True
+    """
+    if not flag:
+        raise InvalidSubmissionError("Flag cannot be empty")
+    if challenge_id not in _ctf_challenges:
+        raise CTFChallengeNotFoundError(f"CTF challenge '{challenge_id}' not found")
+
+    challenge = _ctf_challenges[challenge_id]
+    is_correct = flag.strip() == challenge.flag
+
+    if is_correct:
+        challenge.solves += 1
+
+    return {
+        "correct": is_correct,
+        "challenge_id": challenge_id,
+        "points": challenge.points if is_correct else 0,
+        "difficulty": challenge.difficulty.value,
+        "category": challenge.category.value,
+        "hints_unlocked": challenge.hints if not is_correct else [],
+        "total_solves": challenge.solves,
+        "message": "Correct! Flag verified." if is_correct else "Incorrect flag. Try again!",
+    }
+
+
+def get_all_badges() -> List[dict]:
+    """Get all available skill badges in the platform.
+
+    Returns:
+        List[dict]: All skill badges with their requirements.
+
+    Example:
+        >>> badges = get_all_badges()
+        >>> len(badges) >= 30
+        True
+    """
+    return [badge.to_dict() for badge in _badges.values()]
+
+
+def get_user_badges(user_id: str) -> List[dict]:
+    """Get all badges earned by a specific user.
+
+    Args:
+        user_id: Unique identifier for the user.
+
+    Returns:
+        List[dict]: User's earned badges with details.
+    """
+    if user_id not in _skill_trees:
+        return []
+
+    tree = _skill_trees[user_id]
+    result = []
+    for badge_id in tree.badges:
+        if badge_id in _badges:
+            badge_dict = _badges[badge_id].to_dict()
+            badge_dict["earned"] = True
+            result.append(badge_dict)
+    return result
+
+
+def get_certification_tracks() -> List[dict]:
+    """Get all available certification preparation tracks.
+
+    Returns:
+        List[dict]: Certification tracks with associated courses.
+
+    Example:
+        >>> tracks = get_certification_tracks()
+        >>> len(tracks)
+        4
+    """
+    tracks = {
+        CertificationTrack.COMPTIA_SECURITY_PLUS: [],
+        CertificationTrack.CEH: [],
+        CertificationTrack.CISSP: [],
+        CertificationTrack.OSCP: [],
+    }
+
+    for course in _courses.values():
+        if course.certification_track in tracks:
+            tracks[course.certification_track].append(course.id)
+
+    return [
+        {
+            "name": track.value,
+            "courses": course_list,
+            "total_courses": len(course_list),
+            "estimated_hours": sum(_courses[c].duration_hours for c in course_list if c in _courses),
+        }
+        for track, course_list in tracks.items()
+    ]
+
+
+def get_platform_stats() -> dict:
+    """Get comprehensive platform statistics.
+
+    Returns:
+        dict: Statistics about courses, modules, labs, quizzes, CTFs,
+            badges, and user engagement.
+
+    Example:
+        >>> stats = get_platform_stats()
+        >>> stats['total_courses']
+        15
+    """
+    total_quiz_questions = sum(
+        len(quiz.questions) for quiz in _quizzes.values()
+    )
+
+    return {
+        "total_courses": len(_courses),
+        "total_modules": len(_modules),
+        "total_lessons": len(_lessons),
+        "total_labs": len(_labs),
+        "total_quizzes": len(_quizzes),
+        "total_quiz_questions": total_quiz_questions,
+        "total_ctf_challenges": len(_ctf_challenges),
+        "total_badges": len(_badges),
+        "total_enrolled_users": len(set(p.user_id for p in _user_progress.values())),
+        "total_certificates_issued": len(_certificates),
+        "certification_tracks": len(CertificationTrack),
+        "version": "24.4.0",
+        "platform": "Luqi AI Security Training Academy",
+        "company": "Limitless Telecoms",
+    }
+
+
+def get_module_for_course(course_id: str) -> Optional[dict]:
+    """Get the primary module for a course.
+
+    Args:
+        course_id: The course identifier.
+
+    Returns:
+        dict or None: Module details if found.
+    """
+    if course_id not in _courses:
+        return None
+    course = _courses[course_id]
+    if course.modules:
+        return course.modules[0].to_dict()
+    return None
+
+
+def get_lessons_for_module(module_id: str) -> List[dict]:
+    """Get all lessons for a specific module.
+
+    Args:
+        module_id: The module identifier.
+
+    Returns:
+        List[dict]: Lessons sorted by order.
+    """
+    if module_id not in _modules:
+        return []
+    module = _modules[module_id]
+    return sorted([lesson.to_dict() for lesson in module.lessons], key=lambda x: x["order"])
+
+
+def get_labs_for_module(module_id: str) -> List[dict]:
+    """Get all labs for a specific module.
+
+    Args:
+        module_id: The module identifier.
+
+    Returns:
+        List[dict]: Lab exercises for the module.
+    """
+    if module_id not in _modules:
+        return []
+    module = _modules[module_id]
+    return [lab.to_dict() for lab in module.labs]
+
+
+def get_quiz_for_module(module_id: str) -> Optional[dict]:
+    """Get the quiz for a specific module.
+
+    Args:
+        module_id: The module identifier.
+
+    Returns:
+        dict or None: Quiz details if the module has one.
+    """
+    if module_id not in _modules:
+        return None
+    module = _modules[module_id]
+    return module.quiz.to_dict() if module.quiz else None
+
+
+def reset_user_progress(user_id: str, course_id: str) -> dict:
+    """Reset a user's progress in a course (for retaking).
+
+    Args:
+        user_id: Unique identifier for the user.
+        course_id: ID of the course to reset.
+
+    Returns:
+        dict: Reset confirmation.
+
+    Raises:
+        UserNotEnrolledError: If user is not enrolled.
+    """
+    progress_key = f"{user_id}:{course_id}"
+    if progress_key not in _user_progress:
+        raise UserNotEnrolledError(f"User {user_id} is not enrolled in {course_id}")
+
+    del _user_progress[progress_key]
+    return {
+        "status": "success",
+        "message": f"Progress reset for user {user_id} in course {course_id}",
+    }
+
+
+def export_user_report(user_id: str) -> dict:
+    """Generate a comprehensive report for a user.
+
+    Args:
+        user_id: Unique identifier for the user.
+
+    Returns:
+        dict: Complete user report with all progress, certificates,
+            skill tree, and badges.
+    """
+    # Get all progress entries
+    user_progress = []
+    for key, progress in _user_progress.items():
+        if progress.user_id == user_id:
+            user_progress.append(progress.to_dict())
+
+    # Get certificates
+    user_certs = []
+    for key, cert in _certificates.items():
+        if cert.user_id == user_id:
+            user_certs.append(cert.to_dict())
+
+    skill_tree = get_skill_tree(user_id)
+    badges = get_user_badges(user_id)
+
+    return {
+        "user_id": user_id,
+        "generated_at": datetime.utcnow().isoformat(),
+        "courses_enrolled": len(user_progress),
+        "courses_completed": sum(1 for p in user_progress if p["status"] == "completed"),
+        "overall_progress": user_progress,
+        "certificates": user_certs,
+        "skill_tree": skill_tree,
+        "badges": badges,
+    }
+
+
+# ============================================================================
+# INITIALIZATION
+# ============================================================================
+
+def initialize_platform() -> dict:
+    """Initialize the security training platform.
+
+    Ensures all courses, badges, and CTF challe

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0f19">
+    <title>Luqi-AI: Sovereign Action & Education Portal</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        :root { --bg-dark: #080c14; --panel-bg: #111827; --accent-green: #059669; --accent-blue: #2563eb; --text-main: #ffffff; }
+        body { margin: 0; padding: 0; background: var(--bg-dark); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .header { background: var(--panel-bg); padding: 12px; border-bottom: 1px solid #1f2937; text-align: center; }
+        .header h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; color: var(--accent-green); }
+        #canvas-container { width: 100vw; height: 32vh; background: #000; }
+        .action-stream { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .msg { padding: 12px; border-radius: 8px; font-size: 14px; white-space: pre-wrap; }
+        .msg.ai { background: #1f2937; }
+        .msg.user { background: rgba(255,255,255,0.06); align-self: flex-end; max-width: 85%; }
+        .control-deck { background: var(--panel-bg); padding: 12px; border-top: 1px solid #1f2937; display: flex; flex-direction: column; gap: 10px; }
+        .prompt-suggestion-box { background: rgba(37,99,235,0.12); border-left: 4px solid var(--accent-blue); padding: 10px; border-radius: 4px; display: none; cursor: pointer; }
+        .suggestion-header { font-size: 11px; font-weight: bold; color: #60a5fa; text-transform: uppercase; margin-bottom: 4px; }
+        .suggestion-text { font-size: 13px; font-style: italic; color: #d1d5db; }
+        .input-row { display: flex; gap: 10px; }
+        textarea { flex: 1; background: #1f2937; border: 1px solid #374151; border-radius: 8px; color: white; padding: 12px; font-size: 15px; resize: none; height: 50px; }
+        .action-btn { background: var(--accent-green); border: none; border-radius: 8px; color: white; padding: 0 20px; font-weight: bold; cursor: pointer; }
+        .action-btn:hover { background: #047857; }
+        .mode-selector { display: flex; gap: 10px; font-size: 12px; }
+        .mode-tab { padding: 6px 12px; border-radius: 20px; background: #374151; cursor: pointer; }
+        .mode-tab.active { background: var(--accent-blue); }
+        .voice-bar { display: flex; gap: 8px; }
+        .voice-btn { flex: 1; padding: 8px; border-radius: 20px; border: none; background: var(--accent-green); color: white; font-size: 13px; cursor: pointer; }
+    </style>
+    <!-- Real Three.js build (r128 exposes the global THREE used by app.js) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div class="header"><div id="status-pill" style="font-size:10px;color:#64748b;margin-bottom:4px;">&#9679; checking system status...</div><h1>LUQI-AI // SOVEREIGN ENGINE &middot; <a href="/dashboard.html" style="color:#60a5fa;font-size:12px;text-decoration:none;">OPS COCKPIT &rarr;</a></h1></div>
+    <div id="canvas-container"></div>
+
+    <div class="action-stream" id="stream-display">
+        <div class="msg ai"><strong>Jarvis (Madiba Tone):</strong> Greetings, leader. Whether you are launching an engineering practical or scanning global networks for an active construction tender, I am online to bring actionable blueprints straight to your hands. Action is our path to victory.</div>
+    </div>
+
+    <div class="control-deck">
+        <div class="prompt-suggestion-box" id="suggestion-box" onclick="applySmartPrompt()">
+            <div class="suggestion-header">Prompt Support Optimization</div>
+            <div class="suggestion-text" id="suggestion-content">Optimizing query structures...</div>
+        </div>
+
+        <div class="mode-selector">
+            <div class="mode-tab active" id="tab-edu" onclick="switchMode('edu')">Tech Sandbox</div>
+            <div class="mode-tab" id="tab-biz" onclick="switchMode('biz')">Sovereign Entrepreneur (Tenders & Action)</div>
+        </div>
+
+        <div class="input-row">
+            <textarea id="user-input" placeholder="Enter your technical lab or coding problem..." oninput="triggerPromptSupport()"></textarea>
+            <button class="action-btn" onclick="executeSovereignAction()">Execute</button>
+        </div>
+
+
+        <div id="entrepreneur-workspace" style="background:#0d1222;border:1px solid #1e293b;border-radius:8px;padding:16px;display:none;flex-direction:column;gap:12px;margin-top:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:6px;">
+                <span style="font-size:12px;font-weight:700;text-transform:uppercase;color:#94a3b8;">&#128188; Sovereign Entrepreneurship &amp; Tender Capability</span>
+                <span style="background:rgba(16,185,129,.12);color:#34d399;font-size:11px;padding:2px 8px;border-radius:12px;">Engine: scan-opportunities</span>
+            </div>
+            <div id="biz-viewport" style="background:#04060a;border:1px solid #1e293b;border-radius:6px;padding:12px;font-family:monospace;font-size:12px;color:#e2e8f0;height:180px;overflow-y:auto;line-height:1.6;">
+                <span style="color:#64748b;">// Enter an objective below - Luqi-AI compiles a compliant execution blueprint via the tender scan engine.</span>
+            </div>
+            <div id="biz-optimize-alert" style="display:none;background:rgba(37,99,235,.12);border-left:4px solid #3b82f6;padding:10px;border-radius:4px;font-size:12px;cursor:pointer;" onclick="applyBizOptimizedPrompt()">
+                <span style="color:#60a5fa;font-weight:bold;">Prompt Support:</span> <span id="biz-optimize-text" style="color:#d1d5db;"></span>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <input type="text" id="biz-raw-input" placeholder="e.g., bid for a municipal water project in Gauteng..." oninput="evaluateBizIntent()" style="flex:1;background:#121824;border:1px solid #1e293b;border-radius:6px;color:#fff;padding:12px;font-size:13px;outline:none;">
+                <button onclick="triggerCapabilityExpansion()" style="background:#059669;color:#fff;border:none;border-radius:6px;padding:12px 22px;font-weight:bold;font-size:13px;cursor:pointer;">Analyze &amp; Expand</button>
+            </div>
+        </div>
+
+        <div id="universal-workspace" style="background:#0d1222;border:1px solid #1e293b;border-radius:8px;padding:16px;display:none;flex-direction:column;gap:12px;margin-top:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.05);padding-bottom:6px;">
+                <span style="font-size:12px;font-weight:700;text-transform:uppercase;color:#94a3b8;">&#129516; Integrity Check &amp; Universal Learning</span>
+                <span style="background:rgba(16,185,129,.12);color:#34d399;font-size:11px;padding:2px 8px;border-radius:12px;">Ubuntu ethos</span>
+            </div>
+            <div id="universal-view" style="background:#04060a;border:1px solid #1e293b;border-radius:6px;padding:12px;font-family:monospace;font-size:12px;color:#e2e8f0;height:170px;overflow-y:auto;line-height:1.6;">
+                <span style="color:#64748b;">// Select a mode. Medical outputs carry an educational-research disclaimer.</span>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <select id="universal-mode" style="background:#121824;border:1px solid #1e293b;border-radius:6px;color:#fff;padding:10px;font-size:12px;">
+                    <option value="medical">&#129658; Medical / Botanical Training</option>
+                    <option value="integrity">&#128274; AST Plagiarism Check</option>
+                </select>
+                <input id="universal-input" placeholder="Research objective or source code..." style="flex:1;min-width:220px;background:#121824;border:1px solid #1e293b;border-radius:6px;color:#fff;padding:10px;font-size:12px;outline:none;">
+                <button onclick="runUniversalAction()" style="background:#3b82f6;color:#fff;border:none;border-radius:6px;padding:10px 18px;font-weight:bold;font-size:12px;cursor:pointer;">Execute</button>
+            </div>
+        </div>
+        <div class="voice-bar">
+            <button class="voice-btn" id="voice-trigger">Tap to speak with Jarvis (Madiba Voice)</button>
+            <a href="#" onclick="toggleBizWorkspace();return false;" style="color:#60a5fa;font-size:11px;text-decoration:none;align-self:center;">Entrepreneur Workspace</a>
+            <a href="/credentials.html" style="color:#60a5fa;font-size:11px;text-decoration:none;align-self:center;">My Certificates</a>
+            <a href="#" onclick="toggleUniversalWorkspace();return false;" style="color:#60a5fa;font-size:11px;text-decoration:none;align-self:center;">Integrity &amp; Learning</a>
+            <a href="/terms.html" style="color:#64748b;font-size:11px;text-decoration:none;align-self:center;">Terms &amp; EULA</a>
+        </div>
+    </div>
+
+    <script src="/mesh.js"></script>
+    <script src="/app.js"></script>
+    <script src="/avatar.js"></script>
+    <script src="/skill_client.js"></script>
+</body>
+</html>

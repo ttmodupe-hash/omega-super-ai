@@ -1,0 +1,32 @@
+================================================================================
+Luqi AI v24.4.0 — IT Security Training Part 1 — Chunk Manifest
+================================================================================
+
+Original file: it_security_training_part1.py
+Total size: 44,413 bytes (44KB)
+Total chunks: 6
+Chunk size: ~8,000 bytes each (last chunk may be smaller)
+Courses covered: Course 1 (Network Security), Course 2 (Web Application Security)
+
+CHUNK INDEX:
+--------------------------------------------------------------------------------
+  Chunk     File                                           Size      Status
+--------------------------------------------------------------------------------
+  000       it_security_training_part1.py.chunk000         8,005     OK
+  001       it_security_training_part1.py.chunk001         8,000     OK
+  002       it_security_training_part1.py.chunk002         8,000     OK
+  003       it_security_training_part1.py.chunk003         8,000     OK
+  004       it_security_training_part1.py.chunk004         8,000     OK
+  005       it_security_training_part1.py.chunk005         4,412     OK
+--------------------------------------------------------------------------------
+  TOTAL                                                  44,413     ALL OK
+================================================================================
+
+REASSEMBLY INSTRUCTIONS:
+    cat it_security_training_part1.py.chunk{000..005} > it_security_training_part1.py
+
+REPOSITORY: ttmodupe-hash/omega-super-ai
+BRANCH: main
+PATH: training_parts/
+PUSHED: 2026-07-10
+================================================================================

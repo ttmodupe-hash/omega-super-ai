@@ -1,0 +1,13 @@
+# Railway deployment configuration - OMEGA-LUQI engine.
+# CRITICAL: the repo-root Dockerfile is the LAB SANDBOX image (sleep infinity).
+# Without this override Railway would deploy a sleeping container.
+[build]
+builder = "NIXPACKS"          # python builder from requirements.txt
+
+[deploy]
+startCommand = "bash start.sh"
+healthcheckPath = "/v1/health"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+numReplicas = 1               # single worker: task ledger is in-memory unless STATE_BACKEND=redis

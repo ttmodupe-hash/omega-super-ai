@@ -1,0 +1,235 @@
+ons": sum(len(m.lessons) for m in self.modules),
+            "total_labs": sum(len(m.labs) for m in self.modules),
+        }
+
+
+@dataclass
+class UserProgress:
+    """Tracks user progress through a course."""
+    user_id: str
+    course_id: str
+    enrolled_at: datetime = field(default_factory=datetime.utcnow)
+    completed_lessons: List[str] = field(default_factory=list)
+    lab_scores: Dict[str, float] = field(default_factory=dict)
+    quiz_scores: Dict[str, float] = field(default_factory=dict)
+    quiz_attempts: Dict[str, int] = field(default_factory=dict)
+    overall_score: float = 0.0
+    status: str = "enrolled"  # enrolled, in_progress, completed
+    last_accessed: datetime = field(default_factory=datetime.utcnow)
+    total_time_minutes: int = 0
+
+    def to_dict(self) -> dict:
+        """Serialize progress to dictionary."""
+        return {
+            "user_id": self.user_id,
+            "course_id": self.course_id,
+            "enrolled_at": self.enrolled_at.isoformat(),
+            "completed_lessons": self.completed_lessons,
+            "lab_scores": self.lab_scores,
+            "quiz_scores": self.quiz_scores,
+            "quiz_attempts": self.quiz_attempts,
+            "overall_score": self.overall_score,
+            "status": self.status,
+            "last_accessed": self.last_accessed.isoformat(),
+            "total_time_minutes": self.total_time_minutes,
+            "completion_percentage": self._calculate_completion(),
+        }
+
+    def _calculate_completion(self) -> float:
+        """Calculate course completion percentage."""
+        # This is a simplified calculation; actual implementation
+        # would reference the course structure
+        return round(self.overall_score, 2)
+
+
+@dataclass
+class UserCertificate:
+    """Certificate issued upon course completion."""
+    user_id: str
+    course_id: str
+    certificate_id: str
+    issued_at: datetime = field(default_factory=datetime.utcnow)
+    expiry_date: Optional[datetime] = None
+    verification_hash: str = ""
+    verified: bool = True
+
+    def to_dict(self) -> dict:
+        """Serialize certificate to dictionary."""
+        return {
+            "user_id": self.user_id,
+            "course_id": self.course_id,
+            "certificate_id": self.certificate_id,
+            "issued_at": self.issued_at.isoformat(),
+            "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
+            "verification_hash": self.verification_hash,
+            "verified": self.verified,
+        }
+
+
+@dataclass
+class SkillTree:
+    """User skill tree with levels and badges."""
+    user_id: str
+    skills: Dict[str, int] = field(default_factory=dict)
+    badges: List[str] = field(default_factory=list)
+    level: int = 1
+    total_points: int = 0
+    title: str = "Security Novice"
+
+    def to_dict(self) -> dict:
+        """Serialize skill tree to dictionary."""
+        return {
+            "user_id": self.user_id,
+            "skills": self.skills,
+            "badges": self.badges,
+            "level": self.level,
+            "total_points": self.total_points,
+            "title": self.title,
+        }
+
+
+@dataclass
+class CTFChallenge:
+    """Capture The Flag challenge for hands-on competition."""
+    id: str
+    title: str
+    description: str
+    category: CourseCategory
+    difficulty: DifficultyLevel
+    flag: str
+    hints: List[str] = field(default_factory=list)
+    points: int = 100
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    solves: int = 0
+
+    def to_dict(self, reveal_flag: bool = False) -> dict:
+        """Serialize CTF challenge to dictionary."""
+        result = {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "category": self.category.value,
+            "difficulty": self.difficulty.value,
+            "hints": self.hints,
+            "points": self.points,
+            "created_at": self.created_at.isoformat(),
+            "solves": self.solves,
+        }
+        if reveal_flag:
+            result["flag"] = self.flag
+        return result
+
+
+@dataclass
+class SkillBadge:
+    """Achievement badge that users can earn."""
+    id: str
+    name: str
+    description: str
+    icon: str
+    category: CourseCategory
+    required_points: int = 100
+
+    def to_dict(self) -> dict:
+        """Serialize badge to dictionary."""
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "icon": self.icon,
+            "category": self.category.value,
+            "required_points": self.required_points,
+        }
+
+
+# ============================================================================
+# CUSTOM EXCEPTIONS
+# ============================================================================
+
+class SecurityTrainingError(Exception):
+    """Base exception for security training module."""
+    pass
+
+
+class CourseNotFoundError(SecurityTrainingError):
+    """Raised when a requested course is not found."""
+    pass
+
+
+class ModuleNotFoundError(SecurityTrainingError):
+    """Raised when a requested module is not found."""
+    pass
+
+
+class UserNotEnrolledError(SecurityTrainingError):
+    """Raised when user is not enrolled in a course."""
+    pass
+
+
+class LabNotFoundError(SecurityTrainingError):
+    """Raised when a lab exercise is not found."""
+    pass
+
+
+class QuizNotFoundError(SecurityTrainingError):
+    """Raised when a quiz is not found."""
+    pass
+
+
+class CTFChallengeNotFoundError(SecurityTrainingError):
+    """Raised when a CTF challenge is not found."""
+    pass
+
+
+class InvalidSubmissionError(SecurityTrainingError):
+    """Raised when a submission format is invalid."""
+    pass
+
+
+# ============================================================================
+# IN-MEMORY DATA STORES
+# ============================================================================
+
+_courses: Dict[str, SecurityCourse] = {}
+_modules: Dict[str, SecurityModule] = {}
+_lessons: Dict[str, SecurityLesson] = {}
+_labs: Dict[str, SecurityLab] = {}
+_quizzes: Dict[str, SecurityQuiz] = {}
+_ctf_challenges: Dict[str, CTFChallenge] = {}
+_user_progress: Dict[str, UserProgress] = {}
+_certificates: Dict[str, UserCertificate] = {}
+_skill_trees: Dict[str, SkillTree] = {}
+_badges: Dict[str, SkillBadge] = {}
+_leaderboard: List[dict] = []
+
+
+
+# ============================================================================
+# COURSE DATA CONSTRUCTION
+# ============================================================================
+
+def _build_courses() -> None:
+    """Construct all 15 training courses with their modules, lessons, labs, and quizzes."""
+
+    # ========================================================================
+    # COURSE 1: NETWORK SECURITY
+    # ========================================================================
+    mod1 = SecurityModule(
+        id="netsec_001",
+        course_id="network_security",
+        title="Network Security Fundamentals",
+        description="Comprehensive coverage of network security including firewalls, IDS/IPS, VPNs, and packet analysis.",
+        category=CourseCategory.NETWORK,
+        difficulty=DifficultyLevel.BEGINNER,
+        duration_hours=12.5,
+        prerequisites=[],
+        order=1,
+        lessons=[
+            SecurityLesson(
+                id="netsec_l1", module_id="netsec_001", title="TCP/IP Security Architecture",
+                content="Deep dive into the TCP/IP protocol stack security. Covers IPsec, TCP handshake vulnerabilities, SYN floods, sequence number prediction, and fragmentation attacks. Learn how each layer of the OSI model contributes to network defense and where common vulnerabilities exist.",
+                lesson_type=LessonType.TEXT, duration_min=45, order=1,
+            ),
+            SecurityLesson(
+                id="netsec_l2", module_id="netsec_001", title="Firewalls: iptables & pfSense",
+                content="Master iptables rules, chains, and tables for Linux firewall configu

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luqi AI v25 Prometheus — Unified Intelligence Dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a2035;
+  --bg-hover: #222b45;
+  --border-color: #2d3748;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --accent-blue: #3b82f6;
+  --accent-purple: #8b5cf6;
+  --accent-green: #10b981;
+  --accent-orange: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-cyan: #06b6d4;
+  --accent-pink: #ec4899;
+  --gradient-prometheus: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+  --shadow-hover: 0 8px 40px rgba(0,0,0,0.4);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+.header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 1rem; }
+.logo {
+  width: 40px; height: 40px;
+  background: var(--gradient-prometheus);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.2rem; color: white;
+}
+.header-title { font-size: 1.25rem; font-weight: 700; }
+.header-title span { background: var(--gradient-prometheus); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.version-badge {
+  background: var(--gradient-prometheus);
+  color: white; padding: 0.25rem 0.75rem;
+  border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+}
+.nav-links { display: flex; gap: 1.5rem; list-style: none; }
+.nav-links a {
+  color: var(--text-secondary); text-decoration: none;
+  font-size: 0.875rem; font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover, .nav-links a.active { color: var(--accent-blue); }
+.hero {
+  padding: 3rem 2rem 2rem;
+  text-align: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+.hero h1 .prometheus { background: var(--gradient-prometheus); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto 1.5rem; }
+.stats-bar {
+  display: flex; justify-content: center; gap: 2rem;
+  flex-wrap: wrap;
+}
+.stat-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  text-align: center;
+  min-width: 120px;
+}
+.stat-value {
+  font-size: 1.75rem; font-weight: 800;
+  background: var(--gradient-prometheus);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.search-container {
+  max-width: 600px; margin: 2rem auto;
+  position: relative;
+}
+.search-input {
+  width: 100%; padding: 1rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary); font-size: 1rem;
+  outline: none; transition: border-color 0.2s;
+}
+.search-input:focus { border-color: var(--accent-blue); }
+.search-input::placeholder { color: var(--text-secondary); }
+.dashboard {
+  max-width: 1400px; margin: 0 auto; padding: 0 2rem 3rem;
+}
+.section-title {
+  font-size: 1.1rem; font-weight: 600;
+  margin: 2rem 0 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.section-title .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent-blue);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gradient-prometheus);
+  opacity: 0; transition: opacity 0.2s;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: var(--accent-blue);
+}
+.card:hover::before { opacity: 1; }
+.card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
+.card-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+}
+.card-status {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green);
+}
+.card-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+.card-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 0.75rem; }
+.card-meta {
+  display: flex; gap: 1rem;
+  font-size: 0.75rem; color: var(--text-secondary);
+}
+.card-meta span { display: flex; align-items: center; gap: 0.25rem; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+.tag {
+  font-size: 0.7rem; padding: 0.2rem 0.5rem;
+  border-radius: 6px; font-weight: 500;
+  background: rgba(59,130,246,0.1); color: var(--accent-blue);
+}
+.icon-blue { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+.icon-purple { background: rgba(139,92,246,0.15); color: var(--accent-purple); }
+.icon-green { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+.icon-orange { background: rgba(245,158,11,0.15); color: var(--accent-orange); }
+.icon-red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+.icon-cyan { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
+.icon-pink { background: rgba(236,72,153,0.15); color: var(--accent-pink); }
+.footer {
+  text-align: center; padding: 2rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary); font-size: 0.8rem;
+}
+.footer a { color: var(--accent-blue); text-decoration: none; }
+@media (max-width: 768px) {
+  .header { flex-direction: column; gap: 1rem; padding: 1rem; }
+  .hero h1 { font-size: 1.75rem; }
+  .grid { grid-template-columns: 1fr; }
+  .nav-links { gap: 1rem; flex-wrap: wrap; justify-content: center; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.card { animation: fadeIn 0.4s ease both; }
+.card:nth-child(1) { animation-delay: 0.05s; }
+.card:nth-child(2) { animation-delay: 0.1s; }
+.card:nth-child(3) { animation-delay: 0.15s; }
+.card:nth-child(4) { animation-delay: 0.2s; }
+.card:nth-child(5) { animation-delay: 0.25s; }
+.card:nth-child(6) { animation-delay: 0.3s; }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-left">
+    <div class="logo">L</div>
+    <div class="header-title">Luqi AI <span>v25</span></div>
+    <span class="version-badge">PROMETHEUS</span>
+  </div>
+  <nav>
+    <ul class="nav-links">
+      <li><a href="/web/index.html">Home</a></li>
+      <li><a href="#" class="active">Dashboard</a></li>
+      <li><a href="/api/docs" target="_blank">API Docs</a></li>
+      <li><a href="/web/admin.html">Admin</a></li>
+    </ul>
+  </nav>
+</header>
+<section class="hero">
+  <h1>Luqi AI <span class="prometheus">Prometheus</span></h1>
+  <p>Unified Intelligence Dashboard — 18 AI engines, 50+ endpoints, one powerful platform.</p>
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-value">18</div><div class="stat-label">AI Engines</div></div>
+    <div class="stat-item"><div class="stat-value">50+</div><div class="stat-label">API Endpoints</div></div>
+    <div class="stat-item"><div class="stat-value">6</div><div class="stat-label">Core Modules</div></div>
+    <div class="stat-item"><div class="stat-value">10+</div><div class="stat-label">Languages</div></div>
+  </div>
+</section>
+<div class="search-container">
+  <input type="text" class="search-input" id="searchInput" placeholder="Search engines, endpoints, or features...">
+</div>
+<main class="dashboard" id="dashboard">
+  <div class="section-title"><span class="dot" style="background:var(--accent-green)"></span> Jobs & Skills</div>
+  <div class="grid">
+    <div class="card" data-search="cv resume builder curriculum vitae">
+      <div class="card-header"><div class="card-icon icon-green">CV</div><div class="card-status"></div></div>
+      <div class="card-title">CV Builder</div>
+      <div class="card-desc">Generate professional CVs with Professional, Modern, and Executive templates.</div>
+      <div class="card-meta"><span>POST /api/jobs/cv-build</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">Career</span></div>
+    </div>
+    <div class="card" data-search="interview questions preparation software data nursing finance marketing">
+      <div class="card-header"><div class="card-icon icon-blue">Q&amp;A</div><div class="card-status"></div></div>
+      <div class="card-title">Interview Prep</div>
+      <div class="card-desc">500+ questions across 5 fields and 3 experience levels.</div>
+      <div class="card-meta"><span>GET /api/jobs/interview-questions</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">500+ Qs</span></div>
+    </div>
+    <div class="card" data-search="skills assessment quiz test python javascript pm data">
+      <div class="card-header"><div class="card-icon icon-purple">&#127919;</div><div class="card-status"></div></div>
+      <div class="card-title">Skills Assessor</div>
+      <div class="card-desc">Interactive skill assessments with graded quizzes and level recommendations.</div>
+      <div class="card-meta"><span>POST /api/jobs/skills-assess</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">Quiz</span></div>
+    </div>
+    <div class="card" data-search="salary guide compensation nigeria usa uk india kenya">
+      <div class="card-header"><div class="card-icon icon-orange">$</div><div class="card-status"></div></div>
+      <div class="card-title">Salary Guide</div>
+      <div class="card-desc">Compare salaries across 5 countries. Entry to Lead level data.</div>
+      <div class="card-meta"><span>GET /api/jobs/salary-guide</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">5 Countries</span></div>
+    </div>
+    <div class="card" data-search="career plan roadmap growth software data nurse pm">
+      <div class="card-header"><div class="card-icon icon-cyan">&#127758;</div><div class="card-status"></div></div>
+      <div class="card-title">Career Planner</div>
+      <div class="card-desc">Personalized career roadmaps with milestones and certification recommendations.</div>
+      <div class="card-meta"><span>POST /api/jobs/career-plan</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">Roadmap</span></div>
+    </div>
+    <div class="card" data-search="freelance upwork fiverr freelancer toptal gig">
+      <div class="card-header"><div class="card-icon icon-pink">&#128187;</div><div class="card-status"></div></div>
+      <div class="card-title">Freelance Guide</div>
+      <div class="card-desc">Platform-specific guides with rate benchmarks for Upwork, Fiverr, Freelancer, Toptal.</div>
+      <div class="card-meta"><span>GET /api/jobs/freelance-guide</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">4 Platforms</span></div>
+    </div>
+  </div>
+  <div class="section-title"><span class="dot" style="background:var(--accent-blue)"></span> NetAI Training</div>
+  <div class="grid">
+    <div class="card" data-search="ccna ccnp ccie curriculum course network">
+      <div class="card-header"><div class="card-icon icon-blue">&#127979;</div><div class="card-status"></div></div>
+      <div class="card-title">Curriculum Browser</div>
+      <div class="card-desc">3-phase curriculum: CCNA (12w), CCNP (16w), CCIE (24w). 18 modules.</div>
+      <div class="card-meta"><span>GET /api/netai/curriculum</span></div>
+      <div class="card-tags"><span class="tag">v23</span><span class="tag">CCNA→CCIE</span></div>
+    </div>
+    <div class="card" data-search="lab hands-on practice switching routing security">
+      <div class="card-header"><div class="card-icon icon-green">&#128295;</div><div class="card-status"></div></div>
+      <div class="card-title">Hands-on Labs</div>
+      <div class="card-desc">8 guided labs from VLAN config to DMVPN. Auto-graded with hints.</div>
+      <div class="card-meta"><span>POST /api/netai/lab/start</span></div>
+      <div class="card-tags"><span class="tag">v23</span><span class="tag">8 Labs</span></div>
+    </div>
+    <div class="card" data-search="topology generator network design diagram">
+      <div class="card-header"><div class="card-icon icon-purple">&#127760;</div><div class="card-status"></div></div>
+      <div class="card-title">Topology Generator</div>
+      <div class="card-desc">Generate network topologies from natural language prompts.</div>
+      <div class="card-meta"><span>POST /api/netai/topology</span></div>
+      <div class="card-tags"><span class="tag">v23</span><span class="tag">AI Gen</span></div>
+    </div>
+    <div class="card" data-search="quiz test assessment networking">
+      <div class="card-header"><div class="card-icon icon-orange">&#9997;</div><div class="card-status"></div></div>
+      <div class="card-title">NetAI Quizzes</div>
+      <div class="card-desc">Module quizzes with auto-grading and detailed explanations.</div>
+      <div class="card-meta"><span>POST /api/netai/quiz/submit</span></div>
+      <div class="card-tags"><span class="tag">v23</span><span class="tag">Assessment</span></div>
+    </div>
+    <div class="card" data-search="mentor ai tutor help guidance">
+      <div class="card-header"><div class="card-icon icon-cyan">&#129302;</div><div class="card-status"></div></div>
+      <div class="card-title">AI Mentor</div>
+      <div class="card-desc">Conversational AI mentor for networking topics and career advice.</div>
+      <div class="card-meta"><span>POST /api/netai/mentor</span></div>
+      <div class="card-tags"><span class="tag">v23</span><span class="tag">AI Chat</span></div>
+    </div>
+    <div class="card" data-search="certificate completion verify badge">
+      <div class="card-header"><div class="card-icon icon-pink">&#127891;</div><div class="card-status"></div></div>
+      <div class="card-title">Certificates</div>
+      <div class="card-desc">Verifiable completion certificates for 5 tracks.</div>
+      <div class="card-meta"><span>GET /api/netai/certificate/&lt;id&gt;</span></div>
+      <div class="card-tags"><span class="tag">v23</span><span class="tag">5 Tracks</span></div>
+    </div>
+  </div>
+  <div class="section-title"><span class="dot" style="background:var(--accent-orange)"></span> Project Management</div>
+  <div class="grid">
+    <div class="card" data-search="agile scrum kanban waterfall hybrid lean six sigma prince2 methodology">
+      <div class="card-header"><div class="card-icon icon-orange">&#128203;</div><div class="card-status"></div></div>
+      <div class="card-title">8 Methodologies</div>
+      <div class="card-desc">Complete guides for Agile, Scrum, Kanban, Waterfall, Hybrid, Lean, Six Sigma, PRINCE2.</div>
+      <div class="card-meta"><span>GET /api/pm/methodologies</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">8 Methods</span></div>
+    </div>
+    <div class="card" data-search="template software marketing event construction product launch">
+      <div class="card-header"><div class="card-icon icon-blue">&#128196;</div><div class="card-status"></div></div>
+      <div class="card-title">22 Project Templates</div>
+      <div class="card-desc">Ready-to-use templates for software, marketing, events, construction, product launches.</div>
+      <div class="card-meta"><span>GET /api/pm/templates</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">22 Templates</span></div>
+    </div>
+    <div class="card" data-search="gantt chart timeline schedule planning">
+      <div class="card-header"><div class="card-icon icon-green">&#128202;</div><div class="card-status"></div></div>
+      <div class="card-title">Gantt Charts</div>
+      <div class="card-desc">Generate Gantt charts with task dependencies and critical path analysis.</div>
+      <div class="card-meta"><span>POST /api/pm/gantt</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">Planning</span></div>
+    </div>
+    <div class="card" data-search="sprint simulate velocity burndown agile">
+      <div class="card-header"><div class="card-icon icon-purple">&#127939;</div><div class="card-status"></div></div>
+      <div class="card-title">Sprint Simulator</div>
+      <div class="card-desc">Simulate Agile sprints with velocity tracking and burndown charts.</div>
+      <div class="card-meta"><span>POST /api/pm/sprint/simulate</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">Scrum</span></div>
+    </div>
+    <div class="card" data-search="risk assessment matrix register mitigation">
+      <div class="card-header"><div class="card-icon icon-red">&#9888;</div><div class="card-status"></div></div>
+      <div class="card-title">Risk Assessment</div>
+      <div class="card-desc">Generate risk registers and get mitigation recommendations.</div>
+      <div class="card-meta"><span>POST /api/pm/risk/assess</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">Risk</span></div>
+    </div>
+    <div class="card" data-search="pmp exam simulator certification project management professional">
+      <div class="card-header"><div class="card-icon icon-cyan">&#127891;</div><div class="card-status"></div></div>
+      <div class="card-title">PMP Exam Simulator</div>
+      <div class="card-desc">Full PMP exam simulation with sample questions and study tips.</div>
+      <div class="card-meta"><span>GET /api/pm/pmp-simulator</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">Certification</span></div>
+    </div>
+  </div>
+  <div class="section-title"><span class="dot" style="background:var(--accent-cyan)"></span> Digital Workspace</div>
+  <div class="grid">
+    <div class="card" data-search="tools guide 51 apps software comparison">
+      <div class="card-header"><div class="card-icon icon-cyan">&#128187;</div><div class="card-status"></div></div>
+      <div class="card-title">51 Tool Guides</div>
+      <div class="card-desc">Comprehensive guides for 51 workspace tools across 9 categories.</div>
+      <div class="card-meta"><span>GET /api/workspace/tools</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">51 Tools</span></div>
+    </div>
+    <div class="card" data-search="phishing security awareness simulation test training">
+      <div class="card-header"><div class="card-icon icon-red">&#128373;</div><div class="card-status"></div></div>
+      <div class="card-title">Phishing Simulator</div>
+      <div class="card-desc">Interactive phishing awareness training with real-world email scenarios.</div>
+      <div class="card-meta"><span>GET /api/workspace/phishing-test</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">Security</span></div>
+    </div>
+    <div class="card" data-search="productivity pomodoro gtd eisenhower time blocking 80/20 deep work">
+      <div class="card-header"><div class="card-icon icon-green">&#9200;</div><div class="card-status"></div></div>
+      <div class="card-title">10 Productivity Methods</div>
+      <div class="card-desc">Pomodoro, GTD, Eisenhower Matrix, Time Blocking, Pareto, Deep Work, and more.</div>
+      <div class="card-meta"><span>GET /api/workspace/productivity</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">10 Methods</span></div>
+    </div>
+    <div class="card" data-search="remote work guide home office setup communication">
+      <div class="card-header"><div class="card-icon icon-purple">&#127968;</div><div class="card-status"></div></div>
+      <div class="card-title">Remote Work Guides</div>
+      <div class="card-desc">8 comprehensive guides for remote work success.</div>
+      <div class="card-meta"><span>GET /api/workspace/remote</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">8 Guides</span></div>
+    </div>
+    <div class="card" data-search="email template professional meeting follow-up thank you introduction">
+      <div class="card-header"><div class="card-icon icon-blue">&#9993;</div><div class="card-status"></div></div>
+      <div class="card-title">Email Templates</div>
+      <div class="card-desc">Professional templates: meetings, follow-ups, project updates, introductions.</div>
+      <div class="card-meta"><span>GET /api/workspace/email-template</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">5 Templates</span></div>
+    </div>
+    <div class="card" data-search="workspace setup recommendation desk chair monitor ergonomic">
+      <div class="card-header"><div class="card-icon icon-orange">&#128719;</div><div class="card-status"></div></div>
+      <div class="card-title">Workspace Setup</div>
+      <div class="card-desc">Personalized equipment recommendations by budget tier.</div>
+      <div class="card-meta"><span>GET /api/workspace/setup</span></div>
+      <div class="card-tags"><span class="tag">v24</span><span class="tag">Ergonomic</span></div>
+    </div>
+  </div>
+  <div class="section-title"><span class="dot" style="background:var(--accent-purple)"></span> Government Services</div>
+  <div class="grid">
+    <div class="card" data-search="id national identity nin aadhaar ssn passport">
+      <div class="card-header"><div class="card-icon icon-purple">&#128505;</div><div class="card-status"></div></div>
+      <div class="card-title">ID &amp; Passport Guides</div>
+      <div class="card-desc">Step-by-step guides for national ID cards and passports across 50+ countries.</div>
+      <div class="card-meta"><span>GET /api/gov/id-guide</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">50+ Countries</span></div>
+    </div>
+    <div class="card" data-search="business registration company incorporate llc sole proprietorship cac">
+      <div class="card-header"><div class="card-icon icon-green">&#128188;</div><div class="card-status"></div></div>
+      <div class="card-title">Business Registration</div>
+      <div class="card-desc">Complete business registration guides with required documents.</div>
+      <div class="card-meta"><span>GET /api/gov/business-guide</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">3 Types</span></div>
+    </div>
+    <div class="card" data-search="tax guide income vat corporate nigeria usa uk india">
+      <div class="card-header"><div class="card-icon icon-orange">&#128178;</div><div class="card-status"></div></div>
+      <div class="card-title">Tax Guides</div>
+      <div class="card-desc">Income tax, VAT, and corporate tax with rate tables and deadlines.</div>
+      <div class="card-meta"><span>GET /api/gov/tax-guide</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">3 Tax Types</span></div>
+    </div>
+    <div class="card" data-search="voting election register polling voter card">
+      <div class="card-header"><div class="card-icon icon-blue">&#127915;</div><div class="card-status"></div></div>
+      <div class="card-title">Voting Information</div>
+      <div class="card-desc">Voter registration and voting procedures for multiple countries.</div>
+      <div class="card-meta"><span>GET /api/gov/voting</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">Elections</span></div>
+    </div>
+    <div class="card" data-search="land property buy sell transaction real estate deed">
+      <div class="card-header"><div class="card-icon icon-cyan">&#127969;</div><div class="card-status"></div></div>
+      <div class="card-title">Land &amp; Property</div>
+      <div class="card-desc">Land transaction guides for buying and selling property.</div>
+      <div class="card-meta"><span>GET /api/gov/land-guide</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">Property</span></div>
+    </div>
+    <div class="card" data-search="social services healthcare welfare benefits unemployment">
+      <div class="card-header"><div class="card-icon icon-pink">&#127973;</div><div class="card-status"></div></div>
+      <div class="card-title">Social Services</div>
+      <div class="card-desc">Healthcare, education, and welfare program guides.</div>
+      <div class="card-meta"><span>GET /api/gov/social-services</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">Welfare</span></div>
+    </div>
+  </div>
+  <div class="section-title"><span class="dot" style="background:var(--accent-green)"></span> WhatsApp Bot</div>
+  <div class="grid">
+    <div class="card" data-search="whatsapp bot chat faq 10 languages webhook">
+      <div class="card-header"><div class="card-icon icon-green">&#128172;</div><div class="card-status"></div></div>
+      <div class="card-title">Conversational Bot</div>
+      <div class="card-desc">AI-powered WhatsApp bot with 200+ FAQ responses across 10 languages.</div>
+      <div class="card-meta"><span>POST /api/whatsapp/webhook</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">10 Languages</span></div>
+    </div>
+    <div class="card" data-search="whatsapp analytics sessions users messages">
+      <div class="card-header"><div class="card-icon icon-blue">&#128202;</div><div class="card-status"></div></div>
+      <div class="card-title">Bot Analytics</div>
+      <div class="card-desc">Session tracking, message analytics, and user engagement metrics.</div>
+      <div class="card-meta"><span>GET /api/whatsapp/analytics</span></div>
+      <div class="card-tags"><span class="tag">v21</span><span class="tag">Analytics</span></div>
+    </div>
+  </div>
+</main>
+<footer class="footer">
+  <p>Luqi AI v25.0.0 "Prometheus" — Built with precision by <a href="https://github.com/ttmodupe-hash">ttmodupe-hash</a></p>
+  <p style="margin-top:0.5rem;">Backend: 80+ modules | 50+ API endpoints | 18 AI engines</p>
+</footer>
+<script>
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  const query = e.target.value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.card');
+  const sections = document.querySelectorAll('.section-title');
+  if (!query) {
+    cards.forEach(c => c.style.display = '');
+    sections.forEach(s => s.style.display = '');
+    return;
+  }
+  cards.forEach(card => {
+    const searchData = card.getAttribute('data-search') || '';
+    const title = card.querySelector('.card-title').textContent.toLowerCase();
+    const desc = card.querySelector('.card-desc').textContent.toLowerCase();
+    const tags = Array.from(card.querySelectorAll('.tag')).map(t => t.textContent.toLowerCase()).join(' ');
+    const match = searchData.includes(query) || title.includes(query) || desc.includes(query) || tags.includes(query);
+    card.style.display = match ? '' : 'none';
+  });
+  sections.forEach(section => {
+    const nextGrid = section.nextElementSibling;
+    if (nextGrid && nextGrid.classList.contains('grid')) {
+      const visibleCards = nextGrid.querySelectorAll('.card:not([style*="display: none"])');
+      section.style.display = visibleCards.length ? '' : 'none';
+    }
+  });
+});
+</script>
+</body>
+</html>

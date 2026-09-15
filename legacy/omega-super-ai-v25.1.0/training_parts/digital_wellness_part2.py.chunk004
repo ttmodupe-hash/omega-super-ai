@@ -1,0 +1,219 @@
+as been working hard. It deserves a few minutes of rest.",
+            "A quick break now means better focus when you return. Want to give it a try?",
+            "Step away for just a few minutes. You will come back even stronger.",
+        ],
+        BreakType.LONG.value: [
+            "You have put in serious work today. Your mind and body will thank you for a proper break.",
+            "Rest is not a reward for finishing work; it is part of the process. Time to recharge.",
+            "A longer break now will make the rest of your day more productive and enjoyable.",
+            "You have earned this. Step away, recharge, and return when you are ready.",
+        ],
+        BreakType.SESSION_END.value: [
+            "The day is winding down. Your well-being is the top priority now.",
+            "Rest is productive too. Time to let your mind and body recover.",
+            "You have done enough for today. Let yourself relax and prepare for restful sleep.",
+        ],
+    }
+
+    @classmethod
+    def get_suggestion(
+        cls,
+        fatigue_score: int,
+        current_session_minutes: int,
+        last_break_minutes_ago: int,
+        wind_down_active: bool = False,
+    ) -> BreakSuggestion:
+        """Generate a personalized break suggestion.
+
+        Args:
+            fatigue_score: Current fatigue score (0-100).
+            current_session_minutes: Current session length in minutes.
+            last_break_minutes_ago: Minutes since last break.
+            wind_down_active: Whether wind-down mode is active.
+
+        Returns:
+            A BreakSuggestion tailored to the user's current state.
+        """
+        if wind_down_active:
+            break_type = BreakType.SESSION_END.value
+            activity = random.choice(cls.SESSION_END_ACTIVITIES)
+            duration = random.choice([300, 600, 900])
+        elif fatigue_score >= Constants.FATIGUE_HIGH:
+            break_type = BreakType.LONG.value
+            activity = random.choice(cls.LONG_BREAK_ACTIVITIES)
+            duration = random.choice([600, 900, 1200, 1800])
+        elif fatigue_score >= Constants.FATIGUE_MODERATE:
+            break_type = BreakType.SHORT.value
+            activity = random.choice(cls.SHORT_BREAK_ACTIVITIES)
+            duration = random.choice([180, 240, 300, 360])
+        elif current_session_minutes >= Constants.MICRO_BREAK_INTERVAL:
+            break_type = BreakType.MICRO.value
+            activity = random.choice(cls.MICRO_BREAK_ACTIVITIES)
+            duration = random.choice([20, 30])
+        else:
+            break_type = BreakType.MICRO.value
+            activity = random.choice(cls.MICRO_BREAK_ACTIVITIES)
+            duration = 20
+
+        message = random.choice(
+            cls.GENTLE_MESSAGES.get(break_type, cls.GENTLE_MESSAGES[BreakType.MICRO.value])
+        )
+
+        return BreakSuggestion(
+            break_type=break_type,
+            duration_seconds=duration,
+            title=activity["title"],
+            description=activity["description"],
+            benefit=activity["benefit"],
+            message=message,
+            fatigue_score=fatigue_score,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Eye Strain Tracker (20-20-20 Rule)
+# ---------------------------------------------------------------------------
+
+
+class EyeStrainTracker:
+    """Tracks compliance with the 20-20-20 rule for eye strain prevention.
+
+    Every 20 minutes of screen time, users should look at something 20 feet
+    away for 20 seconds. This class tracks reminders and compliance.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the eye strain tracker."""
+        self._lock = threading.Lock()
+        self._last_eye_break: Dict[str, datetime] = {}
+        self._compliance_streak: Dict[str, int] = defaultdict(int)
+        self._total_reminders: Dict[str, int] = defaultdict(int)
+        self._compliance_count: Dict[str, int] = defaultdict(int)
+
+    def record_screen_time(
+        self, user_id: str, duration_ms: int
+    ) -> bool:
+        """Record screen time and check if an eye break is due.
+
+        Args:
+            user_id: The user identifier.
+            duration_ms: Screen time duration in milliseconds.
+
+        Returns:
+            True if an eye break reminder should be shown.
+        """
+        with self._lock:
+            now = datetime.utcnow()
+            last = self._last_eye_break.get(user_id)
+
+            if last is None:
+                self._last_eye_break[user_id] = now
+                return False
+
+            minutes_since = (now - last).total_seconds() / 60.0
+
+            if minutes_since >= Constants.EYE_BREAK_INTERVAL_MINUTES:
+                self._total_reminders[user_id] += 1
+                return True
+
+            return False
+
+    def record_compliance(self, user_id: str) -> None:
+        """Record that the user took an eye break.
+
+        Args:
+            user_id: The user who took the break.
+        """
+        with self._lock:
+            self._last_eye_break[user_id] = datetime.utcnow()
+            self._compliance_streak[user_id] += 1
+            self._compliance_count[user_id] += 1
+
+    def get_compliance_rate(self, user_id: str) -> float:
+        """Get the eye break compliance rate.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            Float between 0.0 and 1.0.
+        """
+        with self._lock:
+            total = max(self._total_reminders.get(user_id, 0), 1)
+            compliant = self._compliance_count.get(user_id, 0)
+            return min(compliant / total, 1.0)
+
+    def get_streak(self, user_id: str) -> int:
+        """Get the current eye break compliance streak.
+
+        Args:
+            user_id: The user to query.
+
+        Returns:
+            Number of consecutive compliant breaks.
+        """
+        with self._lock:
+            return self._compliance_streak.get(user_id, 0)
+
+    def reset_streak(self, user_id: str) -> None:
+        """Reset the compliance streak (called when user misses a break).
+
+        Args:
+            user_id: The user whose streak to reset.
+        """
+        with self._lock:
+            self._compliance_streak[user_id] = 0
+
+    def get_reminder_message(self, user_id: str) -> str:
+        """Get a gentle reminder message for the 20-20-20 rule.
+
+        Args:
+            user_id: The user to address.
+
+        Returns:
+            Gentle, encouraging reminder message.
+        """
+        streak = self.get_streak(user_id)
+        if streak >= 5:
+            return (
+                f"Amazing! You have a {streak}-break streak. "
+                "Time for another 20-20-20: look 20 feet away for 20 seconds!"
+            )
+        elif streak >= 3:
+            return (
+                f"Great job! {streak} breaks in a row. "
+                "Look at something 20 feet away for 20 seconds."
+            )
+        else:
+            return (
+                "Friendly reminder: look at something about 20 feet away "
+                "for 20 seconds. Your eyes will thank you!"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Focus Mode Manager
+# ---------------------------------------------------------------------------
+
+
+class FocusModeManager:
+    """Manages focus mode and Pomodoro timer functionality.
+
+    Focus mode provides a distraction-free environment with integrated
+    Pomodoro timing. Users can select from preset work/break intervals
+    or customize their own.
+    """
+
+    PRESETS: ClassVar[Dict[str, Tuple[int, int]]] = {
+        "classic": Constants.POMODORO_CLASSIC,
+        "long": Constants.POMODORO_LONG,
+        "short": Constants.POMODORO_SHORT,
+    }
+
+    def __init__(self) -> None:
+        """Initialize the focus mode manager."""
+        self._lock = threading.Lock()
+        self._focus_state: Dict[str, str] = {}
+        self._pomodoro_phase: Dict[str, str] = {}
+        self._pomodoro_preset: Dict[str, str] = {}
+        self._phase_start_time: Dict[str, dat

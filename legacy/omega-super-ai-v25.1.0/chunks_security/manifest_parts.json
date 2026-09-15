@@ -1,0 +1,12 @@
+{
+  "file": "backend/it_security_training.py",
+  "total_parts": 4,
+  "total_lines": 4572,
+  "reconstruct_script": "reconstruct_from_parts.py",
+  "parts": [
+    "it_security_training.py.part000.txt",
+    "it_security_training.py.part001.txt",
+    "it_security_training.py.part002.txt",
+    "it_security_training.py.part003.txt"
+  ]
+}

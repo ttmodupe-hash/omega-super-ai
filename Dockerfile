@@ -1,9 +1,18 @@
+# Luqi-AI Multi-Track Laboratory Environment
+# Build:  docker build -t luqi-lab-base .
+# This is the template image the LabSandboxManager spins up per student session.
 FROM python:3.11-slim
-WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY backend/ ./backend/
-COPY web/ ./web/
-EXPOSE 8000
-CMD ["python", "-m", "uvicorn", "backend.router:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# Non-root student user - the sandbox executes all student commands as this identity
+RUN groupadd -r luqistudent && useradd -r -g luqistudent luqistudent
+
+# Core diagnostic + networking utilities for the practical tracks
+RUN apt-get update && apt-get install -y --no-install-recommends     net-tools     iputils-ping     curl     git     && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /home/luqistudent/lab
+RUN chown -R luqistudent:luqistudent /home/luqistudent
+
+USER luqistudent
+
+# Container stays alive awaiting commands via the WebSocket terminal router
+CMD ["sleep", "infinity"]

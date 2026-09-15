@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Luqi AI v24.4.0 — IT Security Training Academy
+================================================
+Comprehensive cybersecurity education platform with 15 training modules,
+200+ quiz questions, 50+ hands-on labs, 15 CTF challenges, 30+ skill badges,
+and 4 certification tracks.
+
+Part of Luqi AI v24.4.0 by Limitless Telecoms
+Copyright (c) 2024 Limitless Telecoms. All rights reserved.
+
+Modules:
+  1. Network Security          9. Compliance & Governance
+  2. Web Application Security  10. Mobile Security
+  3. Cryptography              11. Wireless Security
+  4. Ethical Hacking           12. Social Engineering
+  5. Incident Response         13. Africa Telecom Security
+  6. Cloud Security            14. DevSecOps
+  7. Malware Analysis          15. Threat Intelligence
+  8. Digital Forensics
+
+Author: Luqi AI Engineering Team
+Version: 24.4.0
+License: Proprietary
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import random
+import re
+import secrets
+import string
+import uuid
+from copy import deepcopy
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
+
+# ============================================================================
+# ENUMERATIONS
+# ============================================================================
+
+class DifficultyLevel(str, Enum):
+    """Difficulty levels for courses and modules."""
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    EXPERT = "expert"
+
+
+class LessonType(str, Enum):
+    """Types of lesson content delivery."""
+    VIDEO = "video"
+    TEXT = "text"
+    INTERACTIVE = "interactive"
+    LAB = "lab"
+
+
+class CourseCategory(str, Enum):
+    """Categories for security courses."""
+    NETWORK = "network"
+    WEB_APP = "web_application"
+    CRYPTOGRAPHY = "cryptography"
+    OFFENSIVE = "offensive_security"
+    DEFENSIVE = "defensive_security"
+    CLOUD = "cloud"
+    MALWARE = "malware"
+    FORENSICS = "forensics"
+    COMPLIANCE = "compliance"
+    MOBILE = "mobile"
+    WIRELESS = "wireless"
+    SOCIAL = "social_engineering"
+    TELECOM = "telecom"
+    DEVSECOPS = "devsecops"
+    THREAT_INTEL = "threat_intelligence"
+
+
+class CertificationTrack(str, Enum):
+    """Industry certification preparation tracks."""
+    COMPTIA_SECURITY_PLUS = "CompTIA Security+ Prep"
+    CEH = "CEH Prep"
+    CISSP = "CISSP Prep"
+    OSCP = "OSCP Prep"
+
+
+# ============================================================================
+# DATA MODELS
+# ============================================================================
+
+@dataclass
+class QuizQuestion:
+    """A single quiz question with multiple-choice answers."""
+    id: str
+    text: str
+    options: List[str]
+    correct_answer: int  # Index of correct option (0-based)
+    explanation: str
+    difficulty: DifficultyLevel = DifficultyLevel.INTERMEDIATE
+
+    def to_dict(self) -> dict:
+        """Serialize question to dictionary."""
+        return {
+            "id": self.id,
+            "text": self.text,
+            "options": self.options,
+            "correct_answer": self.correct_answer,
+            "explanation": self.explanation,
+            "difficulty": self.difficulty.value,
+        }
+
+
+@dataclass
+class SecurityQuiz:
+    """Quiz assessment for a training module."""
+    id: str
+    module_id: str
+    title: str
+    questions: List[QuizQuestion] = field(default_factory=list)
+    passing_score: int = 70  # Percentage required to pass
+    time_limit_minutes: int = 30
+
+    def to_dict(self) -> dict:
+        """Serialize quiz to dictionary."""
+        return {
+            "id": self.id,
+            "module_id": self.module_id,
+            "title": self.title,
+            "questions": [q.to_dict() for q in self.questions],
+            "passing_score": self.passing_score,
+            "time_limit_minutes": self.time_limit_minutes,
+            "total_questions": len(self.questions),
+        }
+
+
+@dataclass
+class SecurityLab:
+    """Hands-on lab exercise for practical learning."""
+    id: str
+    module_id: str
+    title: str
+    description: str
+    environment: str  # Description of lab environment
+    tasks: List[str] = field(default_factory=list)
+    hints: List[str] = field(default_factory=list)
+    solution: str = ""
+    duration_min: int = 60
+    difficulty: DifficultyLevel = DifficultyLevel.INTERMEDIATE
+    points: int = 100
+
+    def to_dict(self) -> dict:
+        """Serialize lab to dictionary."""
+        return {
+            "id": self.id,
+            "module_id": self.module_id,
+            "title": self.title,
+            "description": self.description,
+            "environment": self.environment,
+            "tasks": self.tasks,
+            "hints": self.hints,
+            "solution": self.solution,
+            "duration_min": self.duration_min,
+            "difficulty": self.difficulty.value,
+            "points": self.points,
+        }
+
+
+@dataclass
+class SecurityLesson:
+    """Individual lesson within a training module."""
+    id: str
+    module_id: str
+    title: str
+    content: str
+    lesson_type: LessonType = LessonType.TEXT
+    duration_min: int = 15
+    order: int = 0
+
+    def to_dict(self) -> dict:
+        """Serialize lesson to dictionary."""
+        return {
+            "id": self.id,
+            "module_id": self.module_id,
+            "title": self.title,
+            "content": self.content,
+            "lesson_type": self.lesson_type.value,
+            "duration_min": self.duration_min,
+            "order": self.order,
+        }
+
+
+@dataclass
+class SecurityModule:
+    """Training module containing lessons, labs, and quizzes."""
+    id: str
+    course_id: str
+    title: str
+    description: str
+    category: CourseCategory
+    difficulty: DifficultyLevel
+    duration_hours: float
+    prerequisites: List[str] = field(default_factory=list)
+    lessons: List[SecurityLesson] = field(default_factory=list)
+    labs: List[SecurityLab] = field(default_factory=list)
+    quiz: Optional[SecurityQuiz] = None
+    order: int = 0
+
+    def to_dict(self) -> dict:
+        """Serialize module to dictionary."""
+        return {
+            "id": self.id,
+            "course_id": self.course_id,
+            "title": self.title,
+            "description": self.description,
+            "category": self.category.value,
+            "difficulty": self.difficulty.value,
+            "duration_hours": self.duration_hours,
+            "prerequisites": self.prerequisites,
+            "lessons": [l.to_dict() for l in self.lessons],
+            "labs": [lab.to_dict() for lab in self.labs],
+            "quiz": self.quiz.to_dict() if self.quiz else None,
+            "order": self.order,
+            "total_lessons": len(self.lessons),
+            "total_labs": len(self.labs),
+        }
+
+
+@dataclass
+class SecurityCourse:
+    """Top-level security training course."""
+    id: str
+    title: str
+    description: str
+    category: CourseCategory
+    difficulty: DifficultyLevel
+    duration_hours: float
+    prerequisites: List[str] = field(default_factory=list)
+    modules: List[SecurityModule] = field(default_factory=list)
+    certification_track: Optional[CertificationTrack] = None
+    icon: str = "🔒"
+
+    def to_dict(self) -> dict:
+        """Serialize course to dictionary."""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "category": self.category.value,
+            "difficulty": self.difficulty.value,
+            "duration_hours": self.duration_hours,
+            "prerequisites": self.prerequisites,
+            "modules": [m.to_dict() for m in self.modules],
+            "certification_track": self.certification_track.value if self.certification_track else None,
+            "icon": self.icon,
+            "total_modules": len(self.modules),
+            "total_less

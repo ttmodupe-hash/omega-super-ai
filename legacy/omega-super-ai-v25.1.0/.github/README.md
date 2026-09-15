@@ -1,0 +1,1 @@
+# GitHub Config\n\nThis directory contains GitHub Actions workflows and repository configuration.\nUpdated: v25.0.0 release prep.\n
