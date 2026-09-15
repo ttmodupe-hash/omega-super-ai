@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.35.7] - 2026-09-15
+### Fixed
+- test determinism campaign: autouse env-isolation fixture (26 failures -> 5, 192/197 passing locally on the six CI files, exact env + real Postgres 5433).
+- WAL test uses a file-based SQLite DB (WAL is impossible on :memory:); wiring audit gains a dormant-router whitelist + suffix matching (None-safe); INSECURE test forces its own default-secret condition.
+### Known remaining (Issue 17)
+- 5 orchestrator failures: with a live DB the engine correctly requires an authenticated HUMAN SESSION for gate releases (403 on admin-header-only). Tests previously passed only against the DB-less degraded path. Fix = register/login fixture presenting a user JWT.
+- 1 wiring-audit gap: engine mounts surface via app.mount(); audit metric cannot see inside mounts (rework: compare against app.openapi() paths).
+
+
 ## [5.35.6] - 2026-09-15
 ### Fixed
 - alembic 0001: DDL path resolves repo root (was alembic/core -> FileNotFoundError); skips comment-only SQL fragments; bootstraps luqi_app_user role (idempotent DO-block).
