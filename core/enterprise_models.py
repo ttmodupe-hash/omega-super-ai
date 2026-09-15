@@ -20,7 +20,7 @@ from decimal import Decimal
 from enum import Enum as PyEnum
 from typing import Optional
 
-from sqlalchemy import String, DateTime, Boolean, ForeignKey, JSON, Enum, Index, Numeric
+from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, JSON, Enum, Index, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .models import Base  # single shared metadata registry

@@ -8,6 +8,10 @@
 
 ## [5.35.1] - 2026-09-15
 ### Fixed
+
+## [5.35.2] - 2026-09-15
+### Fixed
+- enterprise_models: ACTUALLY added the missing Integer import. v5.35.1's guard matched the word 'Integer' elsewhere in the file and skipped the edit; the import line is verified by direct inspection in this release.
 - core/enterprise_models.py: added missing Integer import (NameError crashed alembic
   upgrade head on CI and would crash the app on boot; unblocks CI and Railway).
 - Tags: removed mis-pointed v5.29.1 / v5.31.0 (both pointed at July commits).
