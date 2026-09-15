@@ -9,6 +9,10 @@
 ## [5.35.1] - 2026-09-15
 ### Fixed
 
+## [5.35.4] - 2026-09-15
+### Fixed
+- alembic 0001: skip empty/comment-only SQL fragments before op.execute. security_rls.sql's header comment ends with a semicolon (the commented-out CREATE ROLE ... PASSWORD line), so split(';') yielded a comment-only fragment and psycopg2 raised 'can't execute an empty query' (CI run 4). Both SQL files re-verified: no PL/pgSQL $$ bodies; remaining statements are clean DDL.
+
 ## [5.35.3] - 2026-09-15
 ### Fixed
 - alembic 0001: _read_ddl now resolves the repo root correctly (two dirnames landed in alembic/ -> FileNotFoundError on core/security_rls.sql, killing the CI migration step sub-second on every run).

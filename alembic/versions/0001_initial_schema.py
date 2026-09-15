@@ -37,11 +37,14 @@ def upgrade() -> None:
     # bootstrap; production creates it with a vault password first - DO-block skips if present).
     op.execute("DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'luqi_app_user') THEN CREATE ROLE luqi_app_user NOLOGIN; END IF; END $$")
     # Security + wallet DDL: FORCE RLS policies, unique reference index
-    for stmt in _read_ddl("security_rls.sql").split(";"):
-        if stmt.strip():
-            op.execute(stmt)
-    for stmt in _read_ddl("wallet_ledger.sql").split(";"):
-        if stmt.strip():
+    for rel in ("security_rls.sql", "wallet_ledger.sql"):
+        for raw in _read_ddl(rel).split(";"):
+            stmt = raw.strip()
+            if not stmt:
+                continue
+            # skip comment-only fragments (SQL headers): psycopg2 refuses empty queries
+            if all(not ln.strip() or ln.strip().startswith("--") for ln in stmt.splitlines()):
+                continue
             op.execute(stmt)
 
 
