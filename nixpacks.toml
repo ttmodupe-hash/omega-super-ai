@@ -1,0 +1,13 @@
+# Nixpacks explicit Python pin - without this, Railway may select Python 3.13,
+# which has no psycopg2-binary 2.9.9 wheel (build fails compiling from source).
+# Verified 2026-09-18: engine boots clean on Python 3.12 (sandbox reproduction of
+# the Railway flow: pip install -r requirements.txt && bash start.sh, /v1/health -> 200).
+
+[phases.setup]
+nixPkgs = ["python312"]
+
+[phases.install]
+cmds = ["python -m pip install --upgrade pip", "pip install -r requirements.txt"]
+
+[start]
+cmd = "bash start.sh"
