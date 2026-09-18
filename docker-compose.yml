@@ -1,5 +1,10 @@
 version: '3.8'
 
+# Local full-stack dev compose. NOTE: the repo-root Dockerfile is the LAB
+# SANDBOX image (CMD sleep infinity, no app deps) - never use it for the
+# backend. Railway deploys via railway.toml (Nixpacks + start.sh); this file
+# mirrors that path for local use.
+
 services:
   redis:
     image: redis:7-alpine
@@ -12,10 +17,12 @@ services:
     restart: unless-stopped
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: python:3.11-slim
     container_name: luqi-backend
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: bash -c "pip install --no-cache-dir -r requirements.txt && bash start.sh"
     ports:
       - "8000:8000"
     environment:
@@ -24,30 +31,13 @@ services:
       - CORS_ORIGINS=http://localhost:3000,http://localhost:8080
       - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
       - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
-    volumes:
-      - ./data:/app/data
-      - ./uploads:/app/uploads
     depends_on:
       - redis
     restart: unless-stopped
 
-  collab:
-    build:
-      context: ./collab-service
-      dockerfile: Dockerfile
-    container_name: luqi-collab
-    ports:
-      - "4000:4000"
-    environment:
-      - NODE_ENV=production
-      - PORT=4000
-      - REDIS_URL=redis://redis:6379
-      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
-      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:8080
-    depends_on:
-      - redis
-    restart: unless-stopped
+  # REMOVED 2026-09-18: the 'collab' service built ./collab-service/Dockerfile,
+  # a directory that does not exist in this repo - 'docker compose up' failed
+  # at build. Re-add only when the collab-service source is committed.
 
   nginx:
     image: nginx:alpine
@@ -60,7 +50,6 @@ services:
       - ./web:/usr/share/nginx/html:ro
     depends_on:
       - backend
-      - collab
     restart: unless-stopped
 
 volumes:
