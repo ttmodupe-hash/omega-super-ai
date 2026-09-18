@@ -1,3 +1,4 @@
+
 """
 Companion Module — Omega Super AI v10
 
@@ -22,6 +23,34 @@ from datetime import datetime, timedelta
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+def _fetch_progress_rows(db_conn: Any, topic: str):
+    """Driver-aware progress query.
+
+    The ``?`` paramstyle only works on sqlite3. psycopg2/MySQLdb use ``%s``,
+    and SQLAlchemy connections need ``text()`` with named params. Pick the
+    right style from the connection type so progress tracking works on the
+    Postgres-first engine, not just local sqlite.
+    """
+    mod = type(db_conn).__module__.lower()
+    if "sqlalchemy" in mod:
+        from sqlalchemy import text
+        return db_conn.execute(
+            text(
+                "SELECT lesson_number, completed, completed_at, quiz_score "
+                "FROM learning_progress WHERE topic = :topic ORDER BY lesson_number"
+            ),
+            {"topic": topic},
+        ).fetchall()
+    placeholder = "?" if "sqlite" in mod else "%s"
+    cur = db_conn.cursor() if hasattr(db_conn, "cursor") else db_conn
+    res = cur.execute(
+        "SELECT lesson_number, completed, completed_at, quiz_score "
+        f"FROM learning_progress WHERE topic = {placeholder} ORDER BY lesson_number",
+        (topic,),
+    )
+    return res.fetchall()
 
 
 class Companion:
@@ -541,11 +570,7 @@ class Companion:
             }
 
         try:
-            rows = db_conn.execute(
-                "SELECT lesson_number, completed, completed_at, quiz_score "
-                "FROM learning_progress WHERE topic = ? ORDER BY lesson_number",
-                (topic,),
-            ).fetchall()
+            rows = _fetch_progress_rows(db_conn, topic)
         except Exception as exc:
             logger.error("Database query error: %s", exc)
             return {
