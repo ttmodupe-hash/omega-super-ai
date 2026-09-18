@@ -1,3 +1,4 @@
+
 """
 OMEGA-LUQI AI Unified Engine (core/main.py) v2.0.0
 Merged from the OMEGA AI baseline and the Project Bug Fixes stream:
@@ -23,7 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from .term_websocket import router as terminal_router
+from .term_websocket import router as terminal_router, terminal_manager, get_sandbox_manager
 from .kimi_gateway import router as kimi_router
 from .kimi_plugins import router as kimi_plugins_router
 from .action_engine import router as action_router
@@ -67,6 +68,7 @@ from .self_healing import router as self_healing_router
 from .automation_engine import automation_router
 from .voice_api import router as voice_router
 from .pedagogy_engine import pedagogy_router
+from .companion_engine import companion_router
 from .sovereign_core import sovereign_router
 from .integrity_engine import integrity_router
 from .universal_learning import universal_router
@@ -110,7 +112,7 @@ def init_db() -> None:
     try:
         from sqlalchemy import create_engine
         from .models import Base
-        from . import enterprise_models  # noqa: F401 - registers tables on shared Base
+        from . import enterprise_models, companion_models  # noqa: F401 - registers tables on shared Base
 
         engine = create_engine(DATABASE_URL, pool_pre_ping=True)
         from .sqlite_wal import configure_sqlite_engine
@@ -357,6 +359,7 @@ app.include_router(self_healing_router)
 app.include_router(automation_router)
 app.include_router(voice_router)
 app.include_router(pedagogy_router)
+app.include_router(companion_router)
 app.include_router(sovereign_router)
 app.include_router(integrity_router)
 app.include_router(universal_router)
