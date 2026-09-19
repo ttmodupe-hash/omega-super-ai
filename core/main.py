@@ -70,6 +70,7 @@ from .voice_api import router as voice_router
 from .pedagogy_engine import pedagogy_router
 from .companion_engine import companion_router
 from .stripe_payments import stripe_router
+from .finlit import router as finlit_router
 from .sovereign_core import sovereign_router
 from .integrity_engine import integrity_router
 from .universal_learning import universal_router
@@ -362,6 +363,7 @@ app.include_router(voice_router)
 app.include_router(pedagogy_router)
 app.include_router(companion_router)
 app.include_router(stripe_router)
+app.include_router(finlit_router)
 app.include_router(sovereign_router)
 app.include_router(integrity_router)
 app.include_router(universal_router)
