@@ -21,6 +21,9 @@ psycopg2-binary==2.9.9
 alembic==1.13.1
 PyMySQL==1.1.0            # only required when DATABASE_URL uses mysql+pymysql
 
+# Payments
+stripe==15.6.1           # Stripe provider (lazy-imported; engine boots without it)
+
 # Auth & session revocation (PyJWT is imported lazily - engine boots without it)
 PyJWT==2.8.0
 redis==5.0.3              # only required when STATE_BACKEND=redis
