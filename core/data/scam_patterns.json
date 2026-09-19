@@ -1,1 +1,128 @@
-scam_json
+{
+  "version": "1.0.0",
+  "updated": "2026-09-19",
+  "jurisdiction_focus": "ZAF",
+  "note": "Defensive detection patterns for the LUQI financial-literacy skill. Bump `version` on any pattern change; this file is the versioned source of truth (UNIFY-13).",
+  "patterns": [
+    {
+      "id": "ponzi-guaranteed-returns",
+      "name": "Ponzi / pyramid scheme",
+      "category": "investment_fraud",
+      "severity": 5,
+      "indicators": ["guaranteed returns", "guaranteed profit", "risk-free investment", "% per month", "% daily", "double your money", "recruit", "referral bonus", "downline", "passive income for life", "compound daily"],
+      "description": "Promises of high, fixed, or 'guaranteed' returns — especially monthly percentages or referral-based earnings. Paying old investors with new investors' money.",
+      "sa_example": "Mirror Trading International (MTI) and Africrypt — two of the largest crypto Ponzi collapses in history — were South African. Both promised steady monthly returns.",
+      "advice": "No legitimate investment guarantees returns. If returns depend on recruiting others, it is a pyramid scheme — illegal under the Consumer Protection Act. Check FSCA registration before investing a single rand."
+    },
+    {
+      "id": "advance-fee-fraud",
+      "name": "Advance-fee fraud (419)",
+      "category": "payment_fraud",
+      "severity": 4,
+      "indicators": ["processing fee", "clearance fee", "release fee", "transfer fee", "pay a small fee", "unlock your funds", "inheritance", "unclaimed funds", "lottery winnings", "you have won"],
+      "description": "You are told money is waiting (prize, inheritance, loan, refund) but you must first pay a fee to 'release' it. The money does not exist.",
+      "sa_example": "SMS or email claiming you won a lottery you never entered, or that an 'R500 000 inheritance' needs a R2 000 'clearance fee'.",
+      "advice": "Real institutions deduct fees from the payout — they never ask you to pay to receive money. Any upfront 'release fee' is a scam, 100% of the time."
+    },
+    {
+      "id": "phishing-smishing",
+      "name": "Phishing / smishing (fake bank or SARS messages)",
+      "category": "identity_theft",
+      "severity": 4,
+      "indicators": ["verify your account", "account will be suspended", "account has been compromised", "click the link", "confirm your details", "update your banking details", "unusual activity detected", "efiling refund", "e-filing refund", "sars refund"],
+      "description": "Messages impersonating banks, SARS, or courier companies with urgent links to 'verify' or 'unlock' your account. The link harvests your login and card details.",
+      "sa_example": "'SARS: You have a tax refund of R8 450. Click here to claim.' SARS never sends refund links by SMS — refunds are processed inside official eFiling.",
+      "advice": "Never click links in unsolicited SMS/WhatsApp/email about money. Open your banking app or type the official web address yourself. Banks and SARS never ask for your PIN, password, or OTP."
+    },
+    {
+      "id": "vishing-otp-theft",
+      "name": "Vishing — fake bank fraud department",
+      "category": "identity_theft",
+      "severity": 5,
+      "indicators": ["fraud department", "reverse the transaction", "stop the fraud", "read out the otp", "send us the otp", "one-time pin", "otp to cancel", "approve the reversal"],
+      "description": "A caller claims to be from your bank's fraud department and pressures you to read out an OTP 'to stop a fraudulent transaction'. The OTP actually authorises THEIR transaction.",
+      "sa_example": "Caller ID spoofed to look like your bank: 'We detected fraud — read us the OTP we just sent so we can block it.'",
+      "advice": "A bank will NEVER ask for an OTP, PIN, or password — the OTP is the criminal's key. Hang up and call the number on the back of your card."
+    },
+    {
+      "id": "whatsapp-investment-group",
+      "name": "WhatsApp / Telegram 'investment' groups",
+      "category": "investment_fraud",
+      "severity": 4,
+      "indicators": ["whatsapp group", "telegram group", "investment group", "trading signals", "forex mentor", "account manager", "profit screenshot", "withdrawal proof", "bitcoin investment", "crypto investment opportunity"],
+      "description": "Group chats full of fake members posting 'profit screenshots' and 'withdrawal proofs', run by a 'mentor' or 'account manager' who takes deposits and vanishes.",
+      "sa_example": "'Forex mentor' groups targeting stokvel members and church groups with screenshots of luxury cars and fake withdrawal receipts.",
+      "advice": "Screenshots prove nothing — they are trivial to fake. Real financial advisors are FSCA-licensed and do not recruit in WhatsApp groups. Never hand money to an 'account manager' found on social media."
+    },
+    {
+      "id": "pig-butchering-crypto",
+      "name": "Pig-butchering / fake crypto platform",
+      "category": "investment_fraud",
+      "severity": 5,
+      "indicators": ["trading platform", "withdrawal fee", "pay tax to withdraw", "deposit to withdraw", "account frozen", "margin call", "ai trading bot", "mining pool", "cloud mining", "usdt", "wallet address"],
+      "description": "A fake trading platform shows your 'balance' growing, but every withdrawal attempt demands another deposit — 'tax', 'fees', 'unfreeze'. The balance is fiction; only your deposits are real.",
+      "sa_example": "Victims 'invest' R5 000, watch the app show R40 000, then pay R8 000 'tax' to withdraw — and are told to pay again. This pattern is exploding in SA.",
+      "advice": "If you must PAY to withdraw YOUR money, it is a scam — full stop. Legitimate platforms deduct fees from the balance. Report to the FSCA and SAPS immediately; do not send 'one last payment'."
+    },
+    {
+      "id": "romance-scam",
+      "name": "Romance scam",
+      "category": "social_engineering",
+      "severity": 4,
+      "indicators": ["my love", "god-fearing", "working overseas", "oil rig", "military deployment", "customs fee", "emergency hospital", "plane ticket to visit", "send money via", "gift card"],
+      "description": "An online relationship (never met in person, always an excuse not to video call) that escalates to emergencies requiring money — medical bills, customs fees, plane tickets.",
+      "sa_example": "'Engineer on an oil rig' romances a victim for months, then needs R15 000 for 'customs' to ship a 'gift package'.",
+      "advice": "Never send money, gift cards, or crypto to someone you have not met in person. Reverse-image-search their photos. Talk to a trusted friend before sending anything — shame is the scammer's best tool."
+    },
+    {
+      "id": "job-scam",
+      "name": "Job / recruitment scam",
+      "category": "payment_fraud",
+      "severity": 3,
+      "indicators": ["pay for training", "registration fee", "uniform fee", "background check fee", "guaranteed job", "work from home and earn", "no experience needed earn", "whatsapp your cv", "interview fee"],
+      "description": "Fake job offers that require you to PAY first — for training, uniforms, background checks, or 'registration'. Real employers pay you; you never pay them.",
+      "sa_example": "'Learnership' WhatsApp messages asking R350 'registration' for a guaranteed Transnet/Eskom/mine job. These employers never recruit via WhatsApp.",
+      "advice": "Any job that asks for money upfront is fake — this is the single rule. Apply only through official company career portals. Verify 'learnerships' with the company directly."
+    },
+    {
+      "id": "illegal-loan-fee",
+      "name": "Loan scam / illegal upfront loan fees",
+      "category": "credit_fraud",
+      "severity": 4,
+      "indicators": ["blacklisted welcome", "bad credit approved", "guaranteed loan", "loan approved no credit check", "admin fee before", "insurance fee for your loan", "loan in 1 hour"],
+      "description": "'Guaranteed loans' for blacklisted borrowers that demand an 'admin' or 'insurance' fee before payout. Charging upfront fees for credit is illegal in South Africa.",
+      "sa_example": "SMS: 'R100 000 loan approved, blacklisted welcome. Pay R500 admin fee to release.' The NCA makes upfront loan fees illegal.",
+      "advice": "Under the National Credit Act, upfront fees before a loan payout are illegal — that alone proves the scam. Borrow only from NCR-registered credit providers; check registration at ncr.org.za."
+    },
+    {
+      "id": "marketplace-nondelivery",
+      "name": "Marketplace / goods non-delivery scam",
+      "category": "payment_fraud",
+      "severity": 3,
+      "indicators": ["deposit to secure", "pay before viewing", "courier it to you", "eft before delivery", "half now half on delivery", "sold out fast", "other buyers waiting", "car deposit"],
+      "description": "Goods (cars, puppies, electronics, rentals) advertised below market price with pressure to pay a deposit before viewing. The goods do not exist.",
+      "sa_example": "A 'bakkie' on Facebook Marketplace at half its value — 'pay R5 000 deposit, other buyers are waiting'. The photos are stolen from a real listing.",
+      "advice": "Never pay before seeing the item in person. Below-market price + urgency + deposit-before-viewing = scam. For cars, verify registration and VIN; meet at a police station safe-trade zone."
+    },
+    {
+      "id": "stokvel-fraud",
+      "name": "Stokvel / savings-club fraud",
+      "category": "investment_fraud",
+      "severity": 4,
+      "indicators": ["stokvel", "savings club", "grocery club", "investment club payout", "burial society bonus", "join our club and earn"],
+      "description": "Fake or hijacked savings clubs where the 'treasurer' disappears with the pooled money, or pyramid schemes dressed in stokvel language to exploit trust.",
+      "sa_example": "Fake 'grocery stokvels' on WhatsApp each December, and pyramid schemes calling themselves 'stokvels' where earnings depend on recruiting new members.",
+      "advice": "A real stokvel pays out members' own contributions in rotation — it cannot multiply money. If a 'stokvel' promises growth or needs recruits, it is a pyramid. Keep written constitutions, signatories, and bank-issued statements."
+    },
+    {
+      "id": "impersonation-authority",
+      "name": "Authority impersonation (police / SARS / court)",
+      "category": "social_engineering",
+      "severity": 4,
+      "indicators": ["warrant of arrest", "pay a fine immediately", "avoid arrest", "sars audit penalty", "court summons fee", "police clearance payment", "bail via eft"],
+      "description": "Calls or messages claiming you face arrest, fines, or an audit unless you pay immediately — often by EFT, voucher, or crypto. Authorities never collect fines this way.",
+      "sa_example": "'This is Sergeant X, a warrant is out for your arrest — pay the admission-of-guilt fine now by EFT.' SAPS never takes payment by phone.",
+      "advice": "Real fines are paid through official channels (court, AARTO, SARS eFiling) — never via a phone call. Hang up, look up the official number yourself, and verify."
+    }
+  ]
+}
