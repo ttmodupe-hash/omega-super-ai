@@ -46,5 +46,8 @@ jobs:
       - name: Adaptive learning engine (BKT, ZPD, bandwidth routing, nudges)
         run: python tests/verify_adaptive.py
 
+      - name: Task state store (memory + redis ledger, gate-path contract)
+        run: python tests/verify_state_store.py
+
       - name: Stripe provider (fail-closed, webhook, gate-locked settlement)
         run: python tests/verify_stripe.py
