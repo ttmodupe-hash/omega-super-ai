@@ -8,6 +8,7 @@ of credential handling to drift or break.
 
 Contract (preserved for all existing routes and the PWA):
   - missing KIMI_API_KEY  -> HTTPException 500 (fail-closed)
+  - budget hard-stop      -> HTTPException 429, NO upstream call made (fail-closed)
   - upstream non-200      -> HTTPException(status, "Kimi Engine Fault: ...")
   - network failure       -> requests.exceptions.RequestException (routes map to 503)
   - success               -> assistant content string
@@ -30,6 +31,22 @@ def chat_completion(system: str, user: str, *,
     if not kimi_key:
         raise HTTPException(status_code=500, detail="Kimi Core Integration Break: Access Token undefined.")
 
+    # Fail-closed cost circuit-breaker: checked BEFORE the upstream call so a
+    # tripped budget spends exactly $0.00 more. The 80% SMS alarm warns; this
+    # hard stop protects (see cost_telemetry.enforce_budget).
+    from .cost_telemetry import bump, maybe_alarm, enforce_budget
+    allowed, snap = enforce_budget()
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Cost circuit-breaker OPEN: estimated spend ${snap['estimated_spend_usd']} "
+                f"reached {snap['hard_stop_pct']}% of the ${snap['budget_usd']} monthly budget. "
+                "No upstream call was made. Raise MONTHLY_TOKEN_BUDGET_USD / "
+                "COST_HARD_STOP_PCT or wait for the next billing month."
+            ),
+        )
+
     payload: Dict[str, Any] = {
         "model": KIMI_MODEL,
         "messages": [
@@ -43,7 +60,6 @@ def chat_completion(system: str, user: str, *,
         payload["tools"] = tools
         payload["tool_choice"] = "auto"
 
-    from .cost_telemetry import bump, maybe_alarm
     bump("kimi", len(system) + len(user))
     res = requests.post(
         f"{KIMI_BASE_URL}/chat/completions",

@@ -4,11 +4,17 @@ OMEGA-LUQI Cost Telemetry - real counting + ESTIMATED spend vs budget.
 Estimation is labeled as such: chars/4 -> tokens, provider rates per M.
 Counts actual calls at the unified client + multipolar router. At 80% of
 MONTHLY_TOKEN_BUDGET_USD the real SMS gateway alerts (throttled once/day).
+
+HARD STOP (fail-closed): at COST_HARD_STOP_PCT (default 100) of budget,
+enforce_budget() flips closed and the unified client refuses NEW upstream
+calls with HTTP 429 BEFORE any money moves. The 80% alarm warns; the hard
+stop protects. Pre-revenue discipline: set MONTHLY_TOKEN_BUDGET_USD to a
+number you can actually afford (e.g. 10) - the breaker enforces it.
 """
 import os
 import threading
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 from fastapi import APIRouter, Depends
 
@@ -39,13 +45,25 @@ def telemetry() -> Dict[str, Any]:
     with _lock:
         snapshot = {k: dict(v) for k, v in _counts.items()}
     budget = float(os.getenv("MONTHLY_TOKEN_BUDGET_USD", "100"))
+    hard_stop = float(os.getenv("COST_HARD_STOP_PCT", "100"))
     spent = round(sum(v["est_cost_usd"] for v in snapshot.values()), 4)
     pct = round(spent / budget * 100, 1) if budget else 0.0
     return {"month": time.strftime("%Y-%m"), "budget_usd": budget,
             "estimated_spend_usd": spent, "pct_of_budget": pct,
             "alarm_threshold_pct": 80.0, "alarm_triggered": pct >= 80.0,
+            "hard_stop_pct": hard_stop, "hard_stop_triggered": pct >= hard_stop,
             "estimate_disclaimer": "chars/4 token estimate - reconcile with provider invoices",
             "by_provider": snapshot}
+
+
+def enforce_budget() -> Tuple[bool, Dict[str, Any]]:
+    """Fail-closed cost gate. Returns (call_allowed, telemetry_snapshot).
+
+    The ONLY thing this blocks is NEW upstream spend; reads, telemetry and
+    non-LLM routes are unaffected. Trips on the labeled estimate - by design
+    it errs on the side of stopping early, never late."""
+    t = telemetry()
+    return (not t["hard_stop_triggered"], t)
 
 
 def maybe_alarm() -> None:
