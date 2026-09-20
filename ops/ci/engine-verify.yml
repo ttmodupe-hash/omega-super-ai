@@ -1,0 +1,47 @@
+# ============================================================================
+# CI GATE — engine verification workflow
+#
+# ACTION REQUIRED (one-time, user-side): move this file to
+#     .github/workflows/engine-verify.yml
+# The automation token lacks the `workflow` OAuth scope, so GitHub rejects
+# pushes that create files under .github/workflows/ directly. The file is
+# complete and validated — only the location changes.
+# ============================================================================
+name: engine-verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install runtime deps (test-time only)
+        run: pip install fastapi "httpx<1" pydantic "SQLAlchemy==2.0.28" requests pyjwt stripe
+
+      - name: UNIFY-13 finlit + scam shield
+        run: python tests/verify_finlit.py
+
+      - name: UNIFY-16 reflexion stage
+        run: python tests/verify_reflexion.py
+
+      - name: UNIFY-11/10 citations + deep research
+        run: python tests/verify_research.py
+
+      - name: UNIFY-14 i18n layer
+        run: python tests/verify_i18n.py
+
+      - name: Prometheus observability
+        run: python tests/verify_prometheus.py
+
+      - name: Stripe provider (fail-closed, webhook, gate-locked settlement)
+        run: python tests/verify_stripe.py

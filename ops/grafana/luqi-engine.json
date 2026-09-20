@@ -1,0 +1,151 @@
+{
+  "uid": "luqi-engine",
+  "title": "Luqi Engine — Operations",
+  "description": "Engine-native observability from GET /metrics (Prometheus exposition). Every panel maps 1:1 to a real luqi_* metric — no synthetic data.",
+  "tags": ["luqi", "omega-super-ai"],
+  "timezone": "Africa/Johannesburg",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "templating": {"list": []},
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "30% Human Gate — Pending",
+      "description": "Tasks halted at the human-in-the-loop gate right now. Anything above 0 needs admin attention.",
+      "gridPos": {"h": 6, "w": 4, "x": 0, "y": 0},
+      "targets": [{"refId": "A", "expr": "luqi_gate_pending"}],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "red", "value": 1}
+          ]},
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "textMode": "value_and_name"}
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Uptime",
+      "description": "Engine process uptime (resets on deploy).",
+      "gridPos": {"h": 6, "w": 4, "x": 4, "y": 0},
+      "targets": [{"refId": "A", "expr": "luqi_uptime_seconds"}],
+      "fieldConfig": {"defaults": {"unit": "s", "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}}, "overrides": []},
+      "options": {"colorMode": "value", "graphMode": "none", "orientation": "auto", "textMode": "value"}
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Version",
+      "description": "Deployed engine version stamp.",
+      "gridPos": {"h": 6, "w": 4, "x": 8, "y": 0},
+      "targets": [{"refId": "A", "expr": "luqi_build_info", "legendFormat": "{{version}}"}],
+      "fieldConfig": {"defaults": {"thresholds": {"mode": "absolute", "steps": [{"color": "text", "value": null}]}}, "overrides": []},
+      "options": {"colorMode": "none", "graphMode": "none", "orientation": "auto", "textMode": "name"}
+    },
+    {
+      "id": 4,
+      "type": "gauge",
+      "title": "Token Budget — Estimated % Used",
+      "description": "chars/4 token ESTIMATE vs MONTHLY_TOKEN_BUDGET_USD. SMS alarm fires at 80%. Reconcile with provider invoices.",
+      "gridPos": {"h": 6, "w": 5, "x": 12, "y": 0},
+      "targets": [{"refId": "A", "expr": "luqi_cost_budget_pct"}],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "min": 0, "max": 100,
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "orange", "value": 60},
+            {"color": "red", "value": 80}
+          ]}
+        },
+        "overrides": []
+      },
+      "options": {"showThresholdLabels": false, "showThresholdMarkers": true}
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "LLM Calls (process lifetime)",
+      "description": "Unified-client calls counted by cost telemetry.",
+      "gridPos": {"h": 6, "w": 3, "x": 17, "y": 0},
+      "targets": [{"refId": "A", "expr": "sum(luqi_llm_calls_total)"}],
+      "fieldConfig": {"defaults": {"thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}}, "overrides": []},
+      "options": {"colorMode": "value", "graphMode": "area", "orientation": "auto", "textMode": "value"}
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Deployments (7d)",
+      "description": "DORA window — logged deploys.",
+      "gridPos": {"h": 6, "w": 2, "x": 20, "y": 0},
+      "targets": [{"refId": "A", "expr": "luqi_ops_deployments_7d"}],
+      "fieldConfig": {"defaults": {"thresholds": {"mode": "absolute", "steps": [{"color": "purple", "value": null}]}}, "overrides": []},
+      "options": {"colorMode": "value", "graphMode": "none", "orientation": "auto", "textMode": "value"}
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "Open Incidents (7d)",
+      "description": "DORA window — started but not resolved.",
+      "gridPos": {"h": 6, "w": 2, "x": 22, "y": 0},
+      "targets": [{"refId": "A", "expr": "luqi_ops_incidents_open"}],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {"mode": "absolute", "steps": [
+            {"color": "green", "value": null},
+            {"color": "red", "value": 1}
+          ]}
+        },
+        "overrides": []
+      },
+      "options": {"colorMode": "background", "graphMode": "none", "orientation": "auto", "textMode": "value"}
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Request Rate by Route",
+      "description": "Per-second rate by route family and status. Route labels are low-cardinality templates; unknown paths collapse to 'unmatched'.",
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 6},
+      "targets": [{"refId": "A", "expr": "sum by (route, status) (rate(luqi_http_requests_total[5m]))", "legendFormat": "{{route}} · {{status}}"}],
+      "fieldConfig": {"defaults": {"unit": "reqps", "custom": {"drawStyle": "line", "fillOpacity": 12, "stacking": {"mode": "normal"}}}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}, "tooltip": {"mode": "multi", "sort": "desc"}}
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Latency p95 by Route",
+      "description": "histogram_quantile over the middleware duration histogram.",
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 6},
+      "targets": [{"refId": "A", "expr": "histogram_quantile(0.95, sum by (le, route) (rate(luqi_http_request_duration_seconds_bucket[5m])))", "legendFormat": "p95 · {{route}}"}],
+      "fieldConfig": {"defaults": {"unit": "s", "custom": {"drawStyle": "line", "fillOpacity": 8}}, "overrides": []},
+      "options": {"legend": {"displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"]}, "tooltip": {"mode": "multi", "sort": "desc"}}
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Estimated LLM Spend by Provider",
+      "description": "ESTIMATED cost (chars/4), per provider, process lifetime counters.",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 15},
+      "targets": [{"refId": "A", "expr": "luqi_llm_est_cost_usd", "legendFormat": "{{provider}}"}],
+      "fieldConfig": {"defaults": {"unit": "currencyUSD", "custom": {"drawStyle": "line", "fillOpacity": 15, "stacking": {"mode": "normal"}}}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "LLM Call Rate by Provider",
+      "description": "Per-second unified-client call rate.",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 15},
+      "targets": [{"refId": "A", "expr": "sum by (provider) (rate(luqi_llm_calls_total[5m]))", "legendFormat": "{{provider}}"}],
+      "fieldConfig": {"defaults": {"custom": {"drawStyle": "line", "fillOpacity": 10}}, "overrides": []},
+      "options": {"legend": {"displayMode": "list", "placement": "bottom"}, "tooltip": {"mode": "multi"}}
+    }
+  ]
+}
