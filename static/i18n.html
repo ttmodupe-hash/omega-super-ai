@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luqi AI — i18n</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0;
+         background: #faf8f5; color: #2b2620; }
+  main { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem; }
+  .card { background: #fff; border: 1px solid #e8e2d8; border-radius: 12px;
+          padding: 1.5rem 1.75rem; box-shadow: 0 1px 3px rgba(60,50,30,.06); }
+  h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+  .tagline { color: #6b6153; margin: 0 0 1.5rem; }
+  .row { display: flex; justify-content: space-between; align-items: baseline;
+         padding: .55rem 0; border-bottom: 1px solid #f0ebe1; gap: 1rem; }
+  .row:last-child { border-bottom: 0; }
+  .key { font-size: .8rem; color: #8a7f6d; font-family: ui-monospace, monospace; }
+  .val { text-align: right; }
+  .badge { font-size: .68rem; padding: .1rem .45rem; border-radius: 999px;
+           margin-left: .5rem; white-space: nowrap; }
+  .ok  { background: #e8f3e9; color: #2e6b34; }
+  .fb  { background: #fdf0e2; color: #a05c17; }
+  .notice { background: #fdf0e2; border: 1px solid #f0dcc0; border-radius: 8px;
+            padding: .6rem .9rem; font-size: .85rem; color: #7a4b12; margin: 1rem 0; }
+  .meta { font-size: .78rem; color: #8a7f6d; margin-top: 1.25rem; }
+  select { font: inherit; padding: .3rem .5rem; border-radius: 8px; border: 1px solid #ddd3c2;
+           background: #fff; margin-bottom: 1.25rem; }
+  .footer { margin-top: 1.5rem; font-size: .85rem; color: #6b6153; }
+</style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1 id="app-name">Luqi AI</h1>
+    <p class="tagline" id="tagline"></p>
+
+    <label for="lang" class="key">Language / Ulimi / Taal:</label>
+    <select id="lang"></select>
+
+    <div id="notice" class="notice" hidden></div>
+    <div id="rows"></div>
+    <p class="footer" id="footer"></p>
+    <p class="meta" id="meta"></p>
+  </div>
+</main>
+<script>
+// End-to-end language negotiation on one page (UNIFY-14 acceptance):
+// browser language -> /v1/i18n/strings -> rendered with explicit fallback badges.
+const KEYS = ["status.operational","nav.health","nav.companion","nav.research",
+              "cta.ask_luqi","cta.check_scam","cta.deep_research","companion.greeting"];
+
+async function loadLangs() {
+  const r = await fetch("/v1/i18n/languages");
+  const d = await r.json();
+  const sel = document.getElementById("lang");
+  for (const l of d.languages) {
+    const o = document.createElement("option");
+    o.value = l.code;
+    o.textContent = `${l.native} (${l.code}) — ${l.catalogue_keys_translated}/${l.catalogue_keys_total}`;
+    sel.appendChild(o);
+  }
+  const browserLang = (navigator.language || "en").split("-")[0];
+  sel.value = d.languages.some(l => l.code === browserLang) ? browserLang : "en";
+  sel.onchange = () => render(sel.value);
+  render(sel.value);
+}
+
+async function render(lang) {
+  const r = await fetch(`/v1/i18n/strings?lang=${encodeURIComponent(lang)}`);
+  const d = await r.json();
+  document.getElementById("tagline").textContent = d.strings["app.tagline"].text;
+  document.getElementById("footer").textContent = d.strings["footer.sovereignty"].text;
+
+  const notice = document.getElementById("notice");
+  if (d.fallback_notice) { notice.textContent = d.fallback_notice; notice.hidden = false; }
+  else notice.hidden = true;
+
+  const rows = document.getElementById("rows");
+  rows.innerHTML = "";
+  for (const k of KEYS) {
+    const s = d.strings[k];
+    const div = document.createElement("div");
+    div.className = "row";
+    div.innerHTML = `<span class="key">${k}</span>
+      <span class="val">${s.text}<span class="badge ${s.fallback ? "fb" : "ok"}">
+      ${s.fallback ? "english fallback" : "translated"}</span></span>`;
+    rows.appendChild(div);
+  }
+  document.getElementById("meta").textContent =
+    `negotiation: ${d.negotiation.reason} · served=${d.negotiation.served}` +
+    ` · coverage ${d.coverage.keys_translated}/${d.coverage.keys_total}` +
+    (d.negotiation.fallback ? " · EXPLICIT ENGLISH FALLBACK" : "");
+}
+loadLangs();
+</script>
+</body>
+</html>
