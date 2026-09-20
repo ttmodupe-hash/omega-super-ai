@@ -74,6 +74,7 @@ from .finlit import router as finlit_router
 from .reflexion import router as reflexion_router
 from .citations import router as citations_router
 from .deep_research import router as deep_research_router
+from .i18n import router as i18n_router
 from .sovereign_core import sovereign_router
 from .integrity_engine import integrity_router
 from .universal_learning import universal_router
@@ -117,7 +118,7 @@ def init_db() -> None:
     try:
         from sqlalchemy import create_engine
         from .models import Base
-        from . import enterprise_models, companion_models, reflexion_models  # noqa: F401 - registers tables on shared Base
+        from . import enterprise_models, companion_models, reflexion_models, i18n_models  # noqa: F401 - registers tables on shared Base
 
         engine = create_engine(DATABASE_URL, pool_pre_ping=True)
         from .sqlite_wal import configure_sqlite_engine
@@ -370,6 +371,7 @@ app.include_router(finlit_router)
 app.include_router(reflexion_router)
 app.include_router(citations_router)
 app.include_router(deep_research_router)
+app.include_router(i18n_router)
 app.include_router(sovereign_router)
 app.include_router(integrity_router)
 app.include_router(universal_router)
