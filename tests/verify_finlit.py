@@ -42,7 +42,7 @@ check("unknown topic 404", r.status_code == 404)
 r = c.get("/v1/finlit/scam-patterns")
 check("scam-patterns 200", r.status_code == 200)
 body = r.json()
-check("catalogue version present", body["version"] == "1.1.0", f"v={body.get('version')}")
+check("catalogue version present", body["version"] == "1.1.1", f"v={body.get('version')}")
 check("12 patterns catalogued", len(body["patterns"]) == 12, f"got {len(body['patterns'])}")
 check("catalogue has disclaimer", body["disclaimer"] == DISCLAIMER)
 
@@ -145,4 +145,38 @@ r = c.post("/v1/finlit/scam-check", json={"text": "I saved R500 this month in my
 check("clean saver text still none", r["risk_level"] == "none", f"risk={r['risk_level']}")
 check("clean text questions empty", r["questions_to_ask"] == [])
 
-print("\nALL FINLIT CHECKS PASSED (11/10 groups + battery regression)")
+
+
+# 12. Advance-fee / 419 anatomy (gap found 2026-09-21 by the chat-UI live test:
+#     a canonical 419 message scored 0 - the catalogue missed its vocabulary).
+r = c.post("/v1/finlit/scam-check", json={"text":
+    "Hello my dear, I am a soldier stationed overseas. I have a consignment box "
+    "with $2 million for you. Just pay the courier fee of R1500 today via gift "
+    "cards to release it."})
+check("419 check 200", r.status_code == 200)
+b = r.json()
+ids = [m["pattern_id"] for m in b["matched_patterns"]]
+check("419 is high/critical", b["risk_level"] in ("high", "critical"),
+      f"got {b['risk_level']}/{b['risk_score']}")
+check("419 score >= 12", b["risk_score"] >= 12, f"got {b['risk_score']}")
+check("advance-fee-fraud matched", "advance-fee-fraud" in ids, str(ids))
+check("pay-to-release signal fired", "pay-to-release-demand" in ids, str(ids))
+check("gift-card signal fired", "gift-card-payment-demand" in ids, str(ids))
+check("419 questions non-empty", len(b["questions_to_ask"]) >= 1)
+
+r = c.post("/v1/finlit/scam-check", json={"text":
+    "My nephew wants a Steam voucher for his birthday."})
+check("birthday voucher clean", r.json()["risk_score"] == 0,
+      f"got {r.json()['risk_score']}")
+
+r = c.post("/v1/finlit/scam-check", json={"text":
+    "The courier delivered my Takealot parcel this morning, right on time."})
+check("legit delivery clean", r.json()["risk_score"] == 0,
+      f"got {r.json()['risk_score']}")
+
+r = c.post("/v1/finlit/scam-check", json={"text":
+    "SARS eFiling charged me a filing fee and the refund cleared yesterday."})
+check("legit fee mention clean", r.json()["risk_score"] == 0,
+      f"got {r.json()['risk_score']}")
+
+print("\nALL FINLIT CHECKS PASSED (12/12 groups)")

@@ -118,6 +118,11 @@ _PROMISE_RE = re.compile(
 _GUARANTEED_AMOUNT_RE = re.compile(
     r"\bguarantee(?:d|s)?\W+(?:\w+\W+){0,2}r\s?\d", re.I)
 _MONEY_RE = re.compile(r"\br\s?(\d[\d\s]*(?:\.\d{1,2})?)\b", re.I)
+_GIFT_CARD_RE = re.compile(r"\b(?:gift\s?cards?|itunes\s?cards?|steam\s?cards?|google\s?play\s?cards?)\b", re.I)
+_PAY_WORD_RE = re.compile(r"\b(?:pay|pays|paying|payment|send|transfer|deposit|eft)\b", re.I)
+_FEE_WORD_RE = re.compile(r"\b(?:fee|fees|charge|charges)\b", re.I)
+_RELEASE_WORD_RE = re.compile(
+    r"\b(?:release|unlock|clear|claim|deliver|delivery|courier|customs|consignment)\b", re.I)
 
 
 def _money_amounts(text: str) -> List[float]:
@@ -167,6 +172,38 @@ def _synthetic_hits(text: str) -> List[Dict[str, Any]]:
             "sa_example": "You are guaranteed R5000 by tomorrow.",
             "advice": "Ask for the FSCA licence number and the written risk disclosure. "
                       "If returns are 'guaranteed', there is nothing legitimate to verify.",
+        })
+    if _GIFT_CARD_RE.search(text) and _PAY_WORD_RE.search(text):
+        hits.append({
+            "pattern_id": "gift-card-payment-demand",
+            "name": "Gift-card payment demand (deterministic signal)",
+            "category": "payment_fraud",
+            "matched_indicators": ["gift-card wording together with pay/send wording"],
+            "weight": 4,
+            "description": "Payment is being demanded in gift cards. Gift cards are for "
+                           "gifts, not payments: no courier, customs office, bank, soldier, "
+                           "employer or government is ever paid in gift cards.",
+            "sa_example": "'Pay the courier fee of R1500 in iTunes or Steam cards to release your parcel.'",
+            "advice": "The moment anyone asks for gift-card codes, it is a scam - 100% of "
+                      "the time. Never read out card codes. Cut contact and report to SAFPS "
+                      "and your bank.",
+        })
+    if (_FEE_WORD_RE.search(text) and _RELEASE_WORD_RE.search(text)
+            and _PAY_WORD_RE.search(text) and amounts):
+        hits.append({
+            "pattern_id": "pay-to-release-demand",
+            "name": "Pay-to-release demand (deterministic signal)",
+            "category": "payment_fraud",
+            "matched_indicators": ["pay + fee + release/courier/customs wording around a rand amount"],
+            "weight": 5,
+            "description": "The text demands a rand-denominated fee to release, clear, claim "
+                           "or deliver something. This is the anatomy of advance-fee (419) "
+                           "fraud: real institutions deduct fees from the payout or bill the "
+                           "sender - they never ask the recipient to pay to receive.",
+            "sa_example": "Pay a R2000 'customs fee' to release your inheritance / consignment box.",
+            "advice": "Never pay to receive money. Verify any courier or customs claim "
+                      "directly with the real company on its official number - not the number "
+                      "the message gives you.",
         })
     return hits
 

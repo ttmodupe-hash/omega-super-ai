@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "updated": "2026-09-20",
+  "version": "1.1.1",
+  "updated": "2026-09-21",
   "jurisdiction_focus": "ZAF",
   "note": "Defensive detection patterns for the LUQI financial-literacy skill. Bump `version` on any pattern change; this file is the versioned source of truth (UNIFY-13).",
   "patterns": [
@@ -44,7 +44,11 @@
         "inheritance",
         "unclaimed funds",
         "lottery winnings",
-        "you have won"
+        "you have won",
+        "consignment box",
+        "diplomatic delivery",
+        "security keeping fee",
+        "fee to release"
       ],
       "description": "You are told money is waiting (prize, inheritance, loan, refund) but you must first pay a fee to 'release' it. The money does not exist.",
       "sa_example": "SMS or email claiming you won a lottery you never entered, or that an 'R500 000 inheritance' needs a R2 000 'clearance fee'.",
@@ -153,7 +157,10 @@
         "emergency hospital",
         "plane ticket to visit",
         "send money via",
-        "gift card"
+        "gift card",
+        "gift cards",
+        "soldier stationed",
+        "stationed overseas"
       ],
       "description": "An online relationship (never met in person, always an excuse not to video call) that escalates to emergencies requiring money — medical bills, customs fees, plane tickets.",
       "sa_example": "'Engineer on an oil rig' romances a victim for months, then needs R15 000 for 'customs' to ship a 'gift package'.",
