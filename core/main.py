@@ -76,6 +76,7 @@ from .citations import router as citations_router
 from .deep_research import router as deep_research_router
 from .i18n import router as i18n_router
 from .prometheus import router as prometheus_router, metrics_middleware
+from .adaptive_learning import router as adaptive_router
 from .sovereign_core import sovereign_router
 from .integrity_engine import integrity_router
 from .universal_learning import universal_router
@@ -133,6 +134,11 @@ def init_db() -> None:
         # Idle sandbox recycling: frees RAM from abandoned free-tier labs
         _asyncio.get_event_loop().create_task(
             reaper_loop(terminal_manager, get_sandbox_manager()))
+        # Adaptive-learning nudge daemon: GOVERNED — only when explicitly enabled
+        if os.getenv("LUQI_ADAPTIVE_NUDGES") == "1":
+            from .adaptive_learning import run_proactive_checkin_daemon
+            _asyncio.get_event_loop().create_task(run_proactive_checkin_daemon())
+            print("[OMEGA-LUQI] Adaptive nudge daemon enabled (LUQI_ADAPTIVE_NUDGES=1).")
     except Exception as e:
         print(f"[OMEGA-LUQI] Database layer unavailable ({e}). API routes remain active.")
 
@@ -378,6 +384,7 @@ app.include_router(citations_router)
 app.include_router(deep_research_router)
 app.include_router(i18n_router)
 app.include_router(prometheus_router)
+app.include_router(adaptive_router)
 app.include_router(sovereign_router)
 app.include_router(integrity_router)
 app.include_router(universal_router)
