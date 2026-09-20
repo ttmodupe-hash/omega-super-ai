@@ -4,7 +4,8 @@ OMEGA-LUQI Hybrid AI Front Door - deterministic guardrails + local ML intent.
 Architecture:
   Phase 1: compiled-regex guardrails - ZERO dependencies, always on.
   Phase 2: TF-IDF + LogisticRegression intent classifier (lazy sklearn).
-  Phase 3: TIERED confidence gates -> clarification fallback (no hallucination).
+  Phase 3: TIERED confidence gates -> guided escalation (no hallucination,
+           no static dead ends - KNOWLEDGE_GAP_POLICY v1.0.0, 2026-09-20).
            High-risk intents (credentials) require more confidence than
            low-risk ones (sentiment) - per-intent thresholds, env-overridable.
 
@@ -232,11 +233,30 @@ class HybridEngine:
 
         gate = override_threshold or INTENT_THRESHOLDS.get(prediction, self.default_threshold)
         if confidence < gate:
-            return {"engine_used": "Phase 3: Confidence Threshold Fallback",
+            # KNOWLEDGE_GAP_POLICY v1.0.0 (2026-09-20): no static dead ends.
+            # 1) Transparently signal the boundary (the honest number stays).
+            # 2) Offer the proactive research route instead of stopping.
+            # 3) Ask for user-guided context that actually refines retrieval.
+            # This front door stays zero-external-cost: research only fires
+            # when the caller opts in via /v1/deep-research (LLM synthesis is
+            # budget-guarded fail-closed at the unified Kimi client).
+            return {"engine_used": "Phase 3: Confidence Gate - Guided Escalation",
                     "confidence": round(confidence, 3), "required_gate": gate,
-                    "response": (f"Confidence ({round(confidence * 100, 1)}%) is below the "
-                                 f"required gate ({round(gate * 100, 1)}%). "
-                                 "Is it about credentials, campus GPS, network or engineering labs?"),
+                    "boundary": (f"Confidence ({round(confidence * 100, 1)}%) is below the "
+                                 f"required gate ({round(gate * 100, 1)}%) - I would rather "
+                                 "say so than guess."),
+                    "response": ("I am not confident enough to route this safely. "
+                                 "Two ways forward: guide me with a hint (what is it about - "
+                                 "credentials, campus GPS, network or engineering labs? name the "
+                                 "topic in your own words), or ask me to research it."),
+                    "escalation": {"available": True,
+                                   "route": "/v1/deep-research",
+                                   "method": "POST",
+                                   "payload_hint": {"query": "<your question>",
+                                                    "context_hint": "<your hint - optional>"},
+                                   "cost": ("retrieval is free (scholarly APIs); "
+                                            "LLM synthesis is budget-guarded"),
+                                   "opt_in_required": True},
                     "latency_ms": _ms(t0), "pii_redacted": pii_redacted}
 
         meta = INTENT_META[prediction]

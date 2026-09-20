@@ -16,6 +16,8 @@ House guardrails (binding):
   - Per-source isolation: one provider failing degrades, never breaks.
   - Synthesis modes: "llm" (Kimi, when key present), "extractive"
     (deterministic offline brief), "auto" (llm if key else extractive).
+  - Guided refinement (KNOWLEDGE_GAP_POLICY v1.0.0, 2026-09-20): an optional
+    context_hint is folded back into retrieval - no static dead ends.
 """
 import asyncio
 import os
@@ -39,9 +41,13 @@ _SYNTHESIS_TIMEOUT_S = 60
 
 # ── Query planning (deterministic) ───────────────────────────────────────
 
-def plan_query(query: str) -> Dict[str, Any]:
+def plan_query(query: str, context_hint: Optional[str] = None) -> Dict[str, Any]:
     """Decompose the question into retrieval sub-queries. Deterministic —
-    planning must be inspectable and cheap."""
+    planning must be inspectable and cheap.
+
+    KNOWLEDGE_GAP_POLICY v1.0.0 (2026-09-20) step 3: a user-supplied
+    context_hint folds into retrieval as its own sub-query, so guided
+    refinement actually changes what gets retrieved - never decorative."""
     sub_queries = [query.strip()]
     # Multi-part questions: each clause becomes its own retrieval target
     parts = [p.strip() for p in re.split(r"[?;]\s*", query) if len(p.strip()) > 25]
@@ -55,7 +61,12 @@ def plan_query(query: str) -> Dict[str, Any]:
     condensed = " ".join(condensed.replace("?", " ").split())
     if 10 < len(condensed) < len(query) and condensed not in sub_queries:
         sub_queries.append(condensed)
-    return {"original": query, "sub_queries": sub_queries[:4]}
+    if context_hint and context_hint.strip():
+        hint_q = f"{query.strip()} {context_hint.strip()}"[:300]
+        if hint_q not in sub_queries:
+            sub_queries.append(hint_q)
+    return {"original": query, "sub_queries": sub_queries[:5],
+            "guided": bool(context_hint and context_hint.strip())}
 
 
 # ── Retrieval (real providers, per-source isolation) ─────────────────────
@@ -200,13 +211,17 @@ class DeepResearchRequest(BaseModel):
     query: str = Field(min_length=3, max_length=2000)
     max_per_provider: int = Field(default=3, ge=1, le=_MAX_SOURCES_PER_PROVIDER)
     mode: str = Field(default="auto", pattern="^(auto|llm|extractive)$")
+    # KNOWLEDGE_GAP_POLICY v1.0.0 step 3: user-guided context. When the first
+    # retrieval misses, the user's own hint (synonyms, the local or technical
+    # name, a document title, a spelling variant) becomes a retrieval sub-query.
+    context_hint: Optional[str] = Field(None, max_length=1000)
 
 
 @router.post("")
 async def deep_research(req: DeepResearchRequest) -> Dict[str, Any]:
     """End-to-end: plan -> retrieve -> synthesize -> citation-contract wrap."""
     t0 = time.perf_counter()
-    plan = plan_query(req.query)
+    plan = plan_query(req.query, req.context_hint)
     retrieval = await retrieve(plan["sub_queries"], req.max_per_provider)
     citations = retrieval["citations"]
 
@@ -215,7 +230,10 @@ async def deep_research(req: DeepResearchRequest) -> Dict[str, Any]:
         wrapped = wrap_answer(
             "No verifiable sources could be retrieved for this query from the "
             "scholarly providers. I will not answer from memory alone — that is "
-            "how hallucinations happen. Try rephrasing, or a more specific query.",
+            "how hallucinations happen. This is not a dead end: call this "
+            "endpoint again with a context_hint (synonyms, the local or "
+            "technical name, a document title, a spelling variant) and your "
+            "hint is routed straight back into retrieval.",
             [],
         )
         return {
