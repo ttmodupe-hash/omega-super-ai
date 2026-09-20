@@ -75,6 +75,7 @@ from .reflexion import router as reflexion_router
 from .citations import router as citations_router
 from .deep_research import router as deep_research_router
 from .i18n import router as i18n_router
+from .prometheus import router as prometheus_router, metrics_middleware
 from .sovereign_core import sovereign_router
 from .integrity_engine import integrity_router
 from .universal_learning import universal_router
@@ -269,6 +270,10 @@ def _write_audit_record(request: Request, task, released_status) -> None:
 
 
 
+# ---------- Prometheus request telemetry (best-effort, never breaks business path) ----------
+app.middleware("http")(metrics_middleware)
+
+
 # ---------- Sovereign RLS Context Interceptor ----------
 @app.middleware("http")
 async def inject_sovereign_database_context(request, call_next):
@@ -372,6 +377,7 @@ app.include_router(reflexion_router)
 app.include_router(citations_router)
 app.include_router(deep_research_router)
 app.include_router(i18n_router)
+app.include_router(prometheus_router)
 app.include_router(sovereign_router)
 app.include_router(integrity_router)
 app.include_router(universal_router)
