@@ -43,6 +43,42 @@ _PATTERNS_FILE = Path(__file__).resolve().parent / "data" / "scam_patterns.json"
 # Severity-weighted risk bands (sum of matched pattern severities, plus repeat-hit bonus)
 _RISK_BANDS = ((0, "none"), (3, "low"), (7, "medium"), (12, "high"))  # >12 -> critical
 
+# Verification questions per fraud category (founder compliance spec:
+# every scam-check answer must leave the user with questions THEY can ask).
+_QUESTIONS_BY_CATEGORY = {
+    "investment_fraud": [
+        "Can they give an FSCA licence number you can check yourself at fsca.co.za?",
+        "If the returns are guaranteed, why do they need YOUR money?",
+        "Can you withdraw everything today - in writing?",
+    ],
+    "payment_fraud": [
+        "Why must money leave your account BEFORE you receive anything?",
+        "Which registered company receives this payment - check it on CIPC?",
+    ],
+    "identity_theft": [
+        "Did you request this OTP, link, or call? If not, who did?",
+        "Your bank will never ask for a PIN or OTP - so why is this person?",
+    ],
+    "social_engineering": [
+        "Have you ever met this person face to face?",
+        "What happens when you refuse to pay - do they pressure or guilt you?",
+    ],
+    "credit_fraud": [
+        "Is this lender registered with the NCR (ncr.org.za)?",
+        "Are they asking for fees BEFORE the loan pays out? That is illegal in SA.",
+    ],
+}
+
+
+def _questions_for(matches: List[Dict[str, Any]]) -> List[str]:
+    seen, out = set(), []
+    for m in matches:
+        for q in _QUESTIONS_BY_CATEGORY.get(m["category"], []):
+            if q not in seen:
+                seen.add(q)
+                out.append(q)
+    return out[:6]
+
 
 # ── Pattern catalogue (versioned, repo-resident) ─────────────────────────
 
@@ -58,9 +94,81 @@ def _load_patterns() -> Dict[str, Any]:
     return data
 
 
+# Token-gap tolerance: indicator words must appear in order with at most 2
+# words between them. Exact-adjacency matching scored the canonical WhatsApp
+# "guaranteed R5000" scam 0 because the literal phrase "guaranteed returns"
+# never appears (compliance battery finding, 2026-09-20).
+_MAX_INDICATOR_GAP_TOKENS = 2
+
+
 def _compile(indicator: str) -> re.Pattern:
-    # Phrase match, case-insensitive, tolerant of extra internal whitespace.
-    return re.compile(r"\b" + r"\s+".join(map(re.escape, indicator.split())) + r"\b", re.I)
+    gap = r"\W+(?:\w+\W+){0," + str(_MAX_INDICATOR_GAP_TOKENS) + r"}"
+    return re.compile(r"\b" + gap.join(map(re.escape, indicator.split())) + r"\b", re.I)
+
+
+# ── Deterministic money-promise signals (compliance battery fix, 2026-09-20) ──
+# Scams PROMISE multiplication ("invest R1000 today, get R5000 tomorrow") without
+# ever using a catalogue phrase. These deterministic signals catch the anatomy
+# of the promise itself. Each is explainable in one sentence.
+_URGENCY_RE = re.compile(
+    r"\b(today|tonight|tomorrow|now|immediately|instantly|overnight|"
+    r"within \d+ (?:hours?|days?)|in \d+ (?:hours?|days?))\b", re.I)
+_PROMISE_RE = re.compile(
+    r"\b(get|receive|earn|win|profit|returns?|payout|pay out|double|triple|flip)\b", re.I)
+_GUARANTEED_AMOUNT_RE = re.compile(
+    r"\bguarantee(?:d|s)?\W+(?:\w+\W+){0,2}r\s?\d", re.I)
+_MONEY_RE = re.compile(r"\br\s?(\d[\d\s]*(?:\.\d{1,2})?)\b", re.I)
+
+
+def _money_amounts(text: str) -> List[float]:
+    out = []
+    for m in _MONEY_RE.finditer(text):
+        try:
+            out.append(float(m.group(1).replace(" ", "")))
+        except ValueError:
+            continue
+    return out
+
+
+def _synthetic_hits(text: str) -> List[Dict[str, Any]]:
+    """Deterministic promise-anatomy detectors. Return synthetic match dicts
+    in the same shape as catalogue matches so scoring/banding stay single-path."""
+    hits = []
+    amounts = _money_amounts(text)
+    distinct = sorted({a for a in amounts if a > 0})
+    if (len(distinct) >= 2 and _URGENCY_RE.search(text) and _PROMISE_RE.search(text)
+            and max(distinct) >= 2 * min(distinct)):
+        hits.append({
+            "pattern_id": "money-multiplier-promise",
+            "name": "Money-multiplier promise (deterministic signal)",
+            "category": "investment_fraud",
+            "matched_indicators": [
+                f"amounts R{min(distinct):.0f} -> R{max(distinct):.0f}"
+                f" ({max(distinct) / min(distinct):.1f}x) with urgency + promise wording"],
+            "weight": 5,
+            "description": "The text promises money multiplying fast: at least a 2x jump "
+                           "between two rand amounts, with urgency and promise wording. "
+                           "No legitimate investment multiplies money on a deadline.",
+            "sa_example": "Invest R1000 today, get R5000 by tomorrow via a crypto bot.",
+            "advice": "No regulator-licensed product can promise this. Verify any provider "
+                      "at fsca.co.za before paying anything; guaranteed fast multiplication "
+                      "is the oldest fraud signal there is.",
+        })
+    if _GUARANTEED_AMOUNT_RE.search(text):
+        hits.append({
+            "pattern_id": "guaranteed-payout-claim",
+            "name": "'Guaranteed' attached to a money amount (deterministic signal)",
+            "category": "investment_fraud",
+            "matched_indicators": ["'guaranteed' within two words of a rand amount"],
+            "weight": 4,
+            "description": "The word 'guaranteed' is attached directly to a money amount. "
+                           "Real investments carry risk by law; attaching certainty to a "
+                           "sum of money is a fraud marker.",
+            "sa_example": "You are guaranteed R5000 by tomorrow.",
+            "advice": "Ask for the FSCA licence number and the written risk disclosure. "
+                      "If returns are 'guaranteed', there is nothing legitimate to verify.",
+        })
+    return hits
 
 
 # ── Education content (real, ZA-focused) ─────────────────────────────────
@@ -253,6 +361,9 @@ async def scam_check(req: ScamCheckRequest) -> Dict[str, Any]:
                 "sa_example": p["sa_example"],
                 "advice": p["advice"],
             })
+    for syn in _synthetic_hits(req.text):
+        score += syn["weight"]
+        matches.append(syn)
     matches.sort(key=lambda m: -m["weight"])
 
     risk = "critical"
@@ -274,6 +385,7 @@ async def scam_check(req: ScamCheckRequest) -> Dict[str, Any]:
         "risk_score": score,
         "verdict": verdict,
         "matched_patterns": matches,
+        "questions_to_ask": _questions_for(matches),
         "golden_rules": [
             "Guaranteed returns do not exist.",
             "Never share OTPs, PINs, or passwords.",

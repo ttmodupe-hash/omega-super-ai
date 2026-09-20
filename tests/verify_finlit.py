@@ -42,7 +42,7 @@ check("unknown topic 404", r.status_code == 404)
 r = c.get("/v1/finlit/scam-patterns")
 check("scam-patterns 200", r.status_code == 200)
 body = r.json()
-check("catalogue version present", body["version"] == "1.0.0", f"v={body.get('version')}")
+check("catalogue version present", body["version"] == "1.1.0", f"v={body.get('version')}")
 check("12 patterns catalogued", len(body["patterns"]) == 12, f"got {len(body['patterns'])}")
 check("catalogue has disclaimer", body["disclaimer"] == DISCLAIMER)
 
@@ -106,4 +106,43 @@ routes = [getattr(r, "path", "") for r in m.app.routes]
 check("main.py mounts /v1/finlit", any(p.startswith("/v1/finlit") for p in routes),
       str([p for p in routes if "finlit" in p]))
 
-print("\nALL FINLIT CHECKS PASSED (10/10 groups)")
+# 11. Compliance battery regression (2026-09-20): the founder's canonical
+# WhatsApp-crypto scam scored risk none/0 on exact-adjacency matching. It must
+# never happen again — the promise anatomy itself is now detected.
+canonical = ("Someone on WhatsApp said if I invest R1000 today, I will get "
+             "guaranteed R5000 by tomorrow via a crypto bot.")
+r = c.post("/v1/finlit/scam-check", json={"text": canonical, "context": "whatsapp message"})
+check("canonical scam-check 200", r.status_code == 200)
+body = r.json()
+check("canonical flagged high/critical", body["risk_level"] in ("high", "critical"),
+      f"risk={body['risk_level']} score={body['risk_score']}")
+check("canonical score >= 12", body["risk_score"] >= 12, f"score={body['risk_score']}")
+ids = [m["pattern_id"] for m in body["matched_patterns"]]
+check("multiplier promise detected", "money-multiplier-promise" in ids, str(ids))
+check("guaranteed-amount claim detected", "guaranteed-payout-claim" in ids, str(ids))
+check("crypto bot indicator matched", "pig-butchering-crypto" in ids, str(ids))
+check("questions_to_ask non-empty on match", len(body["questions_to_ask"]) > 0,
+      str(body["questions_to_ask"]))
+check("questions are actionable str", all(isinstance(q, str) and len(q) > 20 for q in body["questions_to_ask"]))
+
+# 11b. Singular + gapped variants (adjacency regression)
+variant = "This guaranteed return of R2000 is waiting, invest R500 now and get it back."
+r = c.post("/v1/finlit/scam-check", json={"text": variant}).json()
+check("singular 'guaranteed return' caught", r["risk_score"] > 0,
+      f"risk={r['risk_level']} score={r['risk_score']}")
+
+# 11c. False-positive guards: honest money talk must NOT be flagged
+news = "Bitcoin moved from about R1000 to over R50000 today, analysts say volatility continues."
+r = c.post("/v1/finlit/scam-check", json={"text": news}).json()
+check("price-news not flagged (no promise wording)", r["risk_score"] == 0,
+      f"risk={r['risk_level']} score={r['risk_score']}")
+stokvel = "Our stokvel meets on Saturday. Each member contributes R500 a month."
+r = c.post("/v1/finlit/scam-check", json={"text": stokvel}).json()
+check("honest stokvel chat not high/critical", r["risk_level"] in ("none", "low", "medium"),
+      f"risk={r['risk_level']} score={r['risk_score']}")
+check("no questions on clean text", body is not None)  # shape sanity
+r = c.post("/v1/finlit/scam-check", json={"text": "I saved R500 this month in my tax-free savings account."}).json()
+check("clean saver text still none", r["risk_level"] == "none", f"risk={r['risk_level']}")
+check("clean text questions empty", r["questions_to_ask"] == [])
+
+print("\nALL FINLIT CHECKS PASSED (11/10 groups + battery regression)")
