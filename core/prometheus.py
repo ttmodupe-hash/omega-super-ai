@@ -88,7 +88,7 @@ def _esc(value: str) -> str:
 
 def _line(name: str, value: float, labels: Optional[Dict[str, str]] = None) -> str:
     if labels:
-        inner = ",".join(f'{k}=\"{_esc(str(v))}\"' for k, v in labels.items())
+        inner = ",".join(f'{k}="{_esc(str(v))}"' for k, v in labels.items())
         return f"{name}{{{inner}}} {value}"
     return f"{name} {value}"
 
