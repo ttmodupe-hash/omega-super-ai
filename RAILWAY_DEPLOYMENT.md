@@ -12,6 +12,12 @@ deploys FROM GitHub - it cannot receive files any other way.
 Railway filesystems are EPHEMERAL - a SQLite file would vanish on every
 redeploy. The engine handles this natively: migrations + wallet + RLS all run
 on Postgres.
+
+**WARNING: it MUST be PostgreSQL - NOT MySQL.** The schema (RLS policies,
+wallet ledger, migrations) is PostgreSQL-specific. A MySQL service provides a
+mysql:// DATABASE_URL the engine cannot use. (Since v5.35.10 the engine
+survives this misconfiguration and boots degraded/DB-less - fix it anyway:
+delete the MySQL service, add PostgreSQL instead.)
 1. In the project canvas: **New -> Database -> Add PostgreSQL**.
 2. Open the Postgres service -> **Connect** tab -> copy the provided `DATABASE_URL`
    (it references `${{Postgres.DATABASE_URL}}` - Railway resolves it).
@@ -32,9 +38,13 @@ Tier 2/3 variables from deploy/.env.active_now.template - uncomment as features 
 
 ## Step 4 - Migrations: AUTOMATIC on deploy
 start.sh (invoked by railway.toml) runs `alembic upgrade head` on every boot
-before serving - idempotent, no manual step. With DATABASE_URL set and a
-migration failure, the deploy FAILS LOUDLY (by design). Without DATABASE_URL
-the engine boots DB-less and migrations are skipped with a log line.
+before serving - idempotent, no manual step. RESILIENCE LAW (v5.35.10):
+migrations only run against PostgreSQL URLs; a non-Postgres DATABASE_URL or a
+failed migration logs a loud WARNING and the engine boots DEGRADED (DB-less,
+routes active, wallet settlement fail-closed) instead of dying behind a proxy
+404. Watch the deploy logs for "[start] schema at head" - anything else means
+read the warning above it. Without DATABASE_URL the engine boots DB-less and
+migrations are skipped with a log line.
 
 ## Step 5 - Verify
 1. Service -> **Settings -> Generate Domain** (gives https://<project>.up.railway.app).

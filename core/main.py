@@ -89,7 +89,7 @@ from .main_types import TaskStatus, LuqiState
 from .state_store import get_state_store
 from .kimi_gateway import KIMI_MODEL
 
-app = FastAPI(title="OMEGA-Luqi Unified AI Sovereign Engine", version="5.35.9")
+app = FastAPI(title="OMEGA-Luqi Unified AI Sovereign Engine", version="5.35.10")
 
 # ---------- CORS for distributed African educational nodes ----------
 # NOTE: allow_origins=["*"] combined with allow_credentials=True is rejected by
@@ -157,7 +157,7 @@ STATE_DB = get_state_store()  # memory by default; redis when STATE_BACKEND=redi
 # ---------- API Routes ----------
 @app.get("/v1/health")
 async def health():
-    return {"service": "omega-luqi-ai", "status": "operational", "version": "5.35.9"}
+    return {"service": "omega-luqi-ai", "status": "operational", "version": "5.35.10"}
 
 
 @app.post("/v1/agent/execute", response_model=LuqiState)
