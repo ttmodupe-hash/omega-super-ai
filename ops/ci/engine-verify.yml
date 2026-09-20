@@ -43,5 +43,8 @@ jobs:
       - name: Prometheus observability
         run: python tests/verify_prometheus.py
 
+      - name: Adaptive learning engine (BKT, ZPD, bandwidth routing, nudges)
+        run: python tests/verify_adaptive.py
+
       - name: Stripe provider (fail-closed, webhook, gate-locked settlement)
         run: python tests/verify_stripe.py
