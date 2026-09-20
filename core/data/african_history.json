@@ -1,0 +1,415 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-21",
+  "description": "LUQI African History Archive — curated, sourced, deterministic. Every entry carries verifiable references; contested points are stated as debates, not settled fact.",
+  "categories": [
+    "civilizations",
+    "heritage",
+    "knowledge",
+    "leaders",
+    "liberation",
+    "resistance",
+    "turning points"
+  ],
+  "regions": [
+    "Central Africa",
+    "East Africa",
+    "Horn of Africa",
+    "Nile Valley",
+    "Northeast Africa",
+    "Southern Africa",
+    "West Africa"
+  ],
+  "entries": [
+    {
+      "id": "kush-meroe",
+      "title": "Kingdom of Kush and Meroe",
+      "category": "civilizations",
+      "region": "Northeast Africa",
+      "start_year": -1070,
+      "period": "c. 1070 BCE-350 CE",
+      "summary": "South of Egypt, in what is now Sudan, the Kingdom of Kush ruled the upper Nile for more than a thousand years — first from Napata, then from Meroe. Meroe became a major iron-working centre and built more pyramids than Egypt itself (over 200 survive at Meroe alone), developed its own script (Meroitic, still only partly deciphered), and traded with the Mediterranean, Arabia and sub-Saharan Africa. At its height Meroe's rulers traded gold, ivory and enslaved captives for Mediterranean luxury goods, and its queens — the Kandakes — held power in their own right, one of them reputedly facing down the armies of Augustus.",
+      "significance": "Kush is the proof against the myth that Africa south of the Sahara had no early states: it was a literate, industrial, monumental civilisation contemporary with Greece and Rome.",
+      "sources": [
+        "UNESCO World Heritage List — Archaeological Sites of the Island of Meroe",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. II",
+        "Encyclopaedia Britannica — 'Meroe'"
+      ]
+    },
+    {
+      "id": "kemet-25th-dynasty",
+      "title": "The Kushite pharaohs — Egypt's 25th Dynasty",
+      "category": "civilizations",
+      "region": "Nile Valley",
+      "start_year": -744,
+      "period": "c. 744-656 BCE",
+      "summary": "Around 744 BCE the Kushite king Piye marched north and conquered Egypt itself. For nearly a century Kushite rulers — Piye, Shabaka, Taharqa — sat on the throne of the pharaohs as the 25th Dynasty, restoring temples and reviving pyramid burial. Taharqa's reign ended under Assyrian invasion, and the dynasty withdrew to Kush. The Kushite court saw itself not as foreign conqueror but as restorer of Egypt's own oldest traditions, and its kings were buried at el-Kurru and Nuri under steep pyramids that prefigured Meroe's later fields.",
+      "significance": "African rulers from the south governed the most famous civilisation of the ancient world — a chapter of Nile history long minimised in popular accounts.",
+      "sources": [
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. II",
+        "Encyclopaedia Britannica — 'Taharqa' and 'Twenty-fifth Dynasty'",
+        "Museum of Fine Arts, Boston — Nubia collection (largest outside Sudan)"
+      ]
+    },
+    {
+      "id": "aksum",
+      "title": "Kingdom of Aksum",
+      "category": "civilizations",
+      "region": "Horn of Africa",
+      "start_year": 100,
+      "period": "c. 100-940 CE",
+      "summary": "From its highland capital in what is now Ethiopia and Eritrea, Aksum controlled Red Sea trade between the Roman world and India. It minted its own gold, silver and bronze coinage, erected carved granite stelae weighing hundreds of tonnes, and under King Ezana (c. 330s) adopted Christianity — among the earliest states anywhere to do so. The 9th-century Persian writer Mani reportedly counted Aksum among the great kingdoms of the world.",
+      "significance": "Aksum anchored African statehood and Christianity in the Horn for centuries, and its successor traditions shape Ethiopian identity to this day.",
+      "sources": [
+        "UNESCO World Heritage List — Aksum",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. II",
+        "Encyclopaedia Britannica — 'Aksum' and 'Ezana'"
+      ]
+    },
+    {
+      "id": "mapungubwe",
+      "title": "Mapungubwe — Southern Africa's first kingdom",
+      "category": "civilizations",
+      "region": "Southern Africa",
+      "start_year": 1075,
+      "period": "c. 1075-1220 CE",
+      "summary": "At the meeting of the Limpopo and Shashe rivers, a stratified kingdom grew rich on cattle, ivory and gold traded to the Swahili coast. Its elite were buried on a flat-topped hill with gold-work — including the famous gold rhinoceros figurine — the oldest known gold sculpture in Southern Africa. Mapungubwe was abandoned around 1220, its people and trade networks shifting north to Great Zimbabwe. Excavated in the 1930s, its finds were long kept from public view under apartheid-era discomfort with black achievement, but today the gold rhinoceros anchors a UNESCO-listed cultural landscape.",
+      "significance": "Mapungubwe shows that complex, wealthy states existed in South Africa centuries before European colonisation — its golden rhino has become a national symbol (the Order of Mapungubwe is South Africa's highest honour).",
+      "sources": [
+        "UNESCO World Heritage List — Mapungubwe Cultural Landscape",
+        "Mapungubwe Collection, University of Pretoria Museums",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. IV"
+      ]
+    },
+    {
+      "id": "great-zimbabwe",
+      "title": "Great Zimbabwe",
+      "category": "civilizations",
+      "region": "Southern Africa",
+      "start_year": 1100,
+      "period": "c. 1100-1450 CE",
+      "summary": "Great Zimbabwe was the capital of a Shona kingdom whose stone walls — built without mortar, the Great Enclosure wall over 250 metres around — remain the largest ancient structures in sub-Saharan Africa. Its wealth came from gold and ivory traded through Sofala to the Indian Ocean world; Chinese porcelain and Arab glass excavated there prove the reach. The country's modern name comes from it: 'dzimba dza mabwe', houses of stone. Colonial-era writers long refused to credit Africans with building it — archaeology settled the question decisively.",
+      "significance": "It is the monument that refutes the colonial fiction of a 'stateless' Africa — and the reason a nation proudly carries a ruin's name.",
+      "sources": [
+        "UNESCO World Heritage List — Great Zimbabwe National Monument",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. IV",
+        "Encyclopaedia Britannica — 'Great Zimbabwe'"
+      ]
+    },
+    {
+      "id": "benin-kingdom",
+      "title": "Kingdom of Benin and the Bronzes",
+      "category": "civilizations",
+      "region": "West Africa",
+      "start_year": 1180,
+      "period": "c. 1180-1897 CE",
+      "summary": "The Edo kingdom of Benin (in what is now southern Nigeria — not the modern country of Benin) was governed by the Oba from a capital whose walls and moats were among the largest earthworks ever built. Its guild artists cast the 'Benin Bronzes' — thousands of brass plaques and heads recording court life. In 1897 a British punitive expedition destroyed Benin City and looted the bronzes into museums worldwide. Nigeria has formally demanded their return, and restitutions have begun — Germany transferred ownership of over a thousand in 2022, and returns have come from Cambridge, the Smithsonian and others.",
+      "significance": "The bronzes are both supreme African art and the most visible test case of the global restitution movement.",
+      "sources": [
+        "Encyclopaedia Britannica — 'Benin Bronzes' and 'Kingdom of Benin'",
+        "Digital Benin project (digital-benin.org) — catalogue of dispersed objects",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. V"
+      ]
+    },
+    {
+      "id": "mali-empire",
+      "title": "Mali Empire and Mansa Musa",
+      "category": "civilizations",
+      "region": "West Africa",
+      "start_year": 1235,
+      "period": "c. 1235-1600 CE",
+      "summary": "Founded by Sundiata Keita after his victory at Kirina (c. 1235), Mali ruled the western Sudan's gold fields and trade routes for three centuries. Under Mansa Musa (r. c. 1312-1337) it reached its peak: his 1324 pilgrimage to Mecca moved through Cairo with such quantities of gold that, the chronicler al-Umari recorded, its price in the city was depressed for years. Musa returned with scholars and an architect, and built Timbuktu's great Djinguereber mosque.",
+      "significance": "Mali put West Africa at the centre of the medieval world economy — the Catalan Atlas of 1375 shows Mansa Musa holding a gold nugget as the image of African wealth.",
+      "sources": [
+        "Al-Umari, Masalik al-Absar (contemporary Cairo account of the 1324 hajj)",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. IV",
+        "Encyclopaedia Britannica — 'Mali empire' and 'Mansa Musa'"
+      ]
+    },
+    {
+      "id": "timbuktu-sankore",
+      "title": "Timbuktu and the Sankore scholars",
+      "category": "knowledge",
+      "region": "West Africa",
+      "start_year": 1300,
+      "period": "c. 1300-1591 CE",
+      "summary": "At the Niger's bend, Timbuktu grew from a Tuareg camp into the intellectual capital of the western Sudan. Around the Sankore, Djinguereber and Sidi Yahya mosques gathered a university community — jurists, astronomers, physicians — in a city where, travellers reported, the book trade was the most profitable business. Hundreds of thousands of Arabic and Ajami manuscripts survive, held today by families and institutes such as the Ahmed Baba Institute, and were famously smuggled to safety when extremists occupied the city in 2012.",
+      "significance": "Timbuktu is the standing answer to the claim that Africa's past is only oral: its libraries prove a centuries-old African written scholarly tradition.",
+      "sources": [
+        "Tombouctou Manuscripts Project, University of Cape Town",
+        "Ahmed Baba Institute (CEDRAB), Timbuktu",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vols. IV-V"
+      ]
+    },
+    {
+      "id": "kongo",
+      "title": "Kingdom of Kongo",
+      "category": "civilizations",
+      "region": "Central Africa",
+      "start_year": 1390,
+      "period": "c. 1390-1914",
+      "summary": "The Kongo kingdom — spanning parts of today's Angola, the Congos and Gabon — was already a centralised state when Portuguese ships arrived in 1483. Its king Nzinga a Nkuwu baptised as Joao I in 1491, and his son Afonso I (r. 1506-1543) built a literate Christian court whose surviving letters to the Portuguese crown protest, with growing anger, the slave traders kidnapping his people. The kingdom later fractured under slaving pressure and civil war, though it endured in some form into the 20th century.",
+      "significance": "Kongo's history — diplomacy, literacy, and an early African protest against the slave trade in the king's own hand — is one of the best-documented African-European encounters.",
+      "sources": [
+        "The surviving letters of Afonso I to the Portuguese crown (early 16th c.)",
+        "Portuguese royal chronicles of the contact era (Rui de Pina, Joao de Barros)",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. V"
+      ]
+    },
+    {
+      "id": "songhai",
+      "title": "Songhai Empire",
+      "category": "civilizations",
+      "region": "West Africa",
+      "start_year": 1464,
+      "period": "c. 1464-1591",
+      "summary": "Under Sunni Ali (r. 1464-1492) and then Askia Muhammad (r. 1493-1528), Songhai took over Mali's western Sudanese heartland and became one of the largest states in African history, controlling Timbuktu, Jenne and the Niger bend. Askia Muhammad standardised weights and measures, expanded learning, and organised the empire into provinces with appointed governors. In 1591 a Moroccan army with firearms crossed the Sahara and shattered Songhai at Tondibi.",
+      "significance": "Songhai's fall shows both the scale of West African statecraft and how gunpowder weapons redrew the continent's political map.",
+      "sources": [
+        "Tarikh al-Sudan and Tarikh al-Fattash (Timbuktu chronicles, 17th c.)",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. V",
+        "Encyclopaedia Britannica — 'Songhai empire'"
+      ]
+    },
+    {
+      "id": "queen-nzinga",
+      "title": "Queen Nzinga of Ndongo and Matamba",
+      "category": "leaders",
+      "region": "Central Africa",
+      "start_year": 1583,
+      "period": "c. 1583-1663",
+      "summary": "Nzinga Mbande fought Portugal for forty years. Sent to negotiate in Luanda in 1622 — where, the often-told story goes, offered no chair, she had an attendant form a seat so she could treat with the governor as an equal — she later ruled Ndongo and then Matamba, allied with the Dutch, sheltered runaway slaves, and waged guerrilla war into her sixties. She died in 1663 having kept her kingdoms uncolonised in her lifetime; Angola honours her as a national hero.",
+      "significance": "Nzinga is among history's most persistent anti-colonial strategists — a woman who out-generalled a European empire for decades.",
+      "sources": [
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. V",
+        "Encyclopaedia Britannica — 'Nzinga'",
+        "Linda Heywood, 'Njinga of Angola' (2017) — modern scholarly biography"
+      ]
+    },
+    {
+      "id": "shaka-zulu",
+      "title": "Shaka and the rise of the Zulu kingdom",
+      "category": "leaders",
+      "region": "Southern Africa",
+      "start_year": 1787,
+      "period": "c. 1787-1828",
+      "summary": "Shaka kaSenzangakhona transformed a small chiefdom into southern Africa's most formidable kingdom in barely a decade. He reorganised regiments by age rather than clan, drilled close-quarters tactics around the short stabbing spear (iklwa) and the 'bull's horns' encirclement, and built a state whose military and administrative model outlasted him. His rule was also violent and exacting; in 1828 he was assassinated by his half-brothers Dingane and Mhlangana.",
+      "significance": "Shaka's state-building reshaped the entire subcontinent's politics — the Zulu kingdom he forged would later humble the British Empire at Isandlwana.",
+      "sources": [
+        "The James Stuart Archive — recorded Zulu oral testimony (UKZN)",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. VI",
+        "Encyclopaedia Britannica — 'Shaka'"
+      ]
+    },
+    {
+      "id": "mfecane",
+      "title": "The Mfecane / Difaqane — and the historians' debate",
+      "category": "turning points",
+      "region": "Southern Africa",
+      "start_year": 1815,
+      "period": "c. 1815-1840",
+      "summary": "In the early 19th century, warfare, migration and state formation convulsed southern Africa: new kingdoms rose (the Zulu, the Ndebele of Mzilikazi, the Sotho of Moshoeshoe, the Swazi), old ones shattered, and populations shifted across the interior. Historians still argue over causes and scale — competition for trade, environmental stress, and the Zulu expansion all feature, and some scholars caution against colonial-era exaggerations that painted the interior as 'empty' to justify land seizure.",
+      "significance": "The debate itself is the lesson: African history is a living scholarly field, and who tells it — and why — matters.",
+      "sources": [
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. VI",
+        "Julian Cobbing and the 'Mfecane debate' in South African historiography",
+        "Encyclopaedia Britannica — 'Mfecane'"
+      ]
+    },
+    {
+      "id": "goree",
+      "title": "Goree Island and the memory of the slave trade",
+      "category": "heritage",
+      "region": "West Africa",
+      "start_year": 1450,
+      "period": "15th-19th centuries (memorial today)",
+      "summary": "Off Dakar, Senegal, Goree Island was for centuries a waypoint of the Atlantic slave trade; its 'House of Slaves' and Door of No Return are places of pilgrimage for the African diaspora. Historians caution that Goree's actual share of the trade was smaller than memory suggests — most enslaved Africans embarked from larger mainland ports — but as a symbol it concentrates the memory of the roughly 12.5 million Africans forced across the Atlantic. UNESCO listed the island in 1978.",
+      "significance": "Goree teaches two things at once: the scale of the crime, and that honest memory must stay bigger than any single site.",
+      "sources": [
+        "UNESCO World Heritage List — Island of Goree (1978)",
+        "The Trans-Atlantic Slave Trade Database (slavevoyages.org)",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. V"
+      ]
+    },
+    {
+      "id": "isandlwana",
+      "title": "Isandlwana, 1879",
+      "category": "resistance",
+      "region": "Southern Africa",
+      "start_year": 1879,
+      "period": "22 January 1879",
+      "summary": "When Britain invaded the Zulu kingdom in January 1879, a Zulu army of some 20,000 under Ntshingwayo kaMahole attacked the British camp at Isandlwana and destroyed the central column — about 1,300 imperial and colonial troops killed, one of the worst defeats ever inflicted on a modern European army by an African force without firearms parity. The same day a small garrison famously held Rorke's Drift. Britain sent reinforcements and crushed the kingdom by July at Ulundi, but Isandlwana was never forgotten.",
+      "significance": "Isandlwana proved African armies could defeat industrial empires in open battle — and it echoes in every later resistance movement.",
+      "sources": [
+        "Encyclopaedia Britannica — 'Battle of Isandlwana'",
+        "Ian Knight, 'Isandlwana 1879' — standard modern battle study",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. VII"
+      ]
+    },
+    {
+      "id": "adwa",
+      "title": "The Battle of Adwa, 1896",
+      "category": "resistance",
+      "region": "Horn of Africa",
+      "start_year": 1896,
+      "period": "1 March 1896",
+      "summary": "At Adwa in the Tigray highlands, Emperor Menelik II of Ethiopia — with Empress Taytu and a coalition of regional rulers — fielded perhaps 100,000 fighters and annihilated an invading Italian army in a single day. Italy had tried to convert a treaty dispute (the Italian text of the Treaty of Wuchale claimed a protectorate; the Amharic text did not) into conquest. Adwa kept Ethiopia independent through the entire Scramble for Africa, and Ethiopia's flag and victory became symbols claimed later by Pan-African movements worldwide.",
+      "significance": "Adwa is the decisive counter-proof to the myth of inevitable conquest: an African empire read the contract, armed itself, and won.",
+      "sources": [
+        "Encyclopaedia Britannica — 'Battle of Adwa' and 'Treaty of Wuchale'",
+        "Raymond Jonas, 'The Battle of Adwa' (2011)",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. VII"
+      ]
+    },
+    {
+      "id": "yaa-asantewaa",
+      "title": "Yaa Asantewaa and the War of the Golden Stool",
+      "category": "resistance",
+      "region": "West Africa",
+      "start_year": 1900,
+      "period": "1900-1901",
+      "summary": "When the British governor of the Gold Coast demanded to sit on the Golden Stool — the sacred soul of the Asante nation — the queen mother of Edweso, Yaa Asantewaa, then around sixty, rallied the chiefs: if the men of Asante would not fight, the women would. She led a rising that besieged the British fort in Kumasi for months before reinforcements broke it; she was exiled to the Seychelles and died there in 1921. The Golden Stool was never captured.",
+      "significance": "Her stand made her Ghana's enduring emblem of courage — and showed colonial conquest was contested at every step, often led by women.",
+      "sources": [
+        "Encyclopaedia Britannica — 'Yaa Asantewaa'",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. VII",
+        "Manhyia Palace Museum, Kumasi — Asante royal collections"
+      ]
+    },
+    {
+      "id": "maji-maji",
+      "title": "The Maji Maji rebellion",
+      "category": "resistance",
+      "region": "East Africa",
+      "start_year": 1905,
+      "period": "1905-1907",
+      "summary": "In German East Africa (today's Tanzania), forced cotton labour and brutal administration drove communities across the south into a vast uprising. A spirit medium, Kinjikitile Ngwale, distributed 'maji' — sacred water said to turn German bullets to water — giving a shared sacred purpose to peoples who had never acted as one. German machine guns and a scorched-earth famine policy crushed the rising; estimates of the dead, mostly from hunger, run into the hundreds of thousands.",
+      "significance": "Maji Maji was among the first mass inter-ethnic resistances to colonialism — a precursor of the national unity that later won independence.",
+      "sources": [
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. VII",
+        "Encyclopaedia Britannica — 'Maji Maji rebellion'",
+        "John Iliffe, 'A Modern History of Tanganyika' (1979)"
+      ]
+    },
+    {
+      "id": "haile-selassie",
+      "title": "Haile Selassie — the League speech and the OAU",
+      "category": "leaders",
+      "region": "Horn of Africa",
+      "start_year": 1930,
+      "period": "r. 1930-1974",
+      "summary": "Crowned emperor of Ethiopia in 1930, Haile Selassie was driven into exile by Mussolini's invasion in 1935. In 1936 he stood before the League of Nations in Geneva and warned: 'It is us today. It will be you tomorrow' — the League failed, and within years Europe was at war. He returned with liberation in 1941, modernised the state, and in 1963 hosted the founding of the Organisation of African Unity in Addis Ababa, which remains the seat of the African Union. He was deposed in 1974 and died the following year.",
+      "significance": "He carried Ethiopia's independence into a second century and made Addis Ababa the diplomatic capital of Africa.",
+      "sources": [
+        "League of Nations records — Haile Selassie's 1936 address",
+        "OAU Charter, Addis Ababa, 1963",
+        "Encyclopaedia Britannica — 'Haile Selassie I'"
+      ]
+    },
+    {
+      "id": "ghana-independence",
+      "title": "Ghana's independence, 1957",
+      "category": "liberation",
+      "region": "West Africa",
+      "start_year": 1957,
+      "period": "6 March 1957",
+      "summary": "Kwame Nkrumah's Convention People's Party won self-government step by step until, at midnight on 6 March 1957, the Gold Coast became Ghana — the first sub-Saharan African colony to win independence. Nkrumah declared the independence of Ghana 'meaningless unless it is linked up with the total liberation of the African continent', and Accra became a headquarters for freedom movements across Africa. He named the new nation after the medieval empire of Ghana (Wagadu), tying the modern state to ancient African glory.",
+      "significance": "1957 broke the spell: within a decade most of Africa was free, and the decade's wave started here.",
+      "sources": [
+        "Encyclopaedia Britannica — 'Kwame Nkrumah' and 'Ghana — History'",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. VIII",
+        "Nkrumah, 'Ghana: The Autobiography of Kwame Nkrumah' (1957)"
+      ]
+    },
+    {
+      "id": "apartheid-laws",
+      "title": "Apartheid's legal machine, 1948-1991",
+      "category": "turning points",
+      "region": "Southern Africa",
+      "start_year": 1948,
+      "period": "1948-1991",
+      "summary": "When the National Party won South Africa's 1948 election, it turned long-standing segregation into a total legal system: the Population Registration Act classified every person by 'race'; the Group Areas Act zoned where each could live; pass laws controlled movement; Bantu Education (1953) was designed, in H.F. Verwoerd's own words, to fit Africans for servitude. Resistance — the Defiance Campaign, the Freedom Charter (1955), the PAC and ANC — met banning orders, treason trials and, after Sharpeville, armed struggle. The laws were repealed only from 1991, as negotiations opened.",
+      "significance": "Apartheid was not prejudice alone but engineering — which is why its undoing also had to be engineered, law by law and street by street.",
+      "sources": [
+        "The statutes themselves: Population Registration Act (1950), Group Areas Act (1950), Bantu Education Act (1953)",
+        "The Freedom Charter, adopted at Kliptown, 26 June 1955",
+        "Apartheid Museum, Johannesburg"
+      ]
+    },
+    {
+      "id": "sharpeville",
+      "title": "Sharpeville, 21 March 1960",
+      "category": "liberation",
+      "region": "Southern Africa",
+      "start_year": 1960,
+      "period": "21 March 1960",
+      "summary": "Robert Sobukwe's Pan Africanist Congress called on Africans to present themselves for arrest without their pass books. At Sharpeville police station, officers opened fire on the crowd — 69 people were officially recorded killed, many shot in the back, and 180 wounded. The government declared a state of emergency and banned the ANC and PAC, pushing liberation movements underground and into armed struggle. The massacre horrified the world; the UN Security Council met on South Africa for the first time.",
+      "significance": "Sharpeville ended the era of purely peaceful protest and put apartheid permanently on the world's agenda — South Africa now marks the day as Human Rights Day.",
+      "sources": [
+        "Truth and Reconciliation Commission records — the Sharpeville massacre",
+        "Encyclopaedia Britannica — 'Sharpeville massacre'",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. VIII"
+      ]
+    },
+    {
+      "id": "robben-island",
+      "title": "Robben Island",
+      "category": "heritage",
+      "region": "Southern Africa",
+      "start_year": 1961,
+      "period": "political prison 1961-1991",
+      "summary": "A flat island in Table Bay served for centuries as a place of banishment — for Khoikhoi leaders, Muslim scholars from the East Indies, and, from 1961, apartheid's political prisoners. In B-Section, Nelson Mandela spent 18 of his 27 imprisoned years alongside Walter Sisulu, Govan Mbeki, Ahmed Kathrada and others; prisoners taught each other in what became known as 'the University'. Instead of breaking them, the island forged the leadership that would govern a democratic South Africa. UNESCO listed it in 1999.",
+      "significance": "Robben Island is the archive of endurance: the prison that produced a presidency, now a museum run to keep the memory exact.",
+      "sources": [
+        "UNESCO World Heritage List — Robben Island (1999)",
+        "Robben Island Museum — many tours are led by former prisoners",
+        "Nelson Mandela, 'Long Walk to Freedom' (1994)"
+      ]
+    },
+    {
+      "id": "soweto-uprising",
+      "title": "The Soweto Uprising, 1976",
+      "category": "liberation",
+      "region": "Southern Africa",
+      "start_year": 1976,
+      "period": "16 June 1976",
+      "summary": "When the apartheid government ordered that key subjects be taught in Afrikaans — 'the language of the oppressor', as one student leader put it — thousands of Soweto schoolchildren marched in protest on 16 June 1976. Police opened fire; among the first killed was the schoolboy Hector Pieterson, whose dying figure, carried by Mbuyisa Makhubu with his sister Antoinette running alongside, was photographed by Sam Nzima and flashed around the world. The rising spread nationally; hundreds were killed in the months that followed, and a generation of young people left the country to join the liberation movements.",
+      "significance": "Children with placards did what decades of petitions could not: they made apartheid untenable. 16 June is South Africa's Youth Day.",
+      "sources": [
+        "Sam Nzima's 1976 photograph of Hector Pieterson — Hector Pieterson Memorial & Museum, Soweto",
+        "Truth and Reconciliation Commission records",
+        "Encyclopaedia Britannica — 'Soweto uprising'"
+      ]
+    },
+    {
+      "id": "sankara",
+      "title": "Thomas Sankara and Burkina Faso",
+      "category": "leaders",
+      "region": "West Africa",
+      "start_year": 1983,
+      "period": "1983-1987",
+      "summary": "Army captain Thomas Sankara became president of Upper Volta in 1983 at 33 and renamed it Burkina Faso — 'Land of Upright People'. In four years his government vaccinated millions of children, planted some ten million trees against the desert, put women in office, sold off ministerial Mercedes for Renault 5s, and told the 1987 OAU summit that Africa's debt 'cannot be repaid' and should not be paid at the cost of lives. He was assassinated in a coup in October 1987. His example — austere, feminist, pan-African — only grew after his death.",
+      "significance": "Sankara remains the continent's benchmark for integrity in power: proof of what four honest years can do.",
+      "sources": [
+        "Sankara's OAU debt speech, Addis Ababa, July 1987",
+        "Encyclopaedia Britannica — 'Thomas Sankara'",
+        "UNESCO General History of Africa, 8 vols (1981-1993) — free at unesco.org, vol. VIII"
+      ]
+    },
+    {
+      "id": "mandela-release",
+      "title": "Mandela's release and the 1994 election",
+      "category": "liberation",
+      "region": "Southern Africa",
+      "start_year": 1990,
+      "period": "11 February 1990 - 27 April 1994",
+      "summary": "After 27 years in prison, Nelson Mandela walked out of Victor Verster prison on 11 February 1990 and chose negotiation over vengeance. Talks survived assassination (Chris Hani, 1993), violence and deadlock; Mandela and F.W. de Klerk shared the 1993 Nobel Peace Prize; and on 27 April 1994 South Africans of all races voted together for the first time. Mandela's inauguration declared: 'Never, never and never again shall it be that this beautiful land will again experience the oppression of one by another.'",
+      "significance": "1994 closed three and a half centuries of settler rule without the racial war the world feared — the century's most improbable negotiated revolution.",
+      "sources": [
+        "Nelson Mandela, 'Long Walk to Freedom' (1994)",
+        "Independent Electoral Commission records — the 1994 election",
+        "Encyclopaedia Britannica — 'Nelson Mandela'"
+      ]
+    }
+  ]
+}
