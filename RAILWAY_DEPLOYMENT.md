@@ -25,7 +25,8 @@ on Postgres.
 | `JWT_SECRET_SIGNING_KEY` | fresh random, same discipline |
 | `KIMI_API_KEY` | your Moonshot key (the one already active) |
 | Optional: `XI_API_KEY`, `AFRICAS_TALKING_API_KEY` + `ADMIN_PHONE_NUMBER`, `HUME_WEBHOOK_SECRET` | per feature |
-| Optional multi-node: `STATE_BACKEND=redis` + `REDIS_URL` (Railway Redis plugin) | enables --workers > 1 |
+| Optional multi-node: `STATE_BACKEND=redis` + `REDIS_URL` (Railway Redis plugin) | REQUIRED before replicas > 1 - the 30% gate ledger must be shared across workers |
+| Optional adaptive nudges: `LUQI_ADAPTIVE_NUDGES=1` + `LUQI_NUDGE_WEBHOOK_URL` | proactive learner check-ins via your WhatsApp/SMS gateway (off by default; without the webhook URL nudges are only logged, never silently "sent") |
 
 Tier 2/3 variables from deploy/.env.active_now.template - uncomment as features go live.
 
