@@ -1,0 +1,386 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-21",
+  "description": "LUQI Everyday Services Pack — plain-language guides to the South African government services people ask about most: SASSA grants, the SRD R370 grant, SARS tax, UIF and NSFAS. Every entry is built from official sources only (gov.za, sassa.gov.za, sars.gov.za, labour.gov.za, nsfas.org.za), carries at least two verifiable references, and flags scam risks — because these services are where our people get robbed most. Amounts and dates change: each entry says when it was verified and points to the official channel to confirm.",
+  "categories": ["grants", "tax", "unemployment", "education funding", "scam safety"],
+  "agencies": ["SASSA", "Postbank", "ITSAA", "SARS", "UIF (Dept of Employment & Labour)", "NSFAS", "DSD"],
+  "entries": [
+    {
+      "id": "srd-grant-apply",
+      "title": "SRD R370 grant — who qualifies and how to apply",
+      "category": "grants",
+      "agency": "SASSA",
+      "summary": "The Social Relief of Distress (SRD) grant is R370 per month for people aged 18 to 60 with little or no income. It has been extended to March 2027 (announced by the Finance Minister in the November 2025 Medium-Term Budget) and reaches roughly 9 million people a month. You qualify if you are a South African citizen, permanent resident, refugee or special-permit holder living in SA, with income under R624 per month, not receiving UIF, NSFAS or another social grant for yourself. Applying is FREE — you never pay anyone. Apply online at srd.sassa.gov.za, on WhatsApp 082 046 8553, or by USSD *134*7737#. You will reconfirm your details and SASSA checks your income every month against bank and government databases — a month can be approved and the next declined. Verified 2026-09-21.",
+      "steps": [
+        "Check you qualify: age 18-60, income under R624/month, no UIF, no other social grant for yourself.",
+        "Apply free at srd.sassa.gov.za, or WhatsApp 082 046 8553, or USSD *134*7737#.",
+        "Give your ID number, correct cellphone number and banking details — payments go to YOUR OWN bank account where possible.",
+        "Wait for the verification SMS each month; approval is month-by-month, not permanent.",
+        "If declined and you disagree, appeal (see 'SRD grant — appeal a decline') within 90 days."
+      ],
+      "official_channels": [
+        "Website: srd.sassa.gov.za",
+        "WhatsApp: 082 046 8553",
+        "USSD: *134*7737#",
+        "Email: srd@sassa.gov.za"
+      ],
+      "warning": "Applying is FREE. Anyone charging a 'fee' to apply, 'speed up' or 'guarantee' approval is a scammer. SASSA will never ask for your banking PIN or OTP. In January 2026 the Department of Social Development publicly debunked viral posts claiming the SRD grant was ending — check official channels before believing or forwarding such posts.",
+      "sources": [
+        "SASSA SRD portal — srd.sassa.gov.za (application, status, e-KYC)",
+        "The South African — 'SASSA SRD grant extended to 2027' (2025-11-13): R370, MTBPS announcement by Finance Minister Godongwana",
+        "The Citizen — 'Social Development responds to claims R370 SRD grant is ending' (2026-01-15): DSD debunks fake news, names official channels"
+      ]
+    },
+    {
+      "id": "srd-grant-status-banking",
+      "title": "SRD grant — check your status and fix banking details",
+      "category": "grants",
+      "agency": "SASSA",
+      "summary": "SRD does not have one fixed public payment date like the permanent grants — your money reflects after your monthly status shows 'Approved' with a pay date, usually in a batch window late in the month. Check your status on srd.sassa.gov.za under 'Application status': it shows month by month whether you are approved, pending or declined, and the reason if declined (for example 'income identified' or 'UIF registered'). If your banking details are wrong or your number changed, update them on the same portal — payments can only go to an account in YOUR name; SASSA cannot pay into someone else's account. If your status shows approved but no pay date for a long time, contact the SASSA toll-free line 0800 60 10 11. Keep the cellphone number you applied with active — OTPs and status links go there. Verified 2026-09-21.",
+      "steps": [
+        "Go to srd.sassa.gov.za and choose 'Application status'.",
+        "Enter your ID number and the cellphone number you applied with.",
+        "Read each month: Approved (with pay date), Pending, or Declined (with reason).",
+        "If banking details are wrong: update them on the portal — account must be in your own name.",
+        "Approved but unpaid for weeks: call SASSA toll-free 0800 60 10 11 with your ID ready."
+      ],
+      "official_channels": [
+        "Status check: srd.sassa.gov.za",
+        "SASSA toll-free: 0800 60 10 11",
+        "Email: srd@sassa.gov.za"
+      ],
+      "warning": "Only enter your ID and phone number on srd.sassa.gov.za — fake 'SRD status check' sites harvest ID numbers. SASSA will never WhatsApp you a link asking for your card PIN.",
+      "sources": [
+        "SASSA SRD portal — srd.sassa.gov.za/said (status check, e-KYC, banking updates)",
+        "SASSA official — toll-free 0800 60 10 11 (sassa.gov.za contact page)",
+        "GroundUp — 'Budget: Changes ahead for R370-a-month SRD grant' (2025-05-21): monthly bank/database verification explained"
+      ]
+    },
+    {
+      "id": "srd-grant-appeal",
+      "title": "SRD grant — appeal a decline (ITSAA)",
+      "category": "grants",
+      "agency": "ITSAA",
+      "summary": "If your SRD application is declined and you disagree, you have the legal right to appeal to the Independent Tribunal for Social Assistance Appeals (ITSAA) — an independent body, not SASSA itself. The rules that matter: you must appeal within 90 days of the decline, and you must lodge a SEPARATE appeal for each month that was declined. Lodge online at srd.sassa.gov.za/appeals/appeal — you confirm the declaration and consent, submit, and get a confirmation. The Tribunal informs you of the outcome electronically within about 60 to 90 days, and if you win, it directs SASSA to pay you. Contact ITSAA on 012 312 7727 or grantappeals@dsd.gov.za. Common decline reasons — 'income identified' (money moved through your account), 'UIF registered', 'NSFAS registered' — often come from old data; the appeal is your chance to correct it. Verified 2026-09-21.",
+      "steps": [
+        "Note the exact month(s) declined and the reason, from your status on srd.sassa.gov.za.",
+        "Go to srd.sassa.gov.za/appeals/appeal within 90 days of the decline.",
+        "Lodge one appeal PER declined month; accept the declaration and consent.",
+        "Keep your confirmation; the Tribunal answers electronically in about 60-90 days.",
+        "Queries: ITSAA 012 312 7727 or grantappeals@dsd.gov.za."
+      ],
+      "official_channels": [
+        "Appeals portal: srd.sassa.gov.za/appeals/appeal",
+        "ITSAA: 012 312 7727",
+        "Email: grantappeals@dsd.gov.za"
+      ],
+      "warning": "Nobody can 'fast-track' an appeal for money. The Tribunal is free and independent — anyone selling 'guaranteed appeal wins' is scamming you.",
+      "sources": [
+        "DSD (The_DSD) official notice — 'Right to appeal': 90 days, ITSAA contacts 012 312 7727 / grantappeals@dsd.gov.za (2026-01-20)",
+        "SASSA SRD appeals portal — srd.sassa.gov.za/appeals/appeal",
+        "ZABursaries — 'How to submit your appeal for SASSA SRD Grant': per-month appeals, 60-90 day outcomes"
+      ]
+    },
+    {
+      "id": "sassa-older-persons-grant",
+      "title": "Older Persons Grant — amount and how to apply",
+      "category": "grants",
+      "agency": "SASSA",
+      "summary": "The Older Persons Grant (old age pension) pays R2 400 per month for people aged 60 to 74, and R2 420 for those 75 and older (amounts effective from April 2026, confirmed by DSD for the 2026/27 year). You qualify if you are 60 or older, a South African citizen or permanent resident living in SA, and you pass the means test — your income and assets must be below the set thresholds (SASSA confirms the current thresholds when you apply). Apply in person at your nearest SASSA office with your ID, proof of marital status, income and assets; a SASSA officer helps you complete the form FREE of charge, and you get a dated receipt — keep it. If approved, payment is backdated to your application date. If you cannot travel due to age or illness, a family member can ask SASSA about a home visit. Payments arrive in the first week of each month — older persons are paid first. Verified 2026-09-21.",
+      "steps": [
+        "Take your ID (or apply for one first — you cannot get the grant without it).",
+        "Go to your nearest SASSA office with proof of income, assets and marital status.",
+        "Complete the application with the SASSA officer — it is FREE; get and keep your dated receipt.",
+        "If approved, money is backdated to application date and paid monthly from the first week.",
+        "Report any change in income, address or marital status to SASSA."
+      ],
+      "official_channels": [
+        "SASSA toll-free: 0800 60 10 11",
+        "Website: sassa.gov.za",
+        "Apply at your nearest SASSA local office"
+      ],
+      "warning": "Application is free and must be done through SASSA — 'agents' who offer to register you for a cut of your pension are criminals. Never sign a form you have not read.",
+      "sources": [
+        "DSD — 'SASSA confirms 2026/2027 social grant payment schedule and increases' (dsd.gov.za, 2026-08-24): R2 400 / R2 420 from April 2026",
+        "SASSA — Older Persons Grant page (sassa.gov.za): means test, application process, office application",
+        "SAnews — 'Social grants to increase' (sanews.gov.za, 2026-02-25): increase from R2 315 to R2 400 confirmed"
+      ]
+    },
+    {
+      "id": "sassa-child-support-grant",
+      "title": "Child Support Grant — amount and how to apply",
+      "category": "grants",
+      "agency": "SASSA",
+      "summary": "The Child Support Grant pays R580 per month (from April 2026, 2026/27 year) to the primary caregiver of a child under 18 — parent, grandparent, or another adult who actually cares for the child. You qualify if you and the child live in South Africa, the child is under 18 and not in a state institution, and your household income passes the means test (SASSA confirms the current threshold when you apply). Apply FREE at any SASSA office: bring your ID, the child's birth certificate, and proof of your income; if you are not the parent, bring proof that you are the primary caregiver (an affidavit works). Children born after 1994 need the SASSA-issued clinic card or Road to Health book where available. Payment starts from the month of approval and is paid with the children's grants group, after older persons and disability grants each month. Top-up exists for orphans — ask the SASSA officer about the Child Support Grant Top-Up if the child's parents are deceased. Verified 2026-09-21.",
+      "steps": [
+        "Gather: your ID, child's birth certificate, proof of income (or affidavit if unemployed).",
+        "Non-parents: add proof you are the primary caregiver (affidavit or school/clinic letter).",
+        "Apply free at your nearest SASSA office; keep the dated receipt.",
+        "If the child is orphaned, ask specifically about the CSG Top-Up.",
+        "Tell SASSA if your income, address or the child's care situation changes."
+      ],
+      "official_channels": [
+        "SASSA toll-free: 0800 60 10 11",
+        "Website: sassa.gov.za",
+        "Apply at your nearest SASSA local office"
+      ],
+      "warning": "No one may charge you to apply. Beware 'loan' offers against a child's grant — using the grant card as loan security is illegal and traps families.",
+      "sources": [
+        "DSD — 'SASSA confirms 2026/2027 social grant payment schedule and increases' (dsd.gov.za, 2026-08-24): Child Support Grant R580 from April 2026",
+        "SASSA — Child Support Grant page (sassa.gov.za): caregiver, means test, documents",
+        "SAnews — 'Social grants to increase' (sanews.gov.za, 2026-02-25): child support grant increase confirmed"
+      ]
+    },
+    {
+      "id": "sassa-disability-care-grants",
+      "title": "Disability Grant and Care Dependency Grant",
+      "category": "grants",
+      "agency": "SASSA",
+      "summary": "Both the Disability Grant (for adults 18-59 whose disability prevents them from working) and the Care Dependency Grant (for caregivers of children with severe disabilities needing full-time care) pay R2 400 per month from April 2026. For the Disability Grant: you need a medical assessment — a doctor completes a medical report; if the disability is temporary, the grant is temporary (6-12 months) and permanent disability gets a permanent grant subject to reviews. You must pass the means test and be a SA citizen or permanent resident. For Care Dependency: the child must be under 18, have a severe disability confirmed by medical assessment, and need permanent care at home; the caregiver passes the means test. Apply FREE at a SASSA office with ID, medical reports and income proof; SASSA arranges the medical assessment if you have no doctor's report. Disability grants are paid in the second payment group each month. If your condition or income changes, report it — reviews are normal and part of the law. Verified 2026-09-21.",
+      "steps": [
+        "Get a medical report about the disability (or ask SASSA to arrange the assessment).",
+        "Take ID, medical evidence and income/asset proof to your nearest SASSA office.",
+        "Apply free; keep your dated receipt.",
+        "Temporary disability grant: diarise the lapse date and reapply before it ends if still unable to work.",
+        "Respond to SASSA review notices — ignoring them can suspend the grant."
+      ],
+      "official_channels": [
+        "SASSA toll-free: 0800 60 10 11",
+        "Website: sassa.gov.za",
+        "Apply at your nearest SASSA local office"
+      ],
+      "warning": "Fake medical certificates bought from 'agents' get grants cancelled and people prosecuted. The medical assessment through SASSA is free.",
+      "sources": [
+        "DSD — 'SASSA confirms 2026/2027 social grant payment schedule and increases' (dsd.gov.za, 2026-08-24): Disability and Care Dependency R2 400 from April 2026",
+        "SASSA — Disability Grant page (sassa.gov.za): medical assessment, temporary vs permanent",
+        "SASSA — Care Dependency Grant page (sassa.gov.za): eligibility and documents"
+      ]
+    },
+    {
+      "id": "sassa-foster-grant-aid",
+      "title": "Foster Child Grant and Grant-in-Aid",
+      "category": "grants",
+      "agency": "SASSA",
+      "summary": "The Foster Child Grant pays R1 290 per month from April 2026 (expected to rise to R1 300 from October 2026) for a child placed in your care by a court order — you need the court order and the child's birth certificate to apply at SASSA; the grant lasts as long as the court order (usually until the child turns 18, extendable to 21 if still in school). The Grant-in-Aid is different: it is R580 per month added ON TOP of an Older Persons, Disability or War Veterans grant when the grant recipient needs full-time care from another person — you cannot get it alone, and it requires a medical report confirming the need for full-time care. Both are applied for FREE at SASSA offices with the same receipt-and-backdate process as other grants. The War Veterans Grant (R2 420 from April 2026) still exists for qualifying veterans of the First/Second World War or Korean War. Verified 2026-09-21.",
+      "steps": [
+        "Foster grant: get the court order first (children's court via a social worker), then apply at SASSA with it plus the child's birth certificate and your ID.",
+        "Grant-in-Aid: you must already receive an Older Persons, Disability or War Veterans grant.",
+        "Get a medical report confirming you need full-time care.",
+        "Apply free at SASSA; keep the dated receipt.",
+        "Foster grant: renew when the court order is renewed; report if the child leaves your care."
+      ],
+      "official_channels": [
+        "SASSA toll-free: 0800 60 10 11",
+        "Website: sassa.gov.za",
+        "Apply at your nearest SASSA local office"
+      ],
+      "warning": "Court orders come from court via social workers — anyone selling 'foster papers' is committing fraud and the child pays the price.",
+      "sources": [
+        "DSD — 'SASSA confirms 2026/2027 social grant payment schedule and increases' (dsd.gov.za, 2026-08-24): Foster R1 290, Grant-in-Aid R580, War Veterans R2 420",
+        "SASSA — Foster Child Grant page (sassa.gov.za): court order requirement",
+        "SASSA — Grant-in-Aid page (sassa.gov.za): top-up nature, medical report requirement"
+      ]
+    },
+    {
+      "id": "sassa-payment-dates",
+      "title": "SASSA payment dates — how the monthly cycle works",
+      "category": "grants",
+      "agency": "SASSA",
+      "summary": "Permanent grants are paid early each month, staggered over three days to reduce queues: older persons first, then disability grants, then children's grants. For the rest of 2026 the confirmed dates are: October — older persons 2 Oct, disability 5 Oct, children's 6 Oct; November — 3, 4 and 5 Nov; December — 2, 3 and 4 Dec. Dates shift when they would land on weekends or public holidays. Your money does NOT expire on payment day — once it is in your account or on your card, it stays there; you do not have to withdraw everything on the day, and leaving it in the account is safer than carrying cash. SRD R370 is separate: it pays in batch windows later in the month after your status shows approved. If money has not arrived after the expected window, check your payment method first, then call SASSA 0800 60 10 11 or visit your office with your ID. Verified 2026-09-21.",
+      "steps": [
+        "Know your group: older persons → disability → children's, first week of the month.",
+        "Rest of 2026: 2/5/6 Oct · 3/4/5 Nov · 2/3/4 Dec.",
+        "Do not rush to withdraw — money stays safe in the account.",
+        "SRD: wait for your approved status + pay date on srd.sassa.gov.za.",
+        "Missing after the window: call 0800 60 10 11 or go to your SASSA office with ID."
+      ],
+      "official_channels": [
+        "SASSA toll-free: 0800 60 10 11",
+        "Payment calendar: sassa.gov.za and DSD announcements",
+        "SRD status: srd.sassa.gov.za"
+      ],
+      "warning": "Payment week is robbery week at ATMs and pay points — withdraw small amounts, hide your PIN, and never accept 'help' from strangers at the ATM.",
+      "sources": [
+        "DSD — 'SASSA confirms 2026/2027 social grant payment schedule and increases' (dsd.gov.za, 2026-08-24): full 2026/27 calendar, staggered system",
+        "SASSA — official payment date announcements (sassa.gov.za)",
+        "Postbank/SASSA client guidance — funds remain available after payment day"
+      ]
+    },
+    {
+      "id": "postbank-black-card",
+      "title": "SASSA Gold Card is dead — get your Postbank Black Card",
+      "category": "grants",
+      "agency": "Postbank",
+      "summary": "SASSA Gold Cards stopped working after the final deadline of 31 August 2026. If you still have a gold card, your grant has NOT been cancelled — the money is still being paid and your account is still active, but you cannot touch it with the old card. You must migrate to the Postbank Black Card. Migration is FREE: take your valid SA ID or temporary ID to a Postbank card replacement site inside selected Shoprite, Checkers, Usave, Pick n Pay, Boxer or Spar stores (dial *120*355# from any cellphone to find the nearest site). No forms, no fees, and you can migrate in any province. The black card works immediately and any balance on the gold card carries over automatically. Most replacement sites stay open after the deadline to help late migrators. Note for the future: the Reserve Bank has ordered a newer 'Black Card 2' with upgraded security — existing black cards keep working and will be swapped when they expire. Help line: Postbank 0800 5354 55. Verified 2026-09-21.",
+      "steps": [
+        "Dial *120*355# on any cellphone to find your nearest card replacement site.",
+        "Take your valid SA ID or temporary ID — nothing else is needed.",
+        "Migration is FREE: no forms, no fees, no 'helpers'.",
+        "Your old balance carries over automatically; the new card works immediately.",
+        "Card/PIN problems afterwards: Postbank 0800 5354 55."
+      ],
+      "official_channels": [
+        "Site locator USSD: *120*355#",
+        "Postbank helpline: 0800 5354 55",
+        "Replacement sites inside selected Shoprite, Checkers, Usave, Pick n Pay, Boxer, Spar"
+      ],
+      "warning": "The genuine card says 'Postbank' on the front. Nobody may charge you for the card or ask you to fill in forms as part of replacement — that is a scam. Also beware 'your grant is suspended, click here' SMSes: Postbank and SASSA never send links asking for your PIN.",
+      "sources": [
+        "gov.za — 'SASSA on last call for gold cards beneficiaries to complete their switch to Postbank black cards' (2026-07-23): 31 Aug 2026 deadline",
+        "IOL — 'Missed the SASSA gold card deadline? Here's what happens to your money' (2026-09-01): grants continue, migration free, *120*355#, 0800 5354 55",
+        "GroundUp — 'New deadline for phase-out of SASSA Gold Cards' (2025-09-03): SARB order, Black Card 2"
+      ]
+    },
+    {
+      "id": "sars-filing-season-2026",
+      "title": "SARS Filing Season 2026 — dates and how to file",
+      "category": "tax",
+      "agency": "SARS",
+      "summary": "The 2026 tax filing season runs with these official dates: auto-assessments went out 1-12 July 2026; non-provisional individuals must file between 13 July and 23 OCTOBER 2026; provisional taxpayers (side income, freelance, business, rental) have until 22 January 2027; trusts file 19 September 2026 to 22 January 2027. If you are a normal salaried employee and were not auto-assessed, your deadline is 23 October 2026 — file on SARS eFiling (secure.sarsefiling.co.za) or the SARS MobiApp. Filing is FREE and you do not need to pay anyone to submit a return. Gather your IRP5 from your employer, medical aid certificate, retirement annuity and investment certificates (IT3) before you start — much of it is already pre-filled from third-party data; your job is to check it. If you owe SARS, pay by the deadline to avoid interest; if SARS owes you, refunds of R100 or more are paid automatically within 72 hours of assessment. Verified 2026-09-21.",
+      "steps": [
+        "Check if you were auto-assessed: SARS Online Query System (SOQS) → 'My Auto Assessment Status'.",
+        "Not auto-assessed: file ITR12 on eFiling or the SARS MobiApp before 23 October 2026 (non-provisional).",
+        "Have IRP5, medical aid, RA and IT3 certificates ready — most are pre-filled; verify them.",
+        "Provisional taxpayers (extra income): deadline 22 January 2027.",
+        "Questions: SARS WhatsApp 0800 11 7277 or USSD *134*7277#."
+      ],
+      "official_channels": [
+        "eFiling: secure.sarsefiling.co.za",
+        "SARS MobiApp",
+        "WhatsApp: 0800 11 7277 · USSD: *134*7277#",
+        "Filing Season page: sars.gov.za/types-of-tax/personal-income-tax/filing-season"
+      ],
+      "warning": "SARS never asks for your banking PIN or OTP by SMS, email or phone, and never threatens instant arrest by SMS. 'Tax consultants' who guarantee big refunds by inflating claims expose YOU to penalties — you sign the return, you carry the risk.",
+      "sources": [
+        "SARS — 'Filing Season' (sars.gov.za, updated 2026-08-19): all 2026 dates, SOQS status check",
+        "SARS — 'Changes for Filing Season 2026' (sars.gov.za, 2026-06-29): auto-assessment notices, provisional changes",
+        "SARS — 'How does Auto-Assessment work' (sars.gov.za, 2026-07-10): refunds of R100+ within 72 hours, WhatsApp 0800 11 7277, *134*7277#"
+      ]
+    },
+    {
+      "id": "sars-auto-assessment",
+      "title": "SARS auto-assessment — what it is and what to do",
+      "category": "tax",
+      "agency": "SARS",
+      "summary": "Auto-assessment means SARS completes your tax return for you using data it already has from your employer, banks, medical scheme, retirement funds and insurers. If you were selected, SARS sent you an SMS or email between 1 and 12 July 2026 saying whether you are due a refund, must pay, or have a zero assessment. What you must do: log in to eFiling or the SARS MobiApp and REVIEW the assessment carefully — check every income line and deduction. If everything is correct, do nothing: no return is needed and refunds of R100 or more are paid automatically within 72 hours. If something is wrong or missing (for example a second income or a missing medical certificate), correct and submit the ITR12 yourself by your filing deadline (23 October 2026 for non-provisional taxpayers). Not receiving a notice by 12 July means you were NOT auto-assessed and must file yourself. You can check your status any time on the SARS Online Query System under 'My Auto Assessment Status' or via the Lwazi assistant. Verified 2026-09-21.",
+      "steps": [
+        "Check status: SOQS on sars.gov.za → 'My Auto Assessment Status'.",
+        "Auto-assessed: log in to eFiling/MobiApp and review every line against your certificates.",
+        "Correct: do nothing — refund (R100+) pays out automatically within 72 hours.",
+        "Incorrect: edit and submit the ITR12 before your deadline.",
+        "No notice by 12 July 2026: you must file yourself from 13 July."
+      ],
+      "official_channels": [
+        "Status: SARS Online Query System (SOQS) on sars.gov.za",
+        "eFiling: secure.sarsefiling.co.za · SARS MobiApp",
+        "WhatsApp: 0800 11 7277 · USSD: *134*7277#"
+      ],
+      "warning": "Scammers copy SARS branding perfectly — 'your refund is ready, click here' messages with links are phishing. SARS pays refunds into the bank account already on your eFiling profile; it never asks you to 'confirm' banking details via a link.",
+      "sources": [
+        "SARS — 'Everything you need to know about Auto Assessments' (sars.gov.za, 2026-06-29)",
+        "SARS — 'How does Auto-Assessment work' (sars.gov.za, 2026-07-10): review steps, refund rules",
+        "TechAfrica News — 'SARS Sets 2026 Auto-Assessment Window' (2026-06-29): 1-12 July notices, 13 July filing start"
+      ]
+    },
+    {
+      "id": "uif-unemployment-claim",
+      "title": "UIF unemployment benefits — claim within 6 months",
+      "category": "unemployment",
+      "agency": "UIF (Dept of Employment & Labour)",
+      "summary": "If you lost your job and UIF was deducted from your salary (1% from you, 1% from your employer), you can claim unemployment benefits — but you must apply within 6 MONTHS of your last working day. You do NOT qualify if you resigned voluntarily, were suspended, or absconded. Claim online at ufiling.labour.gov.za (register with your 13-digit ID, email and cellphone) or in person at your nearest Labour Centre. You need: your ID, the UI-19 form from your employer (they are legally obliged to give it), your termination letter, bank confirmation letter and recent payslips. UIF does not pay your full salary — it pays a sliding-scale percentage for a limited number of months depending on how long you contributed. After approval you must confirm you are still unemployed (continuation) as instructed. Queries: UIF call centre 0800 030 007. If your claim is declined, you can lodge a Notice of Appeal on uFiling within 20 days of the decision to the Regional Appeals Committee. Verified 2026-09-21.",
+      "steps": [
+        "Get the UI-19 form and termination letter from your employer before you leave.",
+        "Register on ufiling.labour.gov.za (ID, email, cellphone) or go to a Labour Centre.",
+        "Apply for Unemployment Benefits within 6 months of your last day.",
+        "Upload supporting documents when prompted (bank confirmation, payslips).",
+        "Submit continuation/appeal as instructed; declined? Notice of Appeal on uFiling within 20 days."
+      ],
+      "official_channels": [
+        "Online claims: ufiling.labour.gov.za",
+        "UIF call centre: 0800 030 007",
+        "Nearest Labour Centre (Dept of Employment & Labour)"
+      ],
+      "warning": "Claiming UIF is free. 'Agents' outside labour offices who offer to 'do your claim' for a percentage of your payout are stealing from you — and banking details captured by strangers get looted.",
+      "sources": [
+        "Dept of Employment & Labour — uFiling portal (ufiling.labour.gov.za): registration, benefit applications",
+        "Dept of Employment & Labour — uFiling System User Guide (ufiling.labour.gov.za/docs): steps, documents, Notice of Appeal",
+        "UIF Online — uifonline.labour.gov.za: claim submission, call centre 08000 30007"
+      ]
+    },
+    {
+      "id": "uif-other-benefits",
+      "title": "UIF maternity, illness, adoption and reduced-time benefits",
+      "category": "unemployment",
+      "agency": "UIF (Dept of Employment & Labour)",
+      "summary": "UIF is not only for job loss. If you contributed, you can also claim: Maternity benefits (apply when you go on maternity leave — up to 17.32 weeks, and you can apply before or after the birth within the allowed window), Illness benefits (when you cannot work for more than two weeks due to illness, with a medical certificate), Adoption benefits (for a parent adopting a child under two, with the court order), and Reduced Working Time benefits (when your employer cuts your hours and your pay drops). All of these are claimed on ufiling.labour.gov.za with the same login as unemployment claims, plus the specific documents for that benefit (medical certificate, birth details, adoption court order, or employer confirmation of reduced hours). Employers MUST register workers and pay the 1%+1% contributions — if your payslip shows UIF deductions but your employer never paid them over, report it to the Department of Employment & Labour; that is a crime and it does not kill your claim. Dependants of a deceased contributor can claim dependants' benefits within 18 months. Verified 2026-09-21.",
+      "steps": [
+        "Register/log in on ufiling.labour.gov.za.",
+        "Choose the correct benefit type: Maternity, Illness, Adoption or Reduced Time.",
+        "Upload the specific proof: medical certificate / birth / adoption order / employer confirmation.",
+        "Track the claim under 'View Application History'.",
+        "Employer never paid over your UIF? Report to the Dept of Employment & Labour — call 0800 030 007."
+      ],
+      "official_channels": [
+        "Online claims: ufiling.labour.gov.za",
+        "UIF call centre: 0800 030 007",
+        "Dept of Employment & Labour: labour.gov.za"
+      ],
+      "warning": "Fake 'UIF payout' WhatsApp broadcasts with links are phishing for ID numbers and bank details. UIF communicates through your uFiling profile and official letters, not broadcast links.",
+      "sources": [
+        "Dept of Employment & Labour — uFiling portal (ufiling.labour.gov.za/uif/how-to-apply): benefit types listed",
+        "Dept of Employment & Labour — uFiling System User Guide (ufiling.labour.gov.za/docs): supporting documents per benefit",
+        "Kontak recruitment guide — 'UIF Claim Process' (kontak.co.za): contribution rules, dependants, exclusions"
+      ]
+    },
+    {
+      "id": "nsfas-2027",
+      "title": "NSFAS 2027 applications are OPEN — free, closes November",
+      "category": "education funding",
+      "agency": "NSFAS",
+      "summary": "NSFAS applications for the 2027 academic year opened on 18 September 2026. The Minister announced a closing date of 18 November 2026, with funding outcomes communicated in December before registration — always confirm the closing date on the official portal, as NSFAS has also displayed 31 October 2026; treat the EARLIER date as your real deadline and apply NOW. Applying is 100% FREE at nsfas.org.za: create or recover your myNSFAS account (you need your own email and cellphone number — never share the password or OTP), complete the form and upload documents: your ID, parent/guardian/spouse IDs, proof of household income (or SASSA letter if your family receives grants — SASSA beneficiaries qualify without income proof), and the disability annexure if applicable. NSFAS funds public university and TVET college students whose household income is under R350 000 a year (R600 000 for students with disabilities). Track your application under 'Track Funding Progress' on myNSFAS. Contact: 08000 67327, WhatsApp +27 63 093 5671, USSD *120*67327#. Verified 2026-09-21.",
+      "steps": [
+        "Go ONLY to nsfas.org.za and open myNSFAS — create/recover your account with your own email and cellphone.",
+        "Complete the application and upload: your ID, guardian IDs, income proof or SASSA letter.",
+        "Submit BEFORE the end of October to be safe (announced close: 18 Nov 2026; portal has shown 31 Oct).",
+        "Track 'Funding Progress' on myNSFAS; respond fast if documents are requested.",
+        "Outcomes come in December — before 2027 registration."
+      ],
+      "official_channels": [
+        "Applications: nsfas.org.za (myNSFAS)",
+        "Toll-free: 08000 67327",
+        "WhatsApp: +27 63 093 5671 · USSD: *120*67327#"
+      ],
+      "warning": "NSFAS never charges application or 'processing' fees and never asks for your OTP. Every year fake 'NSFAS agents' on WhatsApp and Facebook sell fake application help — applying yourself on the real site is free and takes under an hour.",
+      "sources": [
+        "gov.za — Minister Buti Manamela, 'Launch of NSFAS 2027 application cycle' (2026-09-18): opened 18 Sep, closes 18 Nov 2026, outcomes in December",
+        "NSFAS — nsfas.org.za (myNSFAS portal, official contact numbers)",
+        "NSFAS — 'How to apply' (nsfas.org.za/content/how-to-apply.html): documents, process"
+      ]
+    },
+    {
+      "id": "services-scam-safety",
+      "title": "Government services scam safety — the golden rules",
+      "category": "scam safety",
+      "agency": "DSD",
+      "summary": "Every service in this pack is FREE to apply for — that single fact kills most scams. The rules: (1) SASSA, SARS, UIF and NSFAS never charge application, 'processing', 'release' or 'verification' fees — anyone asking for money to unlock money is a scammer. (2) No government body will ever ask for your banking PIN, full card number or OTP — not by phone, SMS, WhatsApp or email. (3) Government never sends links asking you to 'confirm banking details' — refunds and grants go to the details already on your official profile. (4) Only trust official channels: srd.sassa.gov.za, sassa.gov.za, sars.gov.za (eFiling), ufiling.labour.gov.za, nsfas.org.za — bookmark them yourself, never arrive via a forwarded link. (5) In January 2026 DSD publicly debunked viral 'SRD is ending' posts — before panicking or forwarding, check the DSD/SASSA official pages. (6) If someone at an office demands a bribe for a free service, report it: National Anti-Corruption Hotline 0800 701 701. Paste any suspicious message into LUQI's Scam Shield mode — it checks it against the live fraud catalogue. Verified 2026-09-21.",
+      "steps": [
+        "Remember: all applications in this pack are FREE — fees mean fraud.",
+        "Never share PIN, OTP or full card details — with anyone, ever.",
+        "Type official addresses yourself; ignore links in SMS/WhatsApp.",
+        "Verify scary news ('grants are ending!') on official DSD/SASSA pages before believing it.",
+        "Report bribe demands: National Anti-Corruption Hotline 0800 701 701; check suspicious messages in Scam Shield mode."
+      ],
+      "official_channels": [
+        "National Anti-Corruption Hotline: 0800 701 701",
+        "SASSA: 0800 60 10 11 · SARS: 0800 11 7277 · UIF: 0800 030 007 · NSFAS: 08000 67327",
+        "Official sites: sassa.gov.za · srd.sassa.gov.za · sars.gov.za · labour.gov.za · nsfas.org.za"
+      ],
+      "warning": "The most dangerous scam is the helpful stranger: at ATMs, outside SASSA offices, in WhatsApp groups. Real officials do not need your card, your PIN or your OTP to 'help' you.",
+      "sources": [
+        "The Citizen — 'Social Development responds to claims R370 SRD grant is ending' (2026-01-15): DSD fake-news warning, official channels named",
+        "explain.co.za — 'SASSA Gold Card deadline' (2026-08-25): Postbank scam warnings — no fees, no forms, card must say Postbank",
+        "SARS — scam awareness guidance (sars.gov.za): SARS never requests banking details via links"
+      ]
+    }
+  ]
+}
