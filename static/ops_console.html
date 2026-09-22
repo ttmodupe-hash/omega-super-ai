@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMEGA-LUQI Ops Console</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #0b0f14; color: #d7e0ea;
+         font: 14px/1.5 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 14px 18px; background: #111827; border-bottom: 1px solid #22304a;
+           display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; color: #7dd3fc; }
+  header span { color: #64748b; font-size: 12px; }
+  main { max-width: 900px; margin: 0 auto; padding: 16px; }
+  section { background: #111827; border: 1px solid #22304a; border-radius: 8px;
+            padding: 14px 16px; margin-bottom: 16px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+       color: #94a3b8; margin: 0 0 10px; }
+  label { display: block; margin: 8px 0 2px; color: #94a3b8; font-size: 12px; }
+  input, textarea { width: 100%; background: #0b0f14; color: #d7e0ea;
+                    border: 1px solid #334155; border-radius: 6px; padding: 8px; }
+  button { background: #0ea5e9; color: #04121c; border: 0; border-radius: 6px;
+           padding: 8px 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  button.reject { background: #f87171; }
+  button.ghost { background: #334155; color: #d7e0ea; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid #22304a;
+           font-size: 13px; vertical-align: top; }
+  pre { background: #0b0f14; border: 1px solid #22304a; border-radius: 6px;
+        padding: 10px; overflow: auto; max-height: 260px; white-space: pre-wrap; }
+  .ok { color: #4ade80; } .err { color: #f87171; } .dim { color: #64748b; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+  .row > div { flex: 1; min-width: 160px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>OMEGA-LUQI Ops Console</h1>
+  <span>approvals &middot; task runner &middot; self-diagnose &mdash; every action is human-gated</span>
+</header>
+<main>
+  <section>
+    <h2>Admin Key</h2>
+    <label for="key">X-Luqi-Admin-Auth (held in memory only, never stored)</label>
+    <input id="key" type="password" autocomplete="off" placeholder="paste admin key">
+  </section>
+
+  <section>
+    <h2>Request Approval</h2>
+    <div class="row">
+      <div><label for="atype">Action type</label>
+        <input id="atype" placeholder="run_python / deploy / console"></div>
+      <div><label for="asum">Summary</label>
+        <input id="asum" placeholder="what &amp; why"></div>
+    </div>
+    <label for="apayload">Payload (JSON, optional - e.g. {"code": "print(1+1)"})</label>
+    <textarea id="apayload" rows="2"></textarea>
+    <button onclick="requestApproval()">Request ticket</button>
+    <pre id="reqOut" class="dim">ticket response appears here</pre>
+  </section>
+
+  <section>
+    <h2>Pending Tickets <button class="ghost" onclick="loadPending()">refresh</button></h2>
+    <table id="pending"><thead><tr>
+      <th>Ticket</th><th>Action</th><th>Summary</th><th>Expires</th><th></th>
+    </tr></thead><tbody><tr><td colspan="5" class="dim">no data yet</td></tr></tbody></table>
+  </section>
+
+  <section>
+    <h2>Run Approved Ticket</h2>
+    <label for="rtid">Ticket ID (must be approved; runs exactly once)</label>
+    <input id="rtid" placeholder="ticket id">
+    <button onclick="runTicket()">Execute</button>
+    <pre id="runOut" class="dim">run result appears here</pre>
+  </section>
+
+  <section>
+    <h2>Health <button class="ghost" onclick="loadHealth()">refresh</button></h2>
+    <pre id="health" class="dim">self-diagnose + run log appear here</pre>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+
+async function api(path, method, params) {
+  const qs = new URLSearchParams(params || {}).toString();
+  const r = await fetch(qs ? path + "?" + qs : path, {
+    method: method || "GET",
+    headers: { "X-Luqi-Admin-Auth": $("key").value }
+  });
+  const body = await r.json().catch(() => ({}));
+  return { status: r.status, body };
+}
+
+function show(el, res) {
+  el.className = res.status < 400 ? "ok" : "err";
+  el.textContent = res.status + " " + JSON.stringify(res.body, null, 2);
+}
+
+async function requestApproval() {
+  const res = await api("/v1/ops/approvals/request", "POST", {
+    action_type: $("atype").value, summary: $("asum").value, payload: $("apayload").value
+  });
+  show($("reqOut"), res);
+  loadPending();
+}
+
+async function loadPending() {
+  const res = await api("/v1/ops/approvals/pending");
+  const tb = $("pending").querySelector("tbody");
+  tb.innerHTML = "";
+  const rows = (res.body && res.body.pending) || [];
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="5" class="dim">queue empty</td></tr>'; return; }
+  for (const t of rows) {
+    const tr = document.createElement("tr");
+    for (const v of [t.ticket_id, t.action_type, t.summary,
+                     new Date(t.expires * 1000).toLocaleString()]) {
+      const td = document.createElement("td"); td.textContent = v; tr.appendChild(td);
+    }
+    const td = document.createElement("td");
+    for (const [label, cls] of [["Approve", ""], ["Reject", "reject"]]) {
+      const b = document.createElement("button");
+      b.textContent = label; if (cls) b.className = cls;
+      b.style.margin = "0 6px 0 0";
+      b.onclick = () => decide(t.ticket_id, label.toLowerCase());
+      td.appendChild(b);
+    }
+    tr.appendChild(td); tb.appendChild(tr);
+  }
+}
+
+async function decide(tid, decision) {
+  await api("/v1/ops/approvals/" + encodeURIComponent(tid) + "/decision", "POST", { decision });
+  loadPending();
+}
+
+async function runTicket() {
+  const res = await api("/v1/ops/tasks/run", "POST", { ticket_id: $("rtid").value });
+  show($("runOut"), res);
+}
+
+async function loadHealth() {
+  const diag = await api("/v1/self-diagnose/log");
+  const runs = await api("/v1/ops/tasks/log");
+  $("health").className = "";
+  $("health").textContent =
+    "self-diagnose: " + JSON.stringify(diag.body) + "\n" +
+    "task runs:     " + JSON.stringify(runs.body, null, 2);
+}
+</script>
+</body>
+</html>

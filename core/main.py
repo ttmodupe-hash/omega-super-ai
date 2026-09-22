@@ -83,6 +83,9 @@ from .sovereign_core import sovereign_router
 from .integrity_engine import integrity_router
 from .universal_learning import universal_router
 from .sandbox_reaper import reaper_loop
+from .self_diagnose import router as self_diagnose_router
+from .ops_approvals import router as approvals_router
+from .task_runner import router as task_runner_router
 import asyncio as _asyncio
 from .webhooks import webhook_router
 from .resource_caps import enforce_free_tier_resource_caps
@@ -418,6 +421,9 @@ app.include_router(spatial_router)
 app.include_router(feature_flags_router)
 app.include_router(health_router)
 app.include_router(research_router)
+app.include_router(self_diagnose_router)
+app.include_router(approvals_router)
+app.include_router(task_runner_router)
 
 
 # ---------- PWA Static Serving (LAST) ----------
