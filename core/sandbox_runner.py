@@ -157,6 +157,8 @@ async def run_python(code: str, timeout: float = DEFAULT_TIMEOUT) -> dict:
                 "latency_ms": round((time.perf_counter() - t0) * 1000, 2)}
     result = await _run_docker(code, timeout) if _docker_available() else await _run_subprocess(code, timeout)
     result["latency_ms"] = round((time.perf_counter() - t0) * 1000, 2)
+    if not result["ok"] and result.get("stage") in ("docker", "subprocess"):
+        await _feedback(result.get("error") or "")   # execution failures -> self-diagnose
     return result
 
 
@@ -184,7 +186,11 @@ async def run_with_recalibration(code: str, fixer, max_retries: int = 2,
 async def _feedback(traceback_text: str) -> None:
     try:
         from . import self_diagnose
-        await self_diagnose._diagnose(traceback_text)
+        result = await self_diagnose._diagnose(traceback_text)
+        self_diagnose._log.append({"ts": time.time(), "trace_excerpt": traceback_text[:500],
+                                   **result, "auto_applied": False})
+        if len(self_diagnose._log) > self_diagnose.MAX_ENTRIES:
+            del self_diagnose._log[: len(self_diagnose._log) - self_diagnose.MAX_ENTRIES]
     except Exception:
         pass
 
