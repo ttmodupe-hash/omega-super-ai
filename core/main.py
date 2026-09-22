@@ -87,6 +87,8 @@ from .self_diagnose import router as self_diagnose_router
 from .ops_approvals import router as approvals_router
 from .task_runner import router as task_runner_router
 from .code_fixer import router as recalibrate_router
+from .ops_audit import router as ops_audit_router
+from .rate_limiter import setup_rate_limiting
 from . import ops_approvals as _ops_approvals
 import asyncio as _asyncio
 from .webhooks import webhook_router
@@ -97,6 +99,9 @@ from .state_store import get_state_store
 from .kimi_gateway import KIMI_MODEL
 
 app = FastAPI(title="OMEGA-Luqi Unified AI Sovereign Engine", version="5.36.0")
+
+# ---------- Batch F: sliding-window rate limiting (global bucket + per-route) ----------
+setup_rate_limiting(app)
 
 # ---------- CORS for distributed African educational nodes ----------
 # NOTE: allow_origins=["*"] combined with allow_credentials=True is rejected by
@@ -435,6 +440,7 @@ app.include_router(self_diagnose_router)
 app.include_router(approvals_router)
 app.include_router(task_runner_router)
 app.include_router(recalibrate_router)
+app.include_router(ops_audit_router)
 
 
 # ---------- PWA Static Serving (LAST) ----------
