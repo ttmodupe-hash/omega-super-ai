@@ -10,7 +10,7 @@
 - Router wiring audit verified green as evolved (glob discovery + suffix matching + dormant whitelist); the predicted app.mount() blind spot does not exist - all API routers mount via include_router.
 - Version drift closed: engine 5.35.10 -> 5.36.0, aligned with changelog head (drift tests green again).
 ### CI
-- Gate now runs the feature verification batteries (tests/verify_history.py, tests/verify_services.py) as a dedicated step - they are standalone scripts, not pytest modules, so appending them to the pytest line would have collected zero checks.
+- Feature verification batteries (tests/verify_history.py, tests/verify_services.py) staged for the CI gate as a dedicated step - they are standalone scripts, not pytest modules, so appending them to the pytest line would collect zero checks. NOTE: the workflow edit itself is PENDING - the pushing token lacks the workflow scope; apply the 5-line step via the GitHub web editor.
 
 ## [5.35.7] - 2026-09-15
 ### Fixed
