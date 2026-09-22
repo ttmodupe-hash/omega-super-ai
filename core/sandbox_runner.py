@@ -10,10 +10,15 @@ Tier 3: subprocess `python -I` fallback with POSIX rlimits (Windows: timeout-onl
 Failures return structured {exit_code, stderr} and optionally drive a capped
 recalibration loop (stderr -> fixer callback -> retry, bounded) - the self-healing
 loop, honest: feedback to the model, never silent auto-patch.
+
+Batch E: blocking Docker SDK / subprocess calls run via asyncio.to_thread (the
+event loop no longer freezes for the full timeout), and payload temp files are
+unlinked in a finally block - no leaks on timeout or crash.
 """
 from __future__ import annotations
 
 import ast
+import asyncio
 import os
 import subprocess
 import sys
@@ -99,7 +104,7 @@ def _docker_available() -> bool:
         return False
 
 
-async def _run_docker(code: str, timeout: float) -> dict:
+def _run_docker_sync(code: str, timeout: float) -> dict:
     import docker  # type: ignore
     client = docker.from_env()
     with tempfile.TemporaryDirectory() as td:
@@ -124,7 +129,13 @@ async def _run_docker(code: str, timeout: float) -> dict:
             return {"ok": False, "stage": "docker", "output": "", "error": f"{type(exc).__name__}: {exc}", "exit_code": -1}
 
 
-async def _run_subprocess(code: str, timeout: float) -> dict:
+async def _run_docker(code: str, timeout: float) -> dict:
+    """Docker SDK calls block - run them off the event loop."""
+    return await asyncio.to_thread(_run_docker_sync, code, timeout)
+
+
+def _run_subprocess_sync(code: str, timeout: float) -> dict:
+    path = None
     try:
         with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False, encoding="utf-8") as f:
             f.write(code)
@@ -132,7 +143,6 @@ async def _run_subprocess(code: str, timeout: float) -> dict:
         proc = subprocess.run([sys.executable, "-I", "-c", _RUNNER, path],
                               capture_output=True, text=True, timeout=timeout,
                               preexec_fn=_preexec if os.name == "posix" else None)
-        os.unlink(path)
         if proc.returncode == 0:
             _meter["runs"] += 1
             return {"ok": True, "stage": "subprocess", "output": proc.stdout.strip()[:4000], "error": None, "exit_code": 0}
@@ -145,6 +155,17 @@ async def _run_subprocess(code: str, timeout: float) -> dict:
     except Exception as exc:
         _meter["errors"] += 1
         return {"ok": False, "stage": "sandbox", "output": "", "error": f"{type(exc).__name__}: {exc}", "exit_code": -1}
+    finally:
+        if path:
+            try:
+                os.unlink(path)          # no payload temp files left behind, ever
+            except OSError:
+                pass
+
+
+async def _run_subprocess(code: str, timeout: float) -> dict:
+    """subprocess.run blocks - run it off the event loop."""
+    return await asyncio.to_thread(_run_subprocess_sync, code, timeout)
 
 
 async def run_python(code: str, timeout: float = DEFAULT_TIMEOUT) -> dict:

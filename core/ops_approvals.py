@@ -40,6 +40,7 @@ _notify_log: list[str] = []
 MAX_TOKEN_ATTEMPTS = int(os.getenv("OPS_TOKEN_MAX_ATTEMPTS", "5"))
 _fail_counts: dict[str, int] = {}
 _audit: list[dict] = []
+_restoring = False   # replay must never re-journal the events it replays
 
 
 def _audit_event(event: dict) -> None:
@@ -55,7 +56,8 @@ def _prune_expired() -> None:
         if t["status"] == "pending" and t["expires"] <= now:
             t["status"] = "expired"
             _audit_event({"ticket_id": tid, "event": "expired", "ts": now})
-            ops_journal.record({"kind": "approval_expired", "ticket_id": tid})
+            if not _restoring:
+                ops_journal.record({"kind": "approval_expired", "ticket_id": tid})
 
 
 def _secret() -> str:
@@ -202,6 +204,8 @@ def restore_from_journal() -> int:
     their original sign-off links without the token ever hitting the disk."""
     if not ops_journal.ENABLED:
         return 0
+    global _restoring
+    _restoring = True
     restored = 0
     for e in ops_journal.replay():
         kind, tid = e.get("kind"), e.get("ticket_id")
@@ -225,6 +229,7 @@ def restore_from_journal() -> int:
         elif kind == "task_executed" and tid in _tickets:
             _tickets[tid]["status"] = "executed"
     _prune_expired()
+    _restoring = False
     return restored
 
 

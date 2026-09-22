@@ -9,12 +9,15 @@ or sloppy brain response can never smuggle banned constructs into the sandbox).
 
 Fail-closed without keys: returns None and the loop stops instead of guessing.
 Shares the brain env vars with self_diagnose (FIELD_BRAIN_* / KIMI_API_KEY).
+
+Batch E: /recalibrate also accepts a JSON body {"code": "..."} - query-param
+code hits URL length caps and lands in proxy access logs.
 """
 from __future__ import annotations
 
 import os
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .admin_auth import verify_admin
 from . import sandbox_runner as sb
@@ -72,9 +75,17 @@ async def brain_fixer(code: str, stderr: str) -> str | None:
 
 
 @router.post("")
-async def recalibrate(code: str, _: bool = Depends(verify_admin)) -> dict:
-    """Admin-gated: run code through the capped self-healing loop. The verdict
-    is returned to the human caller - nothing is stored, deployed, or applied."""
+async def recalibrate(request: Request, code: str = "", _: bool = Depends(verify_admin)) -> dict:
+    """Admin-gated: run code through the capped self-healing loop. Accepts code as
+    a query param or a JSON body {"code": "..."} - the body form avoids URL length
+    caps and keeps code out of access logs. The verdict is returned to the human
+    caller - nothing is stored, deployed, or applied."""
+    if not (code or "").strip():
+        try:
+            body = await request.json()
+            code = str(body.get("code", ""))
+        except Exception:
+            pass
     if not (code or "").strip():
         raise HTTPException(status_code=400, detail="empty code")
     return await sb.run_with_recalibration(code, brain_fixer, max_retries=MAX_RETRIES)

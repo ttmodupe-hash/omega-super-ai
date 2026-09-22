@@ -5,6 +5,9 @@ Any module posts a traceback; the configured brain returns a diagnosis and a
 SUGGESTED patch. The suggestion is stored as pending_human and returned to the
 caller - nothing is ever applied automatically (the self-modification ban).
 Correct provider URLs only (env-driven); fail-closed without keys.
+
+Batch E: /report is admin-gated - an open endpoint would let anyone burn the
+brain API quota with synthetic tracebacks.
 """
 from __future__ import annotations
 
@@ -60,7 +63,7 @@ async def _diagnose(traceback_text: str) -> dict:
 
 
 @router.post("/report")
-async def report(traceback_text: str) -> dict:
+async def report(traceback_text: str, _: bool = Depends(verify_admin)) -> dict:
     tb = (traceback_text or "").strip()
     if not tb:
         raise HTTPException(status_code=400, detail="empty traceback")
