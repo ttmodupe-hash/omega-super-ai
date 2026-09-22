@@ -20,7 +20,6 @@ os.environ.setdefault("OPS_JOURNAL", "off")
 from core import truth_engine  # noqa: E402
 import core.kimi_client as kimi_client  # noqa: E402
 from core.main import app  # noqa: E402
-
 ADMIN = {"X-Luqi-Admin-Auth": "test-admin-key"}
 
 
