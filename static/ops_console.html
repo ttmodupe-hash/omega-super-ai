@@ -77,6 +77,14 @@
   </section>
 
   <section>
+    <h2>Recalibration Loop (capped, human-gated)</h2>
+    <label for="rccode">Code - failures go to the brain fixer, max retries per server config</label>
+    <textarea id="rccode" rows="3" placeholder="print(2 + 2)"></textarea>
+    <button onclick="recalibrate()">Run with recalibration</button>
+    <pre id="rcOut" class="dim">verdict appears here</pre>
+  </section>
+
+  <section>
     <h2>Health <button class="ghost" onclick="loadHealth()">refresh</button></h2>
     <pre id="health" class="dim">self-diagnose + run log appear here</pre>
   </section>
@@ -139,6 +147,11 @@ async function decide(tid, decision) {
 async function runTicket() {
   const res = await api("/v1/ops/tasks/run", "POST", { ticket_id: $("rtid").value });
   show($("runOut"), res);
+}
+
+async function recalibrate() {
+  const res = await api("/v1/ops/recalibrate", "POST", { code: $("rccode").value });
+  show($("rcOut"), res);
 }
 
 async function loadHealth() {

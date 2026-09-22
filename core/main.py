@@ -86,6 +86,7 @@ from .sandbox_reaper import reaper_loop
 from .self_diagnose import router as self_diagnose_router
 from .ops_approvals import router as approvals_router
 from .task_runner import router as task_runner_router
+from .code_fixer import router as recalibrate_router
 import asyncio as _asyncio
 from .webhooks import webhook_router
 from .resource_caps import enforce_free_tier_resource_caps
@@ -424,6 +425,7 @@ app.include_router(research_router)
 app.include_router(self_diagnose_router)
 app.include_router(approvals_router)
 app.include_router(task_runner_router)
+app.include_router(recalibrate_router)
 
 
 # ---------- PWA Static Serving (LAST) ----------
