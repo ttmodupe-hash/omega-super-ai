@@ -14,9 +14,10 @@ from __future__ import annotations
 import os
 import time
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .admin_auth import verify_admin
+from .rate_limiter import limiter, SELF_DIAG_LIMIT
 
 router = APIRouter(prefix="/v1/self-diagnose", tags=["Self-Diagnose"])
 
@@ -63,7 +64,8 @@ async def _diagnose(traceback_text: str) -> dict:
 
 
 @router.post("/report")
-async def report(traceback_text: str, _: bool = Depends(verify_admin)) -> dict:
+@limiter.limit(SELF_DIAG_LIMIT)
+async def report(request: Request, traceback_text: str, _: bool = Depends(verify_admin)) -> dict:
     tb = (traceback_text or "").strip()
     if not tb:
         raise HTTPException(status_code=400, detail="empty traceback")

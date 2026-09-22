@@ -20,6 +20,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .admin_auth import verify_admin
+from .rate_limiter import limiter, RECALIBRATE_LIMIT
 from . import sandbox_runner as sb
 
 router = APIRouter(prefix="/v1/ops/recalibrate", tags=["Ops Recalibration"])
@@ -75,6 +76,7 @@ async def brain_fixer(code: str, stderr: str) -> str | None:
 
 
 @router.post("")
+@limiter.limit(RECALIBRATE_LIMIT)
 async def recalibrate(request: Request, code: str = "", _: bool = Depends(verify_admin)) -> dict:
     """Admin-gated: run code through the capped self-healing loop. Accepts code as
     a query param or a JSON body {"code": "..."} - the body form avoids URL length
