@@ -16,3 +16,9 @@ def _reset_rate_limiter():
     except Exception:
         pass
     yield
+
+
+@pytest.fixture(params=["asyncio"])
+def anyio_backend(request):
+    """Pin the anyio plugin to asyncio only (trio is not a dependency)."""
+    return request.param

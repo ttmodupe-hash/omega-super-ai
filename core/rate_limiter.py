@@ -42,6 +42,7 @@ GLOBAL_LIMIT = os.getenv("RATE_LIMIT_GLOBAL", "60/minute")
 RECALIBRATE_LIMIT = os.getenv("RATE_LIMIT_RECALIBRATE", "5/minute")    # LLM + sandbox
 SELF_DIAG_LIMIT = os.getenv("RATE_LIMIT_SELF_DIAG", "10/minute")       # LLM quota
 RESPOND_LIMIT = os.getenv("RATE_LIMIT_RESPOND", "15/minute")           # token endpoint
+TRUTH_LIMIT = os.getenv("RATE_LIMIT_TRUTH", "5/minute")               # dual-agent LLM loop
 
 limiter = Limiter(key_func=client_key, enabled=ENABLED,
                   application_limits=[GLOBAL_LIMIT])

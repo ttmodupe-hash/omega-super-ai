@@ -52,6 +52,23 @@ class ReasonRequest(BaseModel):
 async def execute_kimi_reasoning_node(req: ReasonRequest):
     """High-context reasoning endpoint. Blocking call offloaded to the thread pool."""
     try:
-        return await asyncio.to_thread(_call_kimi, req.prompt, req.context_history)
+        out = await asyncio.to_thread(_call_kimi, req.prompt, req.context_history)
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=503, detail=f"Reasoning bridge unavailable: {str(e)}")
+
+    # Batch G: opt-in adversarial verification of the draft answer. Additive by
+    # contract - the response gains a "verification" block and the content is
+    # only ever REPLACED when the pipeline returns status="verified". Any
+    # pipeline fault degrades to {"status": "unavailable"} and the original
+    # answer is returned untouched: the gateway's answer path never breaks.
+    if os.getenv("LUQI_TRUTH_PIPELINE", "0") == "1":
+        try:
+            from .truth_engine import verify_draft
+            draft = out["choices"][0]["message"]["content"]
+            report = await verify_draft(req.prompt, draft)
+            out["verification"] = report
+            if report["status"] == "verified":
+                out["choices"][0]["message"]["content"] = report["answer"]
+        except Exception as exc:
+            out["verification"] = {"status": "unavailable", "error": type(exc).__name__}
+    return out
