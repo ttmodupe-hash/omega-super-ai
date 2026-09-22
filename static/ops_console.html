@@ -85,7 +85,7 @@
   </section>
 
   <section>
-    <h2>Audit Trail <button class="ghost" onclick="loadAudit()">refresh</button></h2>
+    <h2>Audit Trail <span class="dim">auto-polls every 3s</span> <button class="ghost" onclick="loadAudit()">refresh</button></h2>
     <pre id="audit" class="dim">in-memory audit + durable journal appear here</pre>
   </section>
 
@@ -155,12 +155,18 @@ async function runTicket() {
 }
 
 async function recalibrate() {
-  const res = await api("/v1/ops/recalibrate", "POST", { code: $("rccode").value });
-  show($("rcOut"), res);
+  // Batch F: JSON body instead of query param - code stays out of URL logs,
+  // no length cap. The endpoint accepts both (Batch E).
+  const r = await fetch("/v1/ops/recalibrate", {
+    method: "POST",
+    headers: { "X-Luqi-Admin-Auth": $("key").value, "Content-Type": "application/json" },
+    body: JSON.stringify({ code: $("rccode").value })
+  });
+  show($("rcOut"), { status: r.status, body: await r.json().catch(() => ({})) });
 }
 
 async function loadAudit() {
-  const res = await api("/v1/ops/approvals/audit");
+  const res = await api("/v1/ops/audit");          // Batch F aggregate feed
   $("audit").className = res.status < 400 ? "" : "err";
   $("audit").textContent = JSON.stringify(res.body, null, 2);
 }
@@ -173,6 +179,20 @@ async function loadHealth() {
     "self-diagnose: " + JSON.stringify(diag.body) + "\n" +
     "task runs:     " + JSON.stringify(runs.body, null, 2);
 }
+
+// Batch F: live polling - pending tickets + audit feed every 3s once a key is
+// entered. The key lives in memory only, so polling starts on input, never from
+// stored state. 2 requests / 3s = 40/min, inside the 60/min global bucket.
+let _pollTimer = null;
+function startPolling() {
+  if (_pollTimer) return;
+  _pollTimer = setInterval(() => {
+    if (!$("key").value) return;          // never fire unauthenticated polls
+    loadPending();
+    loadAudit();
+  }, 3000);
+}
+$("key").addEventListener("input", startPolling);
 </script>
 </body>
 </html>
