@@ -3,7 +3,8 @@ OMEGA-LUQI Sandbox Runner v2 (Issue 32) - tiered isolation + capped self-recalib
 
 Tier 1: combined static gate - string patterns (open/import/exec/eval/dunder) AND a
         proper AST visitor (forbidden imports: subprocess/sys/shutil/socket/ctypes;
-        forbidden calls: eval/exec/compile/__import__; dunder attribute traversal).
+        forbidden calls: eval/exec/compile/__import__; dunder attribute traversal;
+        attribute access on forbidden module names, e.g. os.system without import).
 Tier 2: ephemeral Docker container when available (network none, mem/cpu caps, non-root,
         read-only mount, auto-remove, hard timeout) - real kernel-namespace isolation.
 Tier 3: subprocess `python -I` fallback with POSIX rlimits (Windows: timeout-only).
@@ -14,6 +15,10 @@ loop, honest: feedback to the model, never silent auto-patch.
 Batch E: blocking Docker SDK / subprocess calls run via asyncio.to_thread (the
 event loop no longer freezes for the full timeout), and payload temp files are
 unlinked in a finally block - no leaks on timeout or crash.
+
+Batch F: run_with_recalibration reports the PER-LOOP recalibration count (the
+global meter made the count depend on unrelated prior runs); the AST gate now
+also rejects attribute access on forbidden module names.
 """
 from __future__ import annotations
 
@@ -59,6 +64,8 @@ class _ASTVerifier(ast.NodeVisitor):
     def visit_Attribute(self, node):
         if node.attr.startswith("__"):
             self.issues.append(f"dunder access: .{node.attr}")
+        if isinstance(node.value, ast.Name) and node.value.id in FORBIDDEN_IMPORTS:
+            self.issues.append(f"forbidden module access: {node.value.id}.{node.attr}")
         self.generic_visit(node)
 
 
@@ -187,21 +194,23 @@ async def run_with_recalibration(code: str, fixer, max_retries: int = 2,
                                  timeout: float = DEFAULT_TIMEOUT) -> dict:
     """The capped self-healing loop: failure -> structured stderr -> fixer(code, err)
     -> retry. Bounded by max_retries; returns the last verdict. Never auto-patches
-    anything except via the caller-reviewed fixer callback."""
-    current, last = code, None
+    anything except via the caller-reviewed fixer callback. The returned
+    'recalibrations' is THIS loop's fix count; the global meter tracks the total."""
+    current, last, fixes = code, None, 0
     for attempt in range(max_retries + 1):
         last = await run_python(current, timeout)
         if last["ok"]:
-            return {**last, "attempts": attempt + 1, "recalibrations": _meter["recalibrations"]}
+            return {**last, "attempts": attempt + 1, "recalibrations": fixes}
         if attempt < max_retries:
             _meter["recalibrations"] += 1
+            fixes += 1
             try:
                 current = await fixer(current, last.get("error", ""))
                 if not current or not str(current).strip():
                     break
             except Exception:
                 break
-    return {**last, "attempts": max_retries + 1, "recalibrations": _meter["recalibrations"]}
+    return {**last, "attempts": max_retries + 1, "recalibrations": fixes}
 
 
 async def _feedback(traceback_text: str) -> None:

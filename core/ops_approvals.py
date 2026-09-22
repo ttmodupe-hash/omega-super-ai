@@ -18,9 +18,10 @@ import os
 import secrets
 import time
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from .admin_auth import verify_admin
+from .rate_limiter import limiter, RESPOND_LIMIT
 from .security_guards import DEFAULT_ADMIN_SECRET
 from . import ops_journal
 
@@ -173,7 +174,8 @@ async def list_pending(_: bool = Depends(verify_admin)) -> dict:
 
 
 @router.get("/{ticket_id}/respond")
-async def respond(ticket_id: str, token: str, decision: str) -> dict:
+@limiter.limit(RESPOND_LIMIT)
+async def respond(request: Request, ticket_id: str, token: str, decision: str) -> dict:
     """The webhook link. The HMAC token IS the credential - no admin header needed.
     Repeated bad tokens lock the ticket (429) - brute force gets nothing."""
     ticket = _tickets.get(ticket_id)
