@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.36.0] - 2026-09-22
+### Added
+- African History Archive v1.0.0: 26 sourced entries, /v1/history endpoints, BCE-aware timeline, >=2 sources enforced at load, UNESCO base, 28-check verification battery (shipped in the 5.35.8-5.35.10 line; changelog drift corrected here).
+- Everyday Services Pack v1.0.0: SASSA/SRD/SARS/UIF/NSFAS guides, /v1/services endpoints, official sources only, scam warning in every entry, 190-check verification battery (same drift correction).
+### Fixed
+- Test gate campaign (Issue 17) closed: orchestrator admin tests now follow the live LUQI_ADMIN_SECRET env (root cause of the 5 "403-on-authorized" failures - the hardcoded test secret never matched CI's env value; the human-session theory was disproven by direct probe: admin header alone returns 200).
+- Anonymous gate-release attempts assert 403, matching the real engine contract (FastAPI APIKeyHeader auto_error refuses missing credentials with 403; the earlier 401 edits were made from theory, not observation, and are reverted).
+- Router wiring audit verified green as evolved (glob discovery + suffix matching + dormant whitelist); the predicted app.mount() blind spot does not exist - all API routers mount via include_router.
+- Version drift closed: engine 5.35.10 -> 5.36.0, aligned with changelog head (drift tests green again).
+### CI
+- Gate now runs the feature verification batteries (tests/verify_history.py, tests/verify_services.py) as a dedicated step - they are standalone scripts, not pytest modules, so appending them to the pytest line would have collected zero checks.
+
 ## [5.35.7] - 2026-09-15
 ### Fixed
 - test determinism campaign: autouse env-isolation fixture (26 failures -> 5, 192/197 passing locally on the six CI files, exact env + real Postgres 5433).
@@ -29,7 +41,7 @@
 
 ## [5.35.5] - 2026-09-15
 ### Fixed
-- core/models.py: added curriculum_lessons + vocational_modules tables (Text import included) - migration 002 bulk-inserts into both, and neither existed in Base.metadata, so lembic upgrade head failed at 002 with 'relation does not exist' after 0001 finally passed.
+- core/models.py: added curriculum_lessons + vocational_modules tables (Text import included) - migration 002 bulk-inserts into both, and neither existed in Base.metadata, so alembic upgrade head failed at 002 with 'relation does not exist' after 0001 finally passed.
 
 ## [5.35.4] - 2026-09-15
 ### Fixed

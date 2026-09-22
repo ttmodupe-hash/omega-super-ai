@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from core.main import app, TaskStatus
 
-ADMIN_SECRET = "SuperSecretAdminKey123"
+ADMIN_SECRET = os.getenv("LUQI_ADMIN_SECRET", "SuperSecretAdminKey123")  # follow live env: CI sets its own; fallback matches engine default
 
 
 @pytest.fixture
@@ -57,7 +57,7 @@ def test_30_percent_human_in_the_loop_gate_enforcement(admin_headers):
 
     # Unauthorized override must be rejected
     fail = client.post(f"/v1/human/override/{task_id}?approve=true&payment_credentials=STOLEN-TOKEN")
-    assert fail.status_code == 401  # no credentials = unauthenticated (engine contract)
+    assert fail.status_code == 403  # anonymous: APIKeyHeader refuses missing credentials before auth (engine contract)
 
     # Authorized human releases the gate
     ok = client.post(
@@ -222,7 +222,7 @@ def test_tax_filing_releases_only_via_authenticated_human():
 
     # Unauthorized release attempt blocked
     blocked = client.post(f"/v1/human/override/{task_id}?approve=true")
-    assert blocked.status_code == 401  # no credentials = unauthenticated (engine contract)
+    assert blocked.status_code == 403  # anonymous: APIKeyHeader refuses missing credentials before auth (engine contract)
 
     # Authenticated human releases the filing
     released = client.post(f"/v1/human/override/{task_id}?approve=true", headers=admin)
