@@ -2,7 +2,7 @@
 # LUQI-AI MASTER PRODUCTION RUNTIME - DEPENDENCY MANIFEST
 # Pinned for reproducible staging builds. Floors were previously >= ; the one
 # conflict found in the pasted manifest (uvicorn 0.28 vs our 0.29 floor) is
-# reconciled below. Unused deps (pydantic-settings, cryptography) removed.
+# reconciled below. pydantic-settings removed as unused; cryptography kept (db_backup lazy-imports it).
 # ==============================================================================
 
 # Web server core
@@ -26,6 +26,7 @@ stripe==15.6.1           # Stripe provider (lazy-imported; engine boots without 
 
 # Auth & session revocation (PyJWT is imported lazily - engine boots without it)
 PyJWT==2.8.0
+cryptography==50.0.1      # AES-256-GCM backup pipeline (core/db_backup.py, lazy-imported); wrongly removed as 'unused' - CI test_backup_cipher_roundtrip needs it
 redis==5.0.3              # only required when STATE_BACKEND=redis
 
 # Sandboxes

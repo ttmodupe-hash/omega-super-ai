@@ -9,6 +9,7 @@
 - Anonymous gate-release attempts assert 403, matching the real engine contract (FastAPI APIKeyHeader auto_error refuses missing credentials with 403; the earlier 401 edits were made from theory, not observation, and are reverted).
 - Router wiring audit verified green as evolved (glob discovery + suffix matching + dormant whitelist); the predicted app.mount() blind spot does not exist - all API routers mount via include_router.
 - Version drift closed: engine 5.35.10 -> 5.36.0, aligned with changelog head (drift tests green again).
+- requirements.txt: cryptography restored (AES-256-GCM backup pipeline, core/db_backup.py lazy import) - its removal as 'unused' broke test_backup_cipher_roundtrip on clean CI installs; reproduced on Python 3.11 + exact CI pins, fixed and re-proven (197/197 with live Postgres 16).
 ### CI
 - Feature verification batteries (tests/verify_history.py, tests/verify_services.py) staged for the CI gate as a dedicated step - they are standalone scripts, not pytest modules, so appending them to the pytest line would collect zero checks. NOTE: the workflow edit itself is PENDING - the pushing token lacks the workflow scope; apply the 5-line step via the GitHub web editor.
 
@@ -187,10 +188,10 @@ lets you do that you couldn't before.
 - Executable verification harness: fixed cases + must-fail negatives run in-sandbox; honest `success_unverified` labeling.
 
 ## [5.13.0] - 2026-09-15
-- Full keyless geocoding family (8 sources) with Nominatim→Photon fallback chain; extended tool-router signals (postcode, IP, health).
+- Full keyless geocoding family (8 sources) with Nominatint→Photon fallback chain; extended tool-router signals (postcode, IP, health).
 
 ## [5.12.0] - 2026-09-15
-- Nominatim geocoding (policy-compliant rate gate); deterministic tool router (when-to-use logic for free APIs).
+- Nominat geocoding (policy-compliant rate gate); deterministic tool router (when-to-use logic for free APIs).
 
 ## [5.11.0] - 2026-09-15
 - Jarvis companion avatar (procedural, gate-reactive, four states); zero-key browser TTS fallback; public companion status endpoint.
