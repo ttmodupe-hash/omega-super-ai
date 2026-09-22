@@ -87,6 +87,7 @@ from .self_diagnose import router as self_diagnose_router
 from .ops_approvals import router as approvals_router
 from .task_runner import router as task_runner_router
 from .code_fixer import router as recalibrate_router
+from . import ops_approvals as _ops_approvals
 import asyncio as _asyncio
 from .webhooks import webhook_router
 from .resource_caps import enforce_free_tier_resource_caps
@@ -147,6 +148,14 @@ def init_db() -> None:
             print("[OMEGA-LUQI] Adaptive nudge daemon enabled (LUQI_ADAPTIVE_NUDGES=1).")
     except Exception as e:
         print(f"[OMEGA-LUQI] Database layer unavailable ({e}). API routes remain active.")
+    # Ops journal replay is independent of the database: pending approvals must
+    # survive restarts even when Postgres is down.
+    try:
+        restored = _ops_approvals.restore_from_journal()
+        if restored:
+            print(f"[OMEGA-LUQI] Ops journal restored {restored} ticket(s).")
+    except Exception as e:
+        print(f"[OMEGA-LUQI] Ops journal replay failed (non-fatal): {e}")
 
 
 # ---------- Security / Human-in-the-Loop Gate ----------
