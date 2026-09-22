@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from .admin_auth import verify_admin
 from . import ops_approvals as oa
 from . import sandbox_runner as sb
+from . import ops_journal
 
 router = APIRouter(prefix="/v1/ops/tasks", tags=["Ops Task Runner"])
 
@@ -73,6 +74,8 @@ async def run_ticket(ticket_id: str, _: bool = Depends(verify_admin)) -> dict:
     _runs.append(run)
     if len(_runs) > MAX_RUNS:
         del _runs[: len(_runs) - MAX_RUNS]
+    ops_journal.record({"kind": "task_executed", "ticket_id": ticket_id,
+                        "action_type": ticket["action_type"], "ok": run["ok"]})
     return run
 
 

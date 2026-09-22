@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from .admin_auth import verify_admin
 from .security_guards import DEFAULT_ADMIN_SECRET
+from . import ops_journal
 
 router = APIRouter(prefix="/v1/ops/approvals", tags=["Ops Approvals"])
 
@@ -34,6 +35,27 @@ PUBLIC_BASE_URL = os.getenv("LUQI_PUBLIC_BASE_URL", "").rstrip("/")
 # per-worker memory (numReplicas=1 rule)
 _tickets: dict[str, dict] = {}
 _notify_log: list[str] = []
+
+# Issue 37: token brute-force lockout + expiry hygiene + audit trail
+MAX_TOKEN_ATTEMPTS = int(os.getenv("OPS_TOKEN_MAX_ATTEMPTS", "5"))
+_fail_counts: dict[str, int] = {}
+_audit: list[dict] = []
+
+
+def _audit_event(event: dict) -> None:
+    _audit.append(event)
+    if len(_audit) > 500:
+        del _audit[: len(_audit) - 500]
+
+
+def _prune_expired() -> None:
+    """Expired pending tickets are marked, journaled, and can never be decided."""
+    now = int(time.time())
+    for tid, t in _tickets.items():
+        if t["status"] == "pending" and t["expires"] <= now:
+            t["status"] = "expired"
+            _audit_event({"ticket_id": tid, "event": "expired", "ts": now})
+            ops_journal.record({"kind": "approval_expired", "ticket_id": tid})
 
 
 def _secret() -> str:
@@ -94,6 +116,10 @@ def _decide(ticket: dict, decision: str, decided_by: str) -> dict:
     ticket["decided_by"] = decided_by
     ticket["decided_at"] = int(time.time())
     _notify_log.append(f"[decision] ticket {ticket['ticket_id']} -> {ticket['status']} ({decided_by})")
+    _audit_event({"ticket_id": ticket["ticket_id"], "event": ticket["status"],
+                  "by": decided_by, "ts": ticket["decided_at"]})
+    ops_journal.record({"kind": "approval_decided", "ticket_id": ticket["ticket_id"],
+                        "status": ticket["status"], "by": decided_by})
     return {"ticket_id": ticket["ticket_id"], "status": ticket["status"]}
 
 
@@ -124,6 +150,12 @@ async def request_approval(action_type: str, summary: str, payload: str = "",
     }
     if len(_tickets) > MAX_TICKETS:
         _evict_oldest()
+    _prune_expired()
+    _audit_event({"ticket_id": ticket_id, "event": "requested", "ts": now,
+                  "action_type": action_type, "summary": (summary or "")[:500]})
+    ops_journal.record({"kind": "approval_requested", "ticket_id": ticket_id,
+                        "action_type": action_type, "summary": (summary or "")[:500],
+                        "payload": parsed_payload, "expires": expires})
     await _notify(_tickets[ticket_id], token)
     return {"ticket_id": ticket_id, "token": token, "status": "pending", "expires": expires}
 
@@ -140,11 +172,15 @@ async def list_pending(_: bool = Depends(verify_admin)) -> dict:
 
 @router.get("/{ticket_id}/respond")
 async def respond(ticket_id: str, token: str, decision: str) -> dict:
-    """The webhook link. The HMAC token IS the credential - no admin header needed."""
+    """The webhook link. The HMAC token IS the credential - no admin header needed.
+    Repeated bad tokens lock the ticket (429) - brute force gets nothing."""
     ticket = _tickets.get(ticket_id)
     if ticket is None:
         raise HTTPException(status_code=404, detail="unknown ticket")
+    if _fail_counts.get(ticket_id, 0) >= MAX_TOKEN_ATTEMPTS:
+        raise HTTPException(status_code=429, detail="ticket locked after repeated bad tokens")
     if not hmac.compare_digest(token or "", ticket["token"]):
+        _fail_counts[ticket_id] = _fail_counts.get(ticket_id, 0) + 1
         raise HTTPException(status_code=403, detail="invalid token")
     return _decide(ticket, decision, decided_by="token-link")
 
@@ -157,3 +193,45 @@ async def admin_decision(ticket_id: str, decision: str,
     if ticket is None:
         raise HTTPException(status_code=404, detail="unknown ticket")
     return _decide(ticket, decision, decided_by="admin-console")
+
+
+def restore_from_journal() -> int:
+    """Restart recovery: replay the journal, re-create tickets, then apply
+    decisions/expirations/executions in write order. The HMAC token is
+    deterministic (ticket_id:action_type:expires), so restored tickets keep
+    their original sign-off links without the token ever hitting the disk."""
+    if not ops_journal.ENABLED:
+        return 0
+    restored = 0
+    for e in ops_journal.replay():
+        kind, tid = e.get("kind"), e.get("ticket_id")
+        if not tid:
+            continue
+        if kind == "approval_requested" and tid not in _tickets:
+            expires = int(e.get("expires", 0))
+            action_type = e.get("action_type", "")
+            _tickets[tid] = {
+                "ticket_id": tid, "action_type": action_type,
+                "summary": e.get("summary", ""), "payload": e.get("payload") or {},
+                "status": "pending", "created": int(e.get("ts", 0)),
+                "expires": expires,
+                "token": _sign_ticket(tid, action_type, expires),
+                "decided_by": None, "decided_at": None,
+            }
+            restored += 1
+        elif kind == "approval_decided" and tid in _tickets:
+            _tickets[tid]["status"] = e.get("status", _tickets[tid]["status"])
+            _tickets[tid]["decided_by"] = e.get("by")
+        elif kind == "task_executed" and tid in _tickets:
+            _tickets[tid]["status"] = "executed"
+    _prune_expired()
+    return restored
+
+
+@router.get("/audit")
+async def audit_trail(_: bool = Depends(verify_admin)) -> dict:
+    """Admin-only: in-memory audit tail + durable journal tail + journal health."""
+    return {"in_memory": _audit[-100:],
+            "journal": ops_journal.read_recent(100),
+            "journal_enabled": ops_journal.ENABLED,
+            "journal_write_errors": ops_journal.write_errors[-10:]}
