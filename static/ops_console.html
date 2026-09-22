@@ -85,6 +85,11 @@
   </section>
 
   <section>
+    <h2>Audit Trail <button class="ghost" onclick="loadAudit()">refresh</button></h2>
+    <pre id="audit" class="dim">in-memory audit + durable journal appear here</pre>
+  </section>
+
+  <section>
     <h2>Health <button class="ghost" onclick="loadHealth()">refresh</button></h2>
     <pre id="health" class="dim">self-diagnose + run log appear here</pre>
   </section>
@@ -152,6 +157,12 @@ async function runTicket() {
 async function recalibrate() {
   const res = await api("/v1/ops/recalibrate", "POST", { code: $("rccode").value });
   show($("rcOut"), res);
+}
+
+async function loadAudit() {
+  const res = await api("/v1/ops/approvals/audit");
+  $("audit").className = res.status < 400 ? "" : "err";
+  $("audit").textContent = JSON.stringify(res.body, null, 2);
 }
 
 async function loadHealth() {

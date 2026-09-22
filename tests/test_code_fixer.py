@@ -7,6 +7,7 @@ import pytest
 
 os.environ.setdefault("PHONE_HASH_SALT", "test-salt")
 os.environ.setdefault("LUQI_ADMIN_SECRET", "TestAdminKey123")
+os.environ.setdefault("OPS_JOURNAL", "off")
 
 from fastapi.testclient import TestClient
 from core.main import app
