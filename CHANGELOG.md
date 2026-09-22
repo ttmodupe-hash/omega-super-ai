@@ -188,10 +188,10 @@ lets you do that you couldn't before.
 - Executable verification harness: fixed cases + must-fail negatives run in-sandbox; honest `success_unverified` labeling.
 
 ## [5.13.0] - 2026-09-15
-- Full keyless geocoding family (8 sources) with Nominatint→Photon fallback chain; extended tool-router signals (postcode, IP, health).
+- Full keyless geocoding family (8 sources) with Nominatim→Photon fallback chain; extended tool-router signals (postcode, IP, health).
 
 ## [5.12.0] - 2026-09-15
-- Nominat geocoding (policy-compliant rate gate); deterministic tool router (when-to-use logic for free APIs).
+- Nominatim geocoding (policy-compliant rate gate); deterministic tool router (when-to-use logic for free APIs).
 
 ## [5.11.0] - 2026-09-15
 - Jarvis companion avatar (procedural, gate-reactive, four states); zero-key browser TTS fallback; public companion status endpoint.
