@@ -91,7 +91,8 @@ async def list_entries(
 async def timeline() -> Dict[str, Any]:
     """The full archive ordered by start_year (BCE is negative) — the sweep
     from Kush to 1994 in one call."""
-    entries = sorted(_load_archive()["entries"], key=lambda e: e["start_year"])
+    entries = sorted(_load_archive()["entries"],
+                    key=lambda e: e["start_year"] if e["start_year"] is not None else 9999)
     return {"count": len(entries), "entries": [_summary(e) for e in entries]}
 
 
