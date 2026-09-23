@@ -1,4 +1,3 @@
-
 """
 OMEGA-LUQI AI Unified Engine (core/main.py) v2.0.0
 Merged from the OMEGA AI baseline and the Project Bug Fixes stream:
@@ -45,6 +44,7 @@ from .tool_router import router as tool_router
 from .free_geo_apis import router as free_geo_router
 from .memory import router as memory_router
 from .feedback import router as feedback_router
+from .site_stats import router as site_stats_router
 from .hybrid_ai import router as hybrid_router
 from .knowledge_base import router as kb_router
 from .ops_metrics import router as ops_router
@@ -136,7 +136,7 @@ def init_db() -> None:
     try:
         from sqlalchemy import create_engine
         from .models import Base
-        from . import enterprise_models, companion_models, reflexion_models, i18n_models  # noqa: F401 - registers tables on shared Base
+        from . import enterprise_models, companion_models, reflexion_models, i18n_models, site_stats_models  # noqa: F401 - registers tables on shared Base
 
         engine = create_engine(DATABASE_URL, pool_pre_ping=True)
         from .sqlite_wal import configure_sqlite_engine
@@ -426,6 +426,7 @@ app.include_router(tool_router)
 app.include_router(free_geo_router)
 app.include_router(memory_router)
 app.include_router(feedback_router)
+app.include_router(site_stats_router)
 app.include_router(hybrid_router)
 app.include_router(kb_router)
 app.include_router(ops_router)
