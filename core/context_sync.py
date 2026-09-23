@@ -178,7 +178,7 @@ def broadcast_legacy_trip(entry: Dict[str, Any]) -> Dict[str, int]:
     text = (
         ":rotating_light: *DIGITAL LEGACY THRESHOLD BREACHED* :rotating_light:\n"
         f"*Account:* `{entry.get('user_id', '?')[:12]}`  *Idle:* {entry.get('idle_days', '?')} days\n"
-        f"*Trusted contact:* `{entry.get('trusted_contact', '?')}`\n"
+        f"*Trusted contact:* {entry.get('trusted_contact', '?')}\n"
         "Status: gate task REGISTERED - awaiting authenticated human release. "
         "No data action has been taken."
     )
