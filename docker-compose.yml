@@ -1,6 +1,6 @@
 version: '3.8'
 
-# Local full-stack dev compose. NOTE: the repo-root Dockerfile is the LAB
+# Local full-stack dev compose. NOTE: lab/Dockerfile is the LAB
 # SANDBOX image (CMD sleep infinity, no app deps) - never use it for the
 # backend. Railway deploys via railway.toml (Nixpacks + start.sh); this file
 # mirrors that path for local use.

@@ -26,7 +26,7 @@ Mandela/Winnie voice synthesis, WebAssembly PWA, payment router slots).
     ├── deploy/                  # systemd unit, production env template, ops manual
 │   └── terraform/           # af-south-1 IaC scaffold (EC2 + SG + encrypted backups)
     ├── docs/                    # Pitch deck, script, grant proposal, API directory, launch checklist
-    ├── Dockerfile               # Student lab sandbox image (luqi-lab-base)
+    ├── lab/Dockerfile           # Student lab sandbox image (luqi-lab-base)
     ├── test_orchestrator.py     # 12-test safety gate suite (all passing)
 ├── test_security_gates.py   # 100-thread tax-gate stress suite (all passing)
 ├── test_auth_hardening.py   # Production guards + rate limiter + revocation (all passing)

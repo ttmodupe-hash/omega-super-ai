@@ -1,6 +1,7 @@
 # Railway deployment configuration - OMEGA-LUQI engine.
-# CRITICAL: the repo-root Dockerfile is the LAB SANDBOX image (sleep infinity).
-# Without this override Railway would deploy a sleeping container.
+# CRITICAL: the LAB SANDBOX image (sleep infinity) now lives at lab/Dockerfile,
+# off the repo root, so Railway Dockerfile auto-detection cannot pick it up.
+# This override keeps Railway building the engine, not the sleeping lab container.
 [build]
 builder = "NIXPACKS"          # python builder from requirements.txt
 

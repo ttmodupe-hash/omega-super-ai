@@ -7,7 +7,7 @@ Hyperlink InfoSystem DevOps guide, reviewed 2026-09-14).
 |---|---|
 | Plan | Roadmap (docs/OMEGA-LUQI_Roadmap.md), pilot definition |
 | Code | CONTRIBUTING.md standards; static gate test (every core module compiles) |
-| Build | Dockerfile (lab image); GitHub Actions `omega_luqi_sync.yml` |
+| Build | lab/Dockerfile (lab image); GitHub Actions `omega_luqi_sync.yml` |
 | Test | 6 suites, 100+ tests; wallet integration vs CI Postgres; alembic chain guard |
 | Release | Alembic migrations (0001 baseline + 002 seed); versioned zips |
 | Deploy | systemd unit + boot guards; deploy/inject_secrets.sh; nginx TLS 1.3 |

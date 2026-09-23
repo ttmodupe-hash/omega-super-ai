@@ -10,7 +10,7 @@ from typing import Dict, Any
 # Use real, pullable images. The Kali image is large (~4GB) - pull once on the host:
 #   docker pull kalilinux/kali-rolling
 IMAGE_MAP = {
-    "software_dev": "luqi-lab-base:latest",  # build from root Dockerfile
+    "software_dev": "luqi-lab-base:latest",  # build from lab/Dockerfile
     "networking": "alpine:latest",
     "cybersecurity": "kalilinux/kali-rolling",
 }
