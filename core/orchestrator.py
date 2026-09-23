@@ -223,9 +223,12 @@ def _knowledge_gap(prompt: str, trace: List[str]) -> AskResponse:
                 "services (SASSA grants, SRD R370, SARS tax, UIF, NSFAS — "
                 "plain-language guides from official sources), and history "
                 "(the sourced African History Archive). Rephrase toward one of "
-                "those, or pass mode_override to force a route."
+                "those, or pass mode_override to force a route. For AV room "
+                "consultancy (acoustics, cabling, cost estimates) use the "
+                "structured endpoint POST /v1/av/consult."
             ),
             "available_modes": list(_VALID_OVERRIDES),
+            "structured_endpoints": ["POST /v1/av/consult"],
         },
         sources=[],
         is_verified=False,

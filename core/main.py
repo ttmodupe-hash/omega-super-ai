@@ -74,6 +74,7 @@ from .finlit import router as finlit_router
 from .african_history import router as african_history_router
 from .everyday_services import router as everyday_services_router
 from .orchestrator import router as orchestrator_router
+from .av_consult import router as av_consult_router
 from .reflexion import router as reflexion_router
 from .citations import router as citations_router
 from .deep_research import router as deep_research_router
@@ -404,6 +405,7 @@ app.include_router(finlit_router)
 app.include_router(african_history_router)
 app.include_router(everyday_services_router)
 app.include_router(orchestrator_router)
+app.include_router(av_consult_router)
 app.include_router(reflexion_router)
 app.include_router(citations_router)
 app.include_router(deep_research_router)
@@ -450,3 +452,4 @@ app.include_router(truth_router)
 # ---------- PWA Static Serving (LAST) ----------
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static")
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+
