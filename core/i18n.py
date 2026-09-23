@@ -56,7 +56,7 @@ LANGUAGES: Dict[str, Dict[str, str]] = {
 # ── Seed UI catalogue (real translations; source="seed") ─────────────────
 # 12 keys covering one full page flow (landing/status/actions/footer).
 SEED_STRINGS: Dict[str, Dict[str, str]] = {
-    "app.name": {l: "Luqi AI" for l in LANGUAGES},
+    "app.name": {l: "luqi-ai" for l in LANGUAGES},
     "app.tagline": {
         "en": "Sovereign intelligence for South Africa",
         "zu": "Ubuhlakani bezwe laseNingizimu Afrika",
