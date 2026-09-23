@@ -102,7 +102,7 @@ from .main_types import TaskStatus, LuqiState
 from .state_store import get_state_store
 from .kimi_gateway import KIMI_MODEL
 
-app = FastAPI(title="OMEGA-luqi-ai Unified Sovereign Engine", version="5.36.0")
+app = FastAPI(title="OMEGA-Luqi-ai Unified Sovereign Engine", version="5.36.0")
 
 # ---------- Batch F: sliding-window rate limiting (global bucket + per-route) ----------
 setup_rate_limiting(app)

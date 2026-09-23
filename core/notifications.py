@@ -35,7 +35,7 @@ class LuqiNotificationGateway:
     async def send_gate_lock_alert(self, task_id: str, action_type: str, item_name: str) -> bool:
         """SMS the admin that a workflow froze at the gate. Best-effort."""
         message = (
-            "[luqi-ai GATE ALERT] "
+            "[Luqi-ai GATE ALERT] "
             f"{action_type} for '{item_name}' is frozen at the 30% human gate. "
             f"Task {task_id[:8]} - sign off in the Ops Cockpit."
         )
