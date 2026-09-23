@@ -114,4 +114,63 @@ r4 = av.calculate_rt60(4.0, 4.0, 3.0, "marble_unlisted")
 check("fallback.coef_default", r4["estimated_rt60_seconds"] == 0.44,
       "unknown wall material uses default 0.10 (same as drywall vector)")
 
+# ── 9. AV-2 bandwidth math, hand-computed ─────────────────────────────────
+# 4 streams jpeg_xs (1.2 Gbps): raw 4.8, engineered 4.8*1.20 = 5.76 -> 10GbE band
+print("group 9: bandwidth estimator")
+n = av.calculate_throughput(4, "jpeg_xs_compressed")
+check("net.raw", n["raw_payload_gbps"] == 4.8, f"got {n['raw_payload_gbps']}")
+check("net.engineered", n["engineered_load_gbps"] == 5.76, f"got {n['engineered_load_gbps']}")
+check("net.10g_band", "10GbE" in n["recommended_switch_fabric"])
+n2 = av.calculate_throughput(2, "sdvoe_uncompressed")   # raw 18.0, eng 21.6 -> >10
+check("net.core_band", "40/100GbE" in n2["recommended_switch_fabric"], f"eng={n2['engineered_load_gbps']}")
+n3 = av.calculate_throughput(8, "h264_h265_streaming")  # raw 0.2, eng 0.24 -> 1GbE
+check("net.1g_band", "1GbE" in n3["recommended_switch_fabric"], f"eng={n3['engineered_load_gbps']}")
+try:
+    av.calculate_throughput(4, "proprietary_magic")
+    raise SystemExit("FAIL [net.invalid] unknown protocol accepted")
+except av.HTTPException as e:
+    check("net.invalid_rejected", e.status_code == 400)
+
+# ── 10. AV-2 scheduling matrix ────────────────────────────────────────────
+print("group 10: scheduling matrix")
+s = av.design_scheduling_layer("Executive Boardroom", "glass")
+check("sched.glass_mount", "adhesive" in s["mounting_hardware"].lower())
+check("sched.glass_raceway", "raceway" in s["cabling_pathway"].lower())
+check("sched.boardroom_panel", "10-inch" in s["scheduling_panel_class"])
+s2 = av.design_scheduling_layer("Huddle Space", "drywall")
+check("sched.huddle_panel", "7-inch" in s2["scheduling_panel_class"])
+check("sched.drywall_hidden", "in-wall" in s2["cabling_pathway"].lower())
+
+# ── 11. AV-2 inventory honesty ────────────────────────────────────────────
+print("group 11: inventory honesty")
+av._STOCK_API_URL = ""   # nothing configured
+inv = av.check_inventory("Extron")
+check("inv.not_integrated", inv["status"] == "not_integrated" and inv["is_live"] is False)
+check("inv.no_fake_numbers", "available_units" not in inv and "units" not in inv)
+check("inv.confirm_note", "confirm stock" in inv["note"].lower())
+av._STOCK_API_URL = "http://127.0.0.1:9/dead"  # configured but unreachable
+inv2 = av.check_inventory("Extron")
+check("inv.unreachable", inv2["status"] == "unreachable" and inv2["is_live"] is False)
+av._STOCK_API_URL = ""   # restore
+
+# ── 12. AV-2 full consult carries new blocks; real PDF ────────────────────
+print("group 12: consult blocks + real PDF")
+req_av2 = AvConsultRequest(length_m=7.5, width_m=5.0, height_m=3.0, wall_material="glass",
+                           num_video_streams=4, stream_protocol="jpeg_xs_compressed")
+res_av2 = av.run_consult(req_av2)
+check("av2.network_present", res_av2.network_infrastructure["engineered_load_gbps"] == 5.76)
+check("av2.sched_present", "adhesive" in res_av2.facility_scheduling["mounting_hardware"].lower())
+check("av2.inventory_honest", res_av2.inventory["is_live"] is False)
+check("av2.still_estimate", res_av2.is_estimate is True and res_av2.sources == [])
+check("av2.version", res_av2.system_meta["assumptions_version"] == "1.1.0")
+try:
+    pdf = av.build_proposal_pdf(req_av2)
+    check("pdf.magic", pdf[:5] == b"%PDF-", f"got {pdf[:5]!r}")
+    check("pdf.size", len(pdf) > 1500, f"{len(pdf)} bytes")
+    check("pdf.eof", b"%%EOF" in pdf[-64:], "PDF trailer present")
+    # deterministic doc id: same inputs -> same id (no random.randint anywhere)
+    check("pdf.deterministic_id", av._proposal_doc_id(res_av2) == av._proposal_doc_id(av.run_consult(req_av2)))
+except ImportError:
+    print("  skip [pdf] reportlab not installed in this env (route fails closed 503)")
+
 print(f"\nALL GREEN — {PASS} checks passed (verify_av_consult)")

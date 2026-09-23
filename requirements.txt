@@ -38,3 +38,6 @@ pytest-asyncio==0.23.5    # reserved for future native-async tests (suites are s
 
 # Ops plane rate limiting (Batch F)
 slowapi==0.1.10
+
+# AV proposal PDF rendering (AV-2)
+reportlab==4.2.5
