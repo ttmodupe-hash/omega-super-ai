@@ -444,7 +444,7 @@ def build_proposal_pdf(res: AvConsultRequest) -> bytes:
         c.drawString(left, y, text[:105])
         y -= dy * mm
 
-    line("LUQI-AI — AV ARCHITECTURE PROPOSAL", 7, bold=True, size=14)
+    line("luqi-ai — AV ARCHITECTURE PROPOSAL", 7, bold=True, size=14)
     line(f"Document ID: {doc_id}  (deterministic content hash — same inputs, same ID)")
     line(f"Generated: {datetime.now(timezone.utc).isoformat(timespec='seconds')} UTC")
     line(f"Assumptions version: {data.system_meta['assumptions_version']}  ·  "
