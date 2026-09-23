@@ -98,7 +98,7 @@ sudo certbot certonly --standalone -d luqi-ai.com -d www.luqi-ai.com
 3. Click "New Project" -> "Deploy from GitHub repo"
 4. Select `omega-super-ai`
 5. Add environment variables in Railway dashboard
-6. Railway auto-detects the Dockerfile and deploys
+6. Railway reads railway.toml (Nixpacks builder, bash start.sh) and deploys
 
 **Option B: Render.com**
 1. Go to https://render.com, sign in with GitHub
