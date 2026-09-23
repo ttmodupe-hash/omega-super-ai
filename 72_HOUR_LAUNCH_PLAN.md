@@ -114,7 +114,7 @@ If ANY of these fail, STOP and fix before continuing.
 2. Sign up for FREE plan
 3. Add domain `luqi-ai.com`
 4. Create `support@luqi-ai.com`
-5. Follow DNS record instructions (add MX records in Namecheap)
+5. Follow DNS record instructions (add MX records to Namecheap)
 
 > **My Recommendation: Start with Zoho Mail (free)**. You can upgrade later. Having `support@luqi-ai.com` makes you look professional to customers.
 
@@ -157,7 +157,7 @@ Step 4: Add DNS Records in Cloudflare
    Type: CNAME
    Name: www
    Target: luqi-ai.com
-   Proxy status: Proxied
+   Proxy status: Proxied (orange cloud)
    TTL: Auto
 
 Step 5: Enable SSL (CRITICAL for Stripe)
@@ -189,7 +189,7 @@ Step 1: Deploy
 4. Click "New Project"
 5. Click "Deploy from GitHub repo"
 6. Select: ttmodupe-hash / omega-super-ai
-7. Railway auto-detects Dockerfile and deploys!
+7. Railway reads railway.toml (Nixpacks builder, bash start.sh) and deploys!
 
 Step 2: Add Environment Variables
 1. In Railway dashboard → Select your project
