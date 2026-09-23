@@ -62,9 +62,19 @@ def _send_concurrent_tax_request(_):
 
 
 def test_gate_integrity_under_extreme_server_stress():
-    """100 simultaneous filing attempts: none may bypass the human boundary."""
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
-        results = list(executor.map(_send_concurrent_tax_request, range(100)))
+    """100 simultaneous filing attempts: none may bypass the human boundary.
+
+    Rate limiting is disabled for this test's duration: it exercises the GATE
+    under concurrency, not the throttle (100 requests in seconds would trip the
+    60/minute global bucket, and a 429 proves nothing about the gate - the
+    request never reaches it). Batch F owns limit coverage."""
+    from core.rate_limiter import limiter
+    limiter.enabled = False
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            results = list(executor.map(_send_concurrent_tax_request, range(100)))
+    finally:
+        limiter.enabled = True
 
     for response in results:
         assert response.status_code == 200
