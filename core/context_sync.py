@@ -127,7 +127,7 @@ _alert_state = {"day": "", "fired": set()}
 
 def format_alert(marker: str, finding: Dict[str, Any], repo: str) -> str:
     return (
-        ":warning: *LUQI-AI DRIFT DETECTED* :warning:\n"
+        ":warning: *luqi-ai DRIFT DETECTED* :warning:\n"
         f"*Repository:* {repo}\n"
         f"*Unresolved context:* `{marker.upper()}`\n"
         f"*Commit:* \"{finding.get('message', '')}\"\n"

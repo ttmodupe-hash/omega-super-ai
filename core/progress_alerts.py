@@ -30,7 +30,7 @@ def get_student_phone(user_id: str) -> Optional[str]:
 def format_unlock_message(skill: str, total_skills: int, hours: int) -> str:
     return (f"Congratulations! Module unlocked: {skill}. "
             f"You now hold {total_skills} verified skills ({hours} credit hours) "
-            f"on Luqi-AI. View your certificates on the dashboard.")
+            f"on luqi-ai. View your certificates on the dashboard.")
 
 
 def notify_module_unlock(user: UserSessionProfile, skill: str, total: int, hours: int) -> dict:
