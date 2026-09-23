@@ -95,7 +95,7 @@ def _naive(dt: Optional[datetime]) -> Optional[datetime]:
     return dt
 
 
-COMPANION_MODES = {"chat", "mentor", "coach", "quiz", "explain"}
+COMPANION_MODES = {"chat", "mentor", "coach", "quiz", "explain", "listen"}
 LEVELS = {"beginner", "intermediate", "advanced", "expert"}
 
 # Deterministic feedback rules: (keywords_any, knob, value, min_rating, max_rating)
@@ -259,7 +259,23 @@ def build_system_prompt(
         "coach": "You are in coach mode: goal-setting, accountability, concrete weekly actions.",
         "quiz": "You are in quiz mode: create clear quiz questions with answers and explanations.",
         "explain": "You are in explain mode: explain the concept in the simplest possible terms with analogies.",
+        "listen": (
+            "You are in listen mode: an active-listening companion. Reflect the user's "
+            "feelings back in your own words so they feel heard. Validate the feeling "
+            "before offering any advice. Ask ONE open follow-up question, then wait. "
+            "Never rush to fixes or solutions. Remember specific details they share so "
+            "you can reference them next time."
+        ),
     }
+
+    # Universal listening doctrine - applies to ALL modes, not just listen.
+    listening_doctrine = [
+        "Listen first: understand what the user is actually saying before you respond.",
+        "When the user shares feelings, reflect those feelings back in your own words before answering.",
+        "Reference specific things the user said, so they know they were heard.",
+        "Short affirming acknowledgements ('I hear you', 'that sounds heavy') are allowed and welcome.",
+        "Never interrogate: at most one question at a time, and never stack questions.",
+    ]
 
     lines = [
         f"You are {profile.companion_name}, the user's long-term AI companion in the Luqi-AI learning ecosystem.",
@@ -267,8 +283,9 @@ def build_system_prompt(
         f"The user's learning level is {profile.level}. You have interacted {profile.interaction_count} times "
         f"(streak {profile.streak_days} days, trust {float(profile.trust_score):.2f}).",
         mode_lines.get(mode, mode_lines["chat"]),
-        "You respond ONLY with a JSON object: {\"reply\": \"...\"} plus optional mode-specific keys.",
     ]
+    lines.extend(listening_doctrine)
+    lines.append("You respond ONLY with a JSON object: {\"reply\": \"...\"} plus optional mode-specific keys.")
 
     directive_lines = [
         DIRECTIVE_PROMPT_LINES[(d.knob, d.value)]
