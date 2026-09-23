@@ -19,11 +19,14 @@ All brain calls route through core/kimi_client.chat_completion (unified key
 check + cost circuit-breaker + forced JSON response format). Blocking HTTP
 runs in threads so the event loop never stalls.
 
+NOTE: no `from __future__ import annotations` here - slowapi's limiter.limit
+wraps endpoints, and FastAPI resolves string annotations in the WRAPPER's
+globals (pydantic 2.6 raises PydanticUndefinedAnnotation). Real annotation
+objects keep route registration sound on the pinned CI dependency set.
+
 Env: LUQI_TRUTH_PIPELINE=1 hooks /v1/agent/kimi-reason (default off),
 TRUTH_MAX_REVISIONS (default 2 = max 3 generator calls), RATE_LIMIT_TRUTH.
 """
-from __future__ import annotations
-
 import asyncio
 import json
 import os
@@ -105,21 +108,21 @@ def _parse_verdict(text: str) -> AuditVerdict:
                 "Regenerate with STRICT JSON: answer, claims with sources, uncertainties."))
 
 
-def _parse_draft(text: str) -> Draft | None:
+def _parse_draft(text: str):
     try:
         return Draft(**_parse_json(text))
     except Exception:
         return None
 
 
-def _journal(status: str, revisions: int, verdict: AuditVerdict | None, query: str) -> None:
+def _journal(status: str, revisions: int, verdict, query: str) -> None:
     ops_journal.record({"kind": "truth_verdict", "status": status, "revisions": revisions,
                         "confidence": verdict.confidence_score if verdict else None,
                         "findings": len(verdict.audit_findings) if verdict else 0,
                         "query": query[:200]})
 
 
-async def _generate(query: str, verdict: AuditVerdict | None) -> Draft | None:
+async def _generate(query: str, verdict):
     recalibration = ""
     if verdict is not None and not verdict.is_truthful_and_accurate:
         recalibration = (
@@ -147,8 +150,8 @@ async def truth_seek(query: str, max_revisions: int = MAX_REVISIONS) -> dict:
     if not (query or "").strip():
         raise HTTPException(status_code=400, detail="empty query")
     _meter["runs"] += 1
-    verdict: AuditVerdict | None = None
-    draft: Draft | None = None
+    verdict = None
+    draft = None
     revisions = 0
     try:
         while True:
@@ -211,7 +214,7 @@ class TruthRequest(BaseModel):
 
 @router.post("/answer")
 @limiter.limit(TRUTH_LIMIT)
-async def answer(request: Request, req: TruthRequest | None = None,
+async def answer(request: Request, req: TruthRequest = None,
                  _: bool = Depends(verify_admin)) -> dict:
     """Admin-gated verification pipeline. JSON body {"query": "..."} preferred
     (keeps queries out of URL logs); ?query= accepted for curl/console use."""
