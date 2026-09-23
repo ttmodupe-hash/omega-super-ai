@@ -452,4 +452,3 @@ app.include_router(truth_router)
 # ---------- PWA Static Serving (LAST) ----------
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static")
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
-
