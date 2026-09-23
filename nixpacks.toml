@@ -2,12 +2,16 @@
 # which has no psycopg2-binary 2.9.9 wheel (build fails compiling from source).
 # Verified 2026-09-18: engine boots clean on Python 3.12 (sandbox reproduction of
 # the Railway flow: pip install -r requirements.txt && bash start.sh, /v1/health -> 200).
+#
+# 2026-09-24 DEPLOY-1 fix: the previous [phases.install] override ran
+# `python -m pip` on the BARE nix interpreter - nixpkgs python ships no global pip
+# (nixpacks python.rs: "pip is not installed globally with nixpkgs py"), so the
+# build died at stage-0 with "No module named pip". Fix: drop the custom install
+# phase entirely - nixpacks' default PipReqs flow creates /opt/venv with pip and
+# installs requirements.txt there, adding /opt/venv/bin to PATH for the runtime
+# image so `bash start.sh` (set in railway.toml) finds uvicorn. gcc + zlib/cc libs
+# mirror nixpacks' own default setup additions (C headers for any source builds).
 
 [phases.setup]
-nixPkgs = ["python312"]
-
-[phases.install]
-cmds = ["python -m pip install --upgrade pip", "pip install -r requirements.txt"]
-
-[start]
-cmd = "bash start.sh"
+nixPkgs = ["python312", "gcc"]
+nixLibs = ["zlib", "stdenv.cc.cc.lib"]
