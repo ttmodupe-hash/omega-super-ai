@@ -73,6 +73,7 @@ from .companion_engine import companion_router
 from .stripe_payments import stripe_router
 from .finlit import router as finlit_router
 from .african_history import router as african_history_router
+from .med_study import router as med_study_router
 from .everyday_services import router as everyday_services_router
 from .orchestrator import router as orchestrator_router
 from .av_consult import router as av_consult_router
@@ -405,6 +406,7 @@ app.include_router(companion_router)
 app.include_router(stripe_router)
 app.include_router(finlit_router)
 app.include_router(african_history_router)
+app.include_router(med_study_router)
 app.include_router(everyday_services_router)
 app.include_router(orchestrator_router)
 app.include_router(av_consult_router)
