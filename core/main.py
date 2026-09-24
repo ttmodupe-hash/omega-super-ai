@@ -1,4 +1,3 @@
-
 """
 OMEGA-LUQI AI Unified Engine (core/main.py) v2.0.0
 Merged from the OMEGA AI baseline and the Project Bug Fixes stream:
@@ -72,8 +71,8 @@ from .pedagogy_engine import pedagogy_router
 from .companion_engine import companion_router
 from .stripe_payments import stripe_router
 from .finlit import router as finlit_router
+from .news_pulse import router as news_pulse_router
 from .african_history import router as african_history_router
-from .med_study import router as med_study_router
 from .everyday_services import router as everyday_services_router
 from .orchestrator import router as orchestrator_router
 from .av_consult import router as av_consult_router
@@ -406,7 +405,6 @@ app.include_router(companion_router)
 app.include_router(stripe_router)
 app.include_router(finlit_router)
 app.include_router(african_history_router)
-app.include_router(med_study_router)
 app.include_router(everyday_services_router)
 app.include_router(orchestrator_router)
 app.include_router(av_consult_router)
@@ -430,6 +428,7 @@ app.include_router(free_geo_router)
 app.include_router(memory_router)
 app.include_router(feedback_router)
 app.include_router(site_stats_router)
+app.include_router(news_pulse_router)
 app.include_router(hybrid_router)
 app.include_router(kb_router)
 app.include_router(ops_router)
