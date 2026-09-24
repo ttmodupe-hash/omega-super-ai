@@ -1,0 +1,437 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-24",
+  "name": "Luqi-ai Medical Study Pack",
+  "description": "High-yield medical study topics with key points, self-test questions and verifiable sources — free references first (OpenStax, StatPearls, Merck Manual, WHO). Built for understanding faster: each topic is a concept map you can quiz yourself against.",
+  "disclaimer": "Study aid only — not medical advice, not a substitute for your prescribed textbooks, lectures or clinical training. Every topic lists its sources so you can verify. If Luqi-ai cannot verify something, it says UNVERIFIED instead of guessing.",
+  "systems": [
+    "cardiovascular",
+    "renal",
+    "respiratory",
+    "endocrine",
+    "nervous",
+    "haematology",
+    "immunology",
+    "pharmacology",
+    "gastrointestinal",
+    "musculoskeletal"
+  ],
+  "topics": [
+    {
+      "id": "raas",
+      "title": "The renin–angiotensin–aldosterone system (RAAS)",
+      "system": "renal",
+      "level": "Year 1-2 foundations",
+      "summary": "RAAS is the body's long-term blood-pressure and fluid-volume control loop. When renal perfusion falls (low pressure, low NaCl at the macula densa, or sympathetic drive via β1), juxtaglomerular cells release renin. Renin cleaves liver-made angiotensinogen to angiotensin I; ACE (mainly in the lungs) converts that to angiotensin II — a potent vasoconstrictor that also triggers aldosterone release (Na⁺ and water retention), ADH secretion, and thirst. Result: raised volume and pressure, restoring perfusion.",
+      "key_points": [
+        "Three renin triggers: ↓renal perfusion pressure, ↓NaCl at macula densa, β1 sympathetic stimulation",
+        "ACE = angiotensin-converting enzyme, pulmonary endothelium; also degrades bradykinin",
+        "Angiotensin II effects: vasoconstriction, aldosterone, ADH, thirst, efferent arteriole constriction (protects GFR)",
+        "Aldosterone acts at the distal nephron: Na⁺ reabsorption in exchange for K⁺/H⁺ secretion",
+        "Clinical hooks: ACE inhibitors and ARBs treat hypertension/heart failure; ACE-i cough is bradykinin"
+      ],
+      "self_test": [
+        {
+          "q": "Which three stimuli cause renin release?",
+          "a": "Low renal perfusion pressure; low NaCl delivery to the macula densa; sympathetic β1 stimulation."
+        },
+        {
+          "q": "Where is angiotensin I converted to angiotensin II, and by what?",
+          "a": "Mainly in the pulmonary endothelium by angiotensin-converting enzyme (ACE)."
+        },
+        {
+          "q": "Why do ACE inhibitors cause a dry cough?",
+          "a": "ACE also degrades bradykinin; inhibiting it raises bradykinin, which irritates the airway."
+        },
+        {
+          "q": "Which arteriole does angiotensin II preferentially constrict, and why does that matter?",
+          "a": "The efferent arteriole — this preserves glomerular filtration pressure when perfusion is low."
+        }
+      ],
+      "clinical_pearl": "Bilateral renal artery stenosis + an ACE inhibitor can crash the GFR — the kidney was depending on efferent constriction to filter at all.",
+      "sources": [
+        "OpenStax Anatomy and Physiology 2e (free, CC-BY) — Ch. 25 'The Urinary System' — openstax.org/details/books/anatomy-and-physiology-2e",
+        "StatPearls (free, NCBI Bookshelf) — 'Physiology, Renin-Angiotensin System' — ncbi.nlm.nih.gov/books",
+        "Guyton and Hall Textbook of Medical Physiology — chapters on renal pressure control"
+      ]
+    },
+    {
+      "id": "cardiac-cycle",
+      "title": "The cardiac cycle, pressures and heart sounds",
+      "system": "cardiovascular",
+      "level": "Year 1-2 foundations",
+      "summary": "One heartbeat is a timed sequence of pressure changes. In diastole the ventricles relax and fill (atrial systole tops them up). When ventricular pressure exceeds atrial pressure the AV valves close — S1. Ventricular pressure rises with all valves closed (isovolumetric contraction), then exceeds aortic/pulmonary pressure, the semilunar valves open and ejection follows. As the ventricle relaxes, pressure falls below arterial pressure, the semilunar valves snap shut — S2 — and isovolumetric relaxation begins the cycle again.",
+      "key_points": [
+        "S1 = AV valve closure (start of systole); S2 = semilunar valve closure (start of diastole)",
+        "Isovolumetric phases: pressure changes, volume does not",
+        "Left-sided pressures roughly five times right-sided — same stroke volume",
+        "The jugular venous waveform (a, c, v waves) mirrors right atrial events",
+        "ECG precedes mechanics: depolarisation first, contraction follows"
+      ],
+      "self_test": [
+        {
+          "q": "What creates the first heart sound?",
+          "a": "Closure of the mitral and tricuspid (AV) valves at the start of ventricular systole."
+        },
+        {
+          "q": "During isovolumetric contraction, what happens to ventricular volume?",
+          "a": "Nothing — all valves are closed, so volume is constant while pressure rises steeply."
+        },
+        {
+          "q": "Which valve events mark the end of systole?",
+          "a": "Closure of the aortic and pulmonary (semilunar) valves — the second heart sound, S2."
+        }
+      ],
+      "clinical_pearl": "A split S2 that widens on inspiration is normal (delayed pulmonary closure from increased right-sided filling); a fixed split suggests an atrial septal defect.",
+      "sources": [
+        "OpenStax Anatomy and Physiology 2e (free, CC-BY) — Ch. 19 'The Cardiovascular System: The Heart'",
+        "StatPearls (free, NCBI Bookshelf) — 'Physiology, Cardiac Cycle'",
+        "Guyton and Hall Textbook of Medical Physiology — cardiac cycle chapters"
+      ]
+    },
+    {
+      "id": "starling-forces",
+      "title": "Starling forces and the formation of oedema",
+      "system": "cardiovascular",
+      "level": "Year 1-2 foundations",
+      "summary": "Fluid exchange across capillaries is set by the balance of pressures: capillary hydrostatic pressure pushes fluid out; plasma oncotic pressure (mainly albumin) pulls it in; interstitial pressures modify both. Net filtration at the arterial end, net reabsorption toward the venous end, with lymphatics draining the surplus. Oedema appears when filtration overwhelms drainage: raised hydrostatic pressure (heart failure, venous obstruction), low oncotic pressure (nephrotic syndrome, liver failure, malnutrition), leaky capillaries (inflammation), or blocked lymphatics.",
+      "key_points": [
+        "Net filtration pressure = (Pc − Pi) − (πc − πi)",
+        "Albumin is the main contributor to plasma oncotic pressure",
+        "Four oedema mechanisms: ↑hydrostatic, ↓oncotic, ↑permeability, lymphatic obstruction",
+        "Pitting oedema = free interstitial fluid; non-pitting suggests lymphatic or myxoedema causes",
+        "Dependent distribution (ankles when upright, sacrum when bedbound) is a gravity clue"
+      ],
+      "self_test": [
+        {
+          "q": "Which protein dominates plasma oncotic pressure?",
+          "a": "Albumin."
+        },
+        {
+          "q": "Name the four mechanisms of oedema.",
+          "a": "Increased capillary hydrostatic pressure; decreased plasma oncotic pressure; increased capillary permeability; lymphatic obstruction."
+        },
+        {
+          "q": "Why does nephrotic syndrome cause oedema?",
+          "a": "Heavy urinary albumin loss lowers plasma oncotic pressure, so fluid leaves the circulation."
+        }
+      ],
+      "clinical_pearl": "A unilateral swollen leg is a local problem until proven otherwise — think DVT before blaming the heart.",
+      "sources": [
+        "StatPearls (free, NCBI Bookshelf) — 'Physiology, Starling Forces'",
+        "Merck Manual Professional (free) — 'Edema' — merckmanuals.com/professional",
+        "Guyton and Hall Textbook of Medical Physiology — microcirculation chapter"
+      ]
+    },
+    {
+      "id": "neuron-action-potential",
+      "title": "The neuronal action potential",
+      "system": "nervous",
+      "level": "Year 1-2 foundations",
+      "summary": "A neuron at rest sits near −70 mV because K⁺ leaks out and the Na⁺/K⁺ pump maintains the gradients. A threshold stimulus opens voltage-gated Na⁺ channels: Na⁺ rushes in and the membrane depolarises toward positive values (upstroke). Na⁺ channels inactivate and voltage-gated K⁺ channels open; K⁺ leaving repolarises and briefly hyperpolarises the cell. Refractory periods — absolute while Na⁺ channels are inactivated, relative during hyperpolarisation — enforce one-way travel and set the maximum firing rate.",
+      "key_points": [
+        "Resting potential ≈ −70 mV, set mainly by K⁺ leak and the Na⁺/K⁺-ATPase (3 Na⁺ out, 2 K⁺ in)",
+        "Upstroke = voltage-gated Na⁺ influx; falling phase = K⁺ efflux",
+        "Absolute refractory period: no new AP possible; relative: stronger stimulus needed",
+        "Myelin (saltatory conduction between nodes of Ranvier) speeds conduction dramatically",
+        "The AP is all-or-none — intensity is coded by frequency, not amplitude"
+      ],
+      "self_test": [
+        {
+          "q": "Which ion movement drives the upstroke of the action potential?",
+          "a": "Na⁺ influx through voltage-gated Na⁺ channels."
+        },
+        {
+          "q": "What does the Na⁺/K⁺ pump exchange per cycle?",
+          "a": "3 Na⁺ out of the cell for 2 K⁺ in, consuming ATP."
+        },
+        {
+          "q": "Why can't an action potential travel backwards?",
+          "a": "The absolute refractory period — Na⁺ channels just behind the wavefront are inactivated."
+        },
+        {
+          "q": "What is saltatory conduction?",
+          "a": "The AP 'jumping' between nodes of Ranvier in myelinated axons, greatly increasing speed."
+        }
+      ],
+      "clinical_pearl": "Demyelination in multiple sclerosis slows or blocks conduction — which is why symptoms worsen with heat (Uhthoff phenomenon), as conduction margins shrink.",
+      "sources": [
+        "OpenStax Anatomy and Physiology 2e (free, CC-BY) — Ch. 12 'The Nervous System and Nervous Tissue'",
+        "StatPearls (free, NCBI Bookshelf) — 'Physiology, Neuron Action Potential'",
+        "Guyton and Hall Textbook of Medical Physiology — membrane potentials chapter"
+      ]
+    },
+    {
+      "id": "oxygen-haemoglobin-curve",
+      "title": "The oxygen–haemoglobin dissociation curve",
+      "system": "respiratory",
+      "level": "Year 1-2 foundations",
+      "summary": "Haemoglobin's sigmoid curve exists because binding is cooperative: each O₂ that binds makes the next bind more easily. The flat top means arterial blood stays nearly saturated even if PaO₂ falls moderately; the steep middle means tissues can pull off large amounts of O₂ for small pressure drops. Shifts change affinity: right shift (release O₂ more easily) with heat, acidosis, raised CO₂ and raised 2,3-BPG — exactly the conditions in exercising muscle. Left shift (hold O₂ tighter) with the opposite, and with fetal haemoglobin and carbon monoxide.",
+      "key_points": [
+        "Sigmoid shape = cooperative binding of four O₂ per haemoglobin",
+        "P50 ≈ 26-27 mmHg: the PaO₂ at which Hb is 50% saturated — the yardstick for shifts",
+        "Right shift: ↑temperature, ↓pH, ↑CO₂ (Bohr effect), ↑2,3-BPG → easier release to tissues",
+        "Left shift: alkalosis, cold, fetal Hb, CO poisoning → tighter holding",
+        "SaO₂ readings can look 'fine' in CO poisoning — the curve is shifted and the oximeter is fooled"
+      ],
+      "self_test": [
+        {
+          "q": "What is the Bohr effect?",
+          "a": "A fall in pH (or rise in CO₂) reduces haemoglobin's O₂ affinity, promoting release to active tissues — a right shift."
+        },
+        {
+          "q": "Which direction does fetal haemoglobin shift the curve, and why?",
+          "a": "Left — higher affinity lets fetal blood pull O₂ across the placenta from maternal blood."
+        },
+        {
+          "q": "What is P50?",
+          "a": "The partial pressure of O₂ at which haemoglobin is 50% saturated; about 26-27 mmHg in adults."
+        }
+      ],
+      "clinical_pearl": "In chronic anaemia and at altitude, 2,3-BPG rises — a right shift that compensates by releasing more oxygen to tissues at any given saturation.",
+      "sources": [
+        "StatPearls (free, NCBI Bookshelf) — 'Physiology, Oxygen Transport' and 'Oxygen Dissociation Curve'",
+        "Merck Manual Professional (free) — 'Oxygen Desaturation'",
+        "Guyton and Hall Textbook of Medical Physiology — oxygen transport chapter"
+      ]
+    },
+    {
+      "id": "acid-base-abg",
+      "title": "Acid–base balance and reading an ABG",
+      "system": "respiratory",
+      "level": "Year 2-3 clinical entry",
+      "summary": "pH is guarded by buffers (bicarbonate first), the lungs (CO₂ washout in minutes) and the kidneys (H⁺ excretion and HCO₃⁻ handling over days). A systematic ABG read: look at pH (acidaemia or alkalaemia), then CO₂ (respiratory component), then HCO₃⁻ (metabolic component). Whichever matches the pH direction is the primary disturbance; the other tells you about compensation. Metabolic acidosis splits by the anion gap: raised gap (lactate, ketones, toxins, renal failure) versus normal gap (diarrhoea, renal tubular acidosis).",
+      "key_points": [
+        "Normal: pH 7.35-7.45, PaCO₂ 4.7-6.0 kPa (35-45 mmHg), HCO₃⁻ 22-26 mmol/L",
+        "Lungs compensate in minutes; kidneys take days",
+        "Anion gap = Na⁺ − (Cl⁻ + HCO₃⁻); normal ≈ 8-12 without K⁺",
+        "Raised-gap metabolic acidosis: think lactate, ketoacidosis, toxins (e.g. methanol, salicylates), uraemia",
+        "Never diagnose from numbers alone — the clinical story must match"
+      ],
+      "self_test": [
+        {
+          "q": "pH 7.22, PaCO₂ low, HCO₃⁻ low — what is the primary disturbance?",
+          "a": "Metabolic acidosis (low HCO₃⁻ matches the acidaemia) with respiratory compensation (low CO₂)."
+        },
+        {
+          "q": "Which organ compensates fastest for an acid–base disturbance?",
+          "a": "The lungs — CO₂ excretion changes within minutes; renal compensation takes days."
+        },
+        {
+          "q": "Give two causes of a raised anion gap metabolic acidosis.",
+          "a": "Lactic acidosis and diabetic ketoacidosis (also toxins and renal failure)."
+        }
+      ],
+      "clinical_pearl": "In salicylate poisoning classically you see a mixed picture: respiratory alkalosis (direct stimulation) plus metabolic acidosis — the 'double' disturbance.",
+      "sources": [
+        "StatPearls (free, NCBI Bookshelf) — 'Acid Base Balance' and 'Anion Gap'",
+        "Merck Manual Professional (free) — 'Acid-Base Balance' and 'Overview of Acid-Base Disorders'",
+        "Kumar and Clark's Clinical Medicine — acid–base chapters"
+      ]
+    },
+    {
+      "id": "insulin-glucose",
+      "title": "Insulin and glucose homeostasis",
+      "system": "endocrine",
+      "level": "Year 1-2 foundations",
+      "summary": "After a meal, glucose entering β-cells is metabolised, ATP rises, ATP-sensitive K⁺ channels close, the cell depolarises, Ca²⁺ floods in and insulin is exocytosed. Insulin drives glucose into muscle and fat (GLUT4 translocation), builds glycogen and fat, and suppresses hepatic glucose output. In fasting, insulin falls and glucagon rises: glycogenolysis and gluconeogenesis keep plasma glucose steady for the brain. Type 1 diabetes is autoimmune β-cell destruction (absolute insulin deficiency); type 2 is insulin resistance with progressive β-cell failure.",
+      "key_points": [
+        "β-cell trigger: glucose → ATP → K_ATP channel closure → Ca²⁺ influx → insulin release",
+        "GLUT4 in muscle/fat is insulin-dependent; brain and liver uptake are not",
+        "Glucagon (α-cells) opposes insulin: glycogenolysis + gluconeogenesis",
+        "HbA1c reflects average glycaemia over roughly the preceding 2-3 months (red-cell lifespan)",
+        "DKA = insulin absence → unrestrained lipolysis → ketones → raised-gap acidosis"
+      ],
+      "self_test": [
+        {
+          "q": "Which channel closure initiates insulin release from β-cells?",
+          "a": "The ATP-sensitive K⁺ channel, closing as intracellular ATP rises from glucose metabolism."
+        },
+        {
+          "q": "Why is the brain protected in fasting hypoglycaemia compared with muscle?",
+          "a": "Brain glucose uptake (GLUT1/GLUT3) is insulin-independent, so it keeps taking up glucose without insulin."
+        },
+        {
+          "q": "What does HbA1c measure and over what timeframe?",
+          "a": "Glycated haemoglobin — average blood glucose over roughly 2-3 months, the red-cell lifespan."
+        }
+      ],
+      "clinical_pearl": "A hypoglycaemic patient who is conscious gets fast oral carbohydrate; unconscious or unsafe to swallow — never force oral intake, escalate (IM glucagon or IV dextrose per local protocol).",
+      "sources": [
+        "OpenStax Anatomy and Physiology 2e (free, CC-BY) — Ch. 17 'The Endocrine System'",
+        "StatPearls (free, NCBI Bookshelf) — 'Physiology, Insulin' and 'Diabetes Mellitus'",
+        "WHO — Diabetes fact sheet (free) — who.int/news-room/fact-sheets"
+      ]
+    },
+    {
+      "id": "nephron-diuretics",
+      "title": "Nephron transport and where diuretics act",
+      "system": "renal",
+      "level": "Year 2-3 clinical entry",
+      "summary": "Each nephron is a sequence of specialised segments. The proximal tubule reabsorbs the bulk (~65%) of filtrate — Na⁺, water, glucose, amino acids, bicarbonate. The loop of Henle's thick ascending limb drives the medullary gradient via the Na⁺-K⁺-2Cl⁻ cotransporter (NKCC2). The distal convoluted tubule fine-tunes via the Na⁺-Cl⁻ cotransporter (NCC), and the collecting duct's principal cells (aldosterone-sensitive ENaC channels) and intercalated cells finish the job. Diuretics map neatly onto this geography: loop diuretics block NKCC2, thiazides block NCC, potassium-sparing agents block ENaC or aldosterone, and osmotic agents act upstream where water follows solute.",
+      "key_points": [
+        "Proximal tubule: bulk reabsorption; site of glucose (SGLT) and amino acid recovery",
+        "NKCC2 in the thick ascending limb — blocked by loop diuretics (furosemide)",
+        "NCC in the distal convoluted tubule — blocked by thiazides",
+        "ENaC + aldosterone in the collecting duct — blocked by amiloride / spironolactone",
+        "Loops waste K⁺ (more distal Na⁺ delivery → more exchange); K⁺-sparing agents do the opposite"
+      ],
+      "self_test": [
+        {
+          "q": "Where does furosemide act?",
+          "a": "The Na⁺-K⁺-2Cl⁻ cotransporter (NKCC2) in the thick ascending limb of the loop of Henle."
+        },
+        {
+          "q": "Why do loop diuretics cause hypokalaemia?",
+          "a": "More Na⁺ reaches the collecting duct, where its reabsorption via ENaC drives K⁺ secretion."
+        },
+        {
+          "q": "Which nephron segment reabsorbs the largest share of filtrate?",
+          "a": "The proximal tubule — roughly 65% of filtered sodium and water."
+        }
+      ],
+      "clinical_pearl": "Thiazides are unusual among diuretics: they increase calcium reabsorption — which is why they can help recurrent calcium kidney stones.",
+      "sources": [
+        "OpenStax Anatomy and Physiology 2e (free, CC-BY) — Ch. 25 'The Urinary System'",
+        "StatPearls (free, NCBI Bookshelf) — 'Physiology, Renal Tubular Transport' and 'Loop Diuretics'",
+        "Rang & Dale's Pharmacology — diuretics chapter"
+      ]
+    },
+    {
+      "id": "innate-adaptive-immunity",
+      "title": "Innate versus adaptive immunity",
+      "system": "immunology",
+      "level": "Year 1-2 foundations",
+      "summary": "Innate immunity is immediate and pattern-based: barriers, complement, neutrophils and macrophages, and natural killer cells respond within minutes to hours using germline-encoded receptors that recognise common microbial patterns. Adaptive immunity is slower (days on first exposure) but specific and memorable: B cells make antibodies, helper T cells coordinate, cytotoxic T cells kill infected cells. The two systems talk constantly — dendritic cells present antigen to T cells, and antibodies make innate killing more efficient (opsonisation). Memory is why vaccination works.",
+      "key_points": [
+        "Innate: fast (minutes-hours), pattern recognition, no memory",
+        "Adaptive: slow first time (days), antigen-specific, memory on re-exposure",
+        "MHC I presents to CD8 (cytotoxic) T cells; MHC II to CD4 (helper) T cells",
+        "IgM first, IgG later and stronger on re-exposure — the serology clock",
+        "Complement bridges both: tagged pathogens are lysed and opsonised"
+      ],
+      "self_test": [
+        {
+          "q": "Which antibody class dominates a secondary (memory) response?",
+          "a": "IgG — faster, stronger and more abundant than the primary response's IgM."
+        },
+        {
+          "q": "Which MHC class presents to cytotoxic T cells?",
+          "a": "MHC class I, presenting to CD8 T cells."
+        },
+        {
+          "q": "Name two cellular arms of innate immunity.",
+          "a": "Neutrophils and macrophages (also NK cells, dendritic cells as sentinels)."
+        }
+      ],
+      "clinical_pearl": "A primary infection gives an IgM-then-IgG pattern; past infection or vaccination shows IgG alone — serology timelines date infections.",
+      "sources": [
+        "OpenStax Microbiology 2e (free, CC-BY) — adaptive and innate immunity chapters — openstax.org",
+        "StatPearls (free, NCBI Bookshelf) — 'Physiology, Innate Immune System' and 'Immunology, Adaptive Immunity'",
+        "Janeway's Immunobiology — standard reference"
+      ]
+    },
+    {
+      "id": "antibiotic-mechanisms",
+      "title": "How the major antibiotic classes work",
+      "system": "pharmacology",
+      "level": "Year 2-3 clinical entry",
+      "summary": "Antibiotics exploit what is different about bacteria. Cell-wall builders (β-lactams — penicillins, cephalosporins — and glycopeptides like vancomycin) block peptidoglycan cross-linking. Protein-synthesis inhibitors target bacterial ribosomes: macrolides and tetracyclines at the 50S/30S subunits. Fluoroquinolones block DNA gyrase and topoisomerase. Antimetabolites (sulfonamides, trimethoprim) strangle folate synthesis. Knowing the target predicts the spectrum, the toxicity, and the likely resistance mechanism — β-lactamases destroy β-lactam rings, efflux pumps expel tetracyclines, altered targets evade vancomycin.",
+      "key_points": [
+        "β-lactams: inhibit cell-wall cross-linking (PBPs) — bactericidal",
+        "Macrolides/tetracyclines: ribosomal protein synthesis — mostly bacteriostatic",
+        "Fluoroquinolones: DNA gyrase/topoisomerase IV — bactericidal",
+        "Sulfonamides + trimethoprim: sequential folate-pathway blockade",
+        "Resistance mirrors mechanism: β-lactamases, altered PBPs (MRSA), efflux pumps, target mutations"
+      ],
+      "self_test": [
+        {
+          "q": "What is the molecular target of penicillins?",
+          "a": "Penicillin-binding proteins — the transpeptidases that cross-link peptidoglycan in the cell wall."
+        },
+        {
+          "q": "Why do β-lactamase enzymes cause penicillin resistance?",
+          "a": "They hydrolyse the β-lactam ring, inactivating the drug before it can bind its target."
+        },
+        {
+          "q": "Which antibiotic class targets DNA gyrase?",
+          "a": "Fluoroquinolones."
+        }
+      ],
+      "clinical_pearl": "Antibiotic stewardship is examinable and ethical: the right drug, only when needed, for the right duration — resistance is a public-health cost paid by everyone.",
+      "sources": [
+        "WHO — 'Antimicrobial resistance' fact sheet (free) — who.int/news-room/fact-sheets",
+        "StatPearls (free, NCBI Bookshelf) — 'Beta Lactam Antibiotics' and 'Antibiotic Classification and Mechanisms'",
+        "Rang & Dale's Pharmacology — antibacterial chapters"
+      ]
+    },
+    {
+      "id": "pain-ladder",
+      "title": "Pain pathways and the WHO analgesic ladder",
+      "system": "nervous",
+      "level": "Year 2-3 clinical entry",
+      "summary": "Nociceptors detect damage and fire along Aδ fibres (fast, sharp, localised) and C fibres (slow, dull, diffuse) to the dorsal horn, where signals are modulated — the gate — before ascending via the spinothalamic tract to the thalamus and cortex. Descending pathways from the brainstem damp the signal (this is where stress and context change pain). Treatment follows the WHO ladder: start with non-opioids (paracetamol, NSAIDs), add a weak opioid for persisting moderate pain, then strong opioids for severe pain — always with adjuvants (e.g. for neuropathic pain) considered, and always reassessing.",
+      "key_points": [
+        "Aδ = fast, sharp pain; C fibres = slow, aching pain",
+        "Dorsal horn = the modulation 'gate' — rubbing an injury literally competes at the gate",
+        "Spinothalamic tract carries pain/temperature upward; it crosses within the spinal cord",
+        "WHO ladder: non-opioid → weak opioid → strong opioid, by the clock, by the ladder, reassess",
+        "Neuropathic pain (burning, shooting) often needs adjuvants, not more opioid"
+      ],
+      "self_test": [
+        {
+          "q": "Which fibre type carries fast, well-localised pain?",
+          "a": "Aδ fibres; C fibres carry slow, dull pain."
+        },
+        {
+          "q": "State the three rungs of the WHO analgesic ladder.",
+          "a": "Non-opioid (± adjuvant) → weak opioid → strong opioid, matched to persisting pain severity."
+        },
+        {
+          "q": "What character suggests neuropathic rather than nociceptive pain?",
+          "a": "Burning, shooting or electric pain, often with sensory change — it responds better to adjuvants than opioids."
+        }
+      ],
+      "clinical_pearl": "Pain is what the patient says it is — there is no objective meter. Document it, treat it, and reassess; unrelieved pain is a treatment failure, not a patient failure.",
+      "sources": [
+        "WHO — cancer pain / analgesic ladder guidance (free) — who.int",
+        "StatPearls (free, NCBI Bookshelf) — 'Pain Pathways' and 'WHO Analgesic Ladder'",
+        "Merck Manual Professional (free) — 'Overview of Pain'"
+      ]
+    },
+    {
+      "id": "anaemia-mcv",
+      "title": "Anaemia by MCV: a working classification",
+      "system": "haematology",
+      "level": "Year 2-3 clinical entry",
+      "summary": "Classify anaemia by red-cell size first — it organises the differential instantly. Microcytic (low MCV): iron deficiency (the world's commonest) and thalassaemias; check ferritin. Normocytic: acute blood loss, chronic disease, renal failure (low erythropoietin), marrow problems — the reticulocyte count divides 'not making' from 'losing/destroying'. Macrocytic (high MCV): megaloblastic (B12 or folate deficiency) versus non-megaloblastic (alcohol, liver disease, hypothyroidism, some drugs). Symptoms track severity and speed: fatigue, pallor, exertional dyspnoea; slow anaemia is tolerated, fast anaemia is not.",
+      "key_points": [
+        "Microcytic: iron deficiency vs thalassaemia — ferritin separates them",
+        "Normocytic: reticulocyte count splits production failure from loss/destruction",
+        "Macrocytic: B12/folate (megaloblastic) vs alcohol/liver/thyroid (non-megaloblastic)",
+        "B12 deficiency can damage the cord (subacute combined degeneration) — treat before folate correction",
+        "In Africa, hookworm and malaria belong on every anaemia differential"
+      ],
+      "self_test": [
+        {
+          "q": "Which test first separates iron deficiency from thalassaemia trait?",
+          "a": "Ferritin (iron studies): low in iron deficiency, normal or high in thalassaemia trait."
+        },
+        {
+          "q": "What does a high reticulocyte count in normocytic anaemia suggest?",
+          "a": "The marrow is responding — so think blood loss or haemolysis, not production failure."
+        },
+        {
+          "q": "Why give B12 before folate when both could be low?",
+          "a": "Folate can correct the blood picture while B12 neuropathy progresses silently — treat B12 first."
+        }
+      ],
+      "clinical_pearl": "In an older adult, new iron-deficiency anaemia is a symptom, not a diagnosis — look for the source, including the gut.",
+      "sources": [
+        "WHO — 'Anaemia' fact sheet (free) — who.int/news-room/fact-sheets",
+        "StatPearls (free, NCBI Bookshelf) — 'Anemia' and 'Iron Deficiency Anemia'",
+        "Kumar and Clark's Clinical Medicine — haematology chapters"
+      ]
+    }
+  ]
+}
