@@ -73,6 +73,7 @@ from .companion_engine import companion_router
 from .stripe_payments import stripe_router
 from .finlit import router as finlit_router
 from .news_pulse import router as news_pulse_router
+from .tech_radar import router as tech_radar_router
 from .african_history import router as african_history_router
 from .everyday_services import router as everyday_services_router
 from .orchestrator import router as orchestrator_router
@@ -167,6 +168,11 @@ def init_db() -> None:
             print(f"[OMEGA-LUQI] Ops journal restored {restored} ticket(s).")
     except Exception as e:
         print(f"[OMEGA-LUQI] Ops journal replay failed (non-fatal): {e}")
+    # Daily deep-research daemon: GOVERNED — only when explicitly enabled
+    if os.getenv("LUQI_RESEARCH_DAEMON") == "1":
+        from .tech_radar import run_daily_research_daemon
+        _asyncio.get_event_loop().create_task(run_daily_research_daemon())
+        print("[OMEGA-LUQI] Daily research daemon enabled (LUQI_RESEARCH_DAEMON=1).")
 
 
 # ---------- Security / Human-in-the-Loop Gate ----------
@@ -430,6 +436,7 @@ app.include_router(memory_router)
 app.include_router(feedback_router)
 app.include_router(site_stats_router)
 app.include_router(news_pulse_router)
+app.include_router(tech_radar_router)
 app.include_router(hybrid_router)
 app.include_router(kb_router)
 app.include_router(ops_router)

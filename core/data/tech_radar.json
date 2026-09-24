@@ -1,0 +1,217 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-24",
+  "honesty": "Every entry is a real, publicly available technology with its official source. Descriptions state what the provider itself offers. No invented statistics. Costs are stated honestly, including where 'free' means a free tier.",
+  "categories": ["jobs", "education", "energy", "health", "safety", "business", "payments", "legal", "wellbeing", "agriculture", "language"],
+  "technologies": [
+    {
+      "id": "sayouth-mobi",
+      "name": "SAYouth.mobi",
+      "category": "jobs",
+      "problem": "I need work but have no money for data",
+      "description": "A zero-rated national youth employment platform — free to use without data on South African networks. Job seekers create a profile, get matched to opportunities, and access work-seeker support.",
+      "cost": "Free (zero-rated: no data cost on SA networks)",
+      "platforms": ["mobile web"],
+      "link": "https://sayouth.mobi",
+      "source": "https://sayouth.mobi"
+    },
+    {
+      "id": "kolibri",
+      "name": "Kolibri",
+      "category": "education",
+      "problem": "I need learning materials but have no internet",
+      "description": "An open-source offline learning platform from Learning Equality. Content is downloaded once (at a school, library or community centre) and then used entirely offline.",
+      "cost": "Free and open source",
+      "platforms": ["windows", "linux", "android"],
+      "link": "https://learningequality.org/kolibri/",
+      "source": "https://learningequality.org/kolibri/"
+    },
+    {
+      "id": "khan-academy",
+      "name": "Khan Academy",
+      "category": "education",
+      "problem": "I cannot afford a tutor",
+      "description": "A non-profit offering free courses in maths, science, computing, economics and more, with practice exercises and progress tracking.",
+      "cost": "Free (non-profit)",
+      "platforms": ["web", "android", "ios"],
+      "link": "https://www.khanacademy.org",
+      "source": "https://www.khanacademy.org"
+    },
+    {
+      "id": "siyavula",
+      "name": "Siyavula",
+      "category": "education",
+      "problem": "I am struggling with maths or science at school",
+      "description": "A South African practice platform for maths and science aligned to the CAPS curriculum, with step-by-step feedback on answers.",
+      "cost": "Free tier available; full access paid",
+      "platforms": ["web", "mobile web"],
+      "link": "https://www.siyavula.com",
+      "source": "https://www.siyavula.com"
+    },
+    {
+      "id": "freecodecamp",
+      "name": "freeCodeCamp",
+      "category": "education",
+      "problem": "I want coding skills but bootcamps cost thousands",
+      "description": "A non-profit with a free, self-paced coding curriculum — from HTML to Python and machine learning — with free certifications.",
+      "cost": "Free (donor-funded non-profit)",
+      "platforms": ["web"],
+      "link": "https://www.freecodecamp.org",
+      "source": "https://www.freecodecamp.org"
+    },
+    {
+      "id": "cs50",
+      "name": "Harvard CS50",
+      "category": "education",
+      "problem": "I want a world-class computer science education for free",
+      "description": "Harvard's introduction to computer science, free to audit online — the same lectures, problem sets and final project as enrolled students.",
+      "cost": "Free to audit (optional paid certificate)",
+      "platforms": ["web"],
+      "link": "https://cs50.harvard.edu/x/",
+      "source": "https://cs50.harvard.edu/x/"
+    },
+    {
+      "id": "duolingo",
+      "name": "Duolingo",
+      "category": "language",
+      "problem": "I want to learn a language but cannot pay for classes",
+      "description": "Free gamified language learning with daily lessons, streaks and placement tests across dozens of languages.",
+      "cost": "Free tier (ads); paid tier removes ads",
+      "platforms": ["web", "android", "ios"],
+      "link": "https://www.duolingo.com",
+      "source": "https://www.duolingo.com"
+    },
+    {
+      "id": "esp-loadshedding",
+      "name": "EskomSePush",
+      "category": "energy",
+      "problem": "Load shedding keeps surprising me and my business",
+      "description": "A South African app that shows load-shedding schedules for your area with push notifications, so households and businesses can plan ahead.",
+      "cost": "Free tier; optional paid tier",
+      "platforms": ["android", "ios", "huawei"],
+      "link": "https://sepush.co.za",
+      "source": "https://sepush.co.za"
+    },
+    {
+      "id": "momconnect",
+      "name": "MomConnect",
+      "category": "health",
+      "problem": "I am pregnant and cannot afford private healthcare advice",
+      "description": "A South African National Department of Health programme that registers pregnancies at clinics and sends free stage-based maternal health messages via SMS and WhatsApp.",
+      "cost": "Free (government programme)",
+      "platforms": ["sms", "whatsapp"],
+      "link": "https://www.health.gov.za",
+      "source": "https://www.health.gov.za"
+    },
+    {
+      "id": "sadag",
+      "name": "SADAG helplines",
+      "category": "wellbeing",
+      "problem": "I need mental health support but cannot afford therapy",
+      "description": "The South African Depression and Anxiety Group runs free telephonic counselling helplines, including a 24-hour suicide crisis line, plus referrals to free resources.",
+      "cost": "Free (non-profit)",
+      "platforms": ["phone", "sms", "whatsapp"],
+      "link": "https://www.sadag.org",
+      "source": "https://www.sadag.org"
+    },
+    {
+      "id": "namola",
+      "name": "Namola",
+      "category": "safety",
+      "problem": "In an emergency I do not know who will actually come",
+      "description": "A South African emergency app that sends your GPS location to a response centre which dispatches the nearest responders — built for where street addresses fail.",
+      "cost": "Free tier; optional paid responder plans",
+      "platforms": ["android", "ios"],
+      "link": "https://namola.com",
+      "source": "https://namola.com"
+    },
+    {
+      "id": "whatsapp-business",
+      "name": "WhatsApp Business",
+      "category": "business",
+      "problem": "My small business has no online presence and no budget for a website",
+      "description": "A free business app with a product catalogue, business profile, quick replies and labels — a shopfront on the platform customers already use.",
+      "cost": "Free",
+      "platforms": ["android", "ios"],
+      "link": "https://www.whatsapp.com/business",
+      "source": "https://www.whatsapp.com/business"
+    },
+    {
+      "id": "google-business-profile",
+      "name": "Google Business Profile",
+      "category": "business",
+      "problem": "Customers nearby cannot find my business",
+      "description": "A free listing that puts a business on Google Search and Maps with hours, photos, reviews and directions.",
+      "cost": "Free",
+      "platforms": ["web", "android", "ios"],
+      "link": "https://www.google.com/business/",
+      "source": "https://www.google.com/business/"
+    },
+    {
+      "id": "cipc-eservices",
+      "name": "CIPC eServices",
+      "category": "business",
+      "problem": "I want to register my company properly without paying an agent",
+      "description": "The Companies and Intellectual Property Commission's online portal lets you register a private company from home for the official fee — no middleman needed.",
+      "cost": "Low official government fee",
+      "platforms": ["web"],
+      "link": "https://www.cipc.co.za",
+      "source": "https://www.cipc.co.za"
+    },
+    {
+      "id": "payshap",
+      "name": "PayShap",
+      "category": "payments",
+      "problem": "Cash is risky and EFTs are slow and costly",
+      "description": "South Africa's instant payment service — send money between banks in seconds using a cellphone number (ShapID), offered through participating banks' apps.",
+      "cost": "Low cost per transaction (bank-dependent)",
+      "platforms": ["banking apps"],
+      "link": "https://www.payshap.co.za",
+      "source": "https://www.payshap.co.za"
+    },
+    {
+      "id": "yoco",
+      "name": "Yoco",
+      "category": "payments",
+      "problem": "My business loses customers who only carry cards",
+      "description": "Card payment acceptance for small businesses — buy an affordable card machine or use payment links, with per-transaction fees and no monthly rental on entry options.",
+      "cost": "Per-transaction fee; hardware from a low once-off price",
+      "platforms": ["android", "ios", "web"],
+      "link": "https://www.yoco.com",
+      "source": "https://www.yoco.com"
+    },
+    {
+      "id": "snapscan",
+      "name": "SnapScan",
+      "category": "payments",
+      "problem": "I want to accept payments at a market stall without a card machine",
+      "description": "QR-code payments: customers scan your code with the app and pay from their phone. Merchants pay a per-transaction fee; no hardware needed.",
+      "cost": "Free for customers; merchant fee per transaction",
+      "platforms": ["android", "ios"],
+      "link": "https://www.snapscan.co.za",
+      "source": "https://www.snapscan.co.za"
+    },
+    {
+      "id": "legal-aid-sa",
+      "name": "Legal Aid SA",
+      "category": "legal",
+      "problem": "I have a legal problem but cannot afford a lawyer",
+      "description": "A state-funded body providing free legal representation and advice to people who cannot afford it, subject to a means test — including criminal, civil and labour matters.",
+      "cost": "Free for qualifying applicants (means-tested)",
+      "platforms": ["offices", "phone", "web"],
+      "link": "https://legal-aid.co.za",
+      "source": "https://legal-aid.co.za"
+    },
+    {
+      "id": "weathersa",
+      "name": "SA Weather Service",
+      "category": "agriculture",
+      "problem": "I farm and weather surprises destroy my planning",
+      "description": "The official South African Weather Service — free forecasts, severe-weather warnings and agricultural advisories via web and app.",
+      "cost": "Free (government service)",
+      "platforms": ["web", "android", "ios"],
+      "link": "https://www.weathersa.co.za",
+      "source": "https://www.weathersa.co.za"
+    }
+  ]
+}
