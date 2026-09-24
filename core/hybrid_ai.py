@@ -13,6 +13,13 @@ v5.18: TVET engineering classes (Electrical N4-N6, Mechanical N4-N6),
 admin-gated live calibration (near-miss samples retrain without redeploy),
 latency + pii_redacted telemetry on every response.
 
+v5.37 (FRONTDOOR-FIX-1, 2026-09-24): ML-offline is no longer a dead end.
+When sklearn is absent the front door degrades to Phase 1.6 - a deterministic
+knowledge router over the engine's real surfaces (Scam Shield, Everyday
+Services, African History Archive, Technology Radar, World Pulse, Wikipedia).
+Unmatched input gets an honest guided escalation listing what the engine CAN
+do - never the old "ML classifier offline" refusal.
+
 Security: /calibrate is ADMIN-GATED - an open calibration endpoint would let
 anyone poison the classifier that routes students. Corpus capped.
 
@@ -150,6 +157,256 @@ INTENT_THRESHOLDS = {0: 0.40, 1: 0.25, 2: 0.25, 3: 0.25, 4: 0.25,
                      5: 0.22, 6: 0.22, 7: 0.25}
 _MAX_CORPUS = 5000
 
+# ---------------------------------------------------------------------------
+# Phase 1.6 - Deterministic Knowledge Router (ML-offline fallback)
+# FRONTDOOR-FIX-1: when sklearn is unavailable, the front door still THINKS -
+# it routes deterministically to the engine's real knowledge surfaces.
+# Every answer below is retrieved from a sourced module, never generated.
+# ---------------------------------------------------------------------------
+_FALLBACK_STOPWORDS = {
+    "the", "a", "an", "is", "are", "was", "were", "i", "me", "my", "you",
+    "your", "we", "our", "they", "them", "it", "this", "that", "these",
+    "those", "of", "to", "in", "on", "for", "and", "or", "but", "with",
+    "about", "how", "what", "when", "where", "who", "why", "which", "can",
+    "could", "should", "would", "do", "does", "did", "please", "tell",
+    "much", "many", "old", "get", "got", "have", "has", "had", "be", "been",
+    "am", "luqi", "ai", "hey", "hello", "hi", "there", "know", "from", "into",
+}
+
+_QUESTION_PREFIXES = (
+    "how old is", "how old are", "how old was", "what is", "what are",
+    "what was", "who is", "who are", "who was", "when did", "when is",
+    "where is", "why is", "why are", "how does", "how do", "how much is",
+    "how many", "define",
+)
+
+# Factual questions ("how old is the world", "who was Shaka") go to the live
+# Wikipedia backstop FIRST — pack-internal rarity cannot tell "world" apart
+# from a topical term, but the question shape can. Procedural questions
+# ("how do I apply for SRD") stay pack-first: those packs ARE the answer.
+_FACTUAL_PREFIXES = (
+    "how old", "how many", "how much is", "what is", "what are", "what was",
+    "who is", "who are", "who was", "when did", "when is", "why is",
+    "why are", "define",
+)
+
+_NEWS_WORDS = {"news", "headlines", "headline", "happening", "latest",
+               "current", "events", "updates", "update"}
+
+_RADAR_WORDS = {"need", "afford", "looking", "free", "cheap", "app", "tool",
+                "business", "job", "jobs", "work", "learn", "study",
+                "register", "pay", "payment", "payments", "farm", "farming",
+                "solve", "problem"}
+
+_ML_NOTE = ("ML classifier offline on this node (sklearn not installed); "
+            "answered via the deterministic knowledge router.")
+
+
+def _content_words(text: str) -> list:
+    return [w for w in re.findall(r"[a-z0-9]+", text)
+            if len(w) > 2 and w not in _FALLBACK_STOPWORDS]
+
+
+def _extract_topic(text: str) -> str:
+    for pre in _QUESTION_PREFIXES:
+        if text.startswith(pre):
+            text = text[len(pre):].strip()
+            break
+    return " ".join(_content_words(text)[:4])
+
+
+def _p16_scam(text: str):
+    """Always-on deterministic scam scan (offline, zero-cost)."""
+    from . import finlit
+    data = finlit._load_patterns()
+    matches, score = [], 0
+    for p in data["patterns"]:
+        hits, hit_terms = 0, []
+        for ind in p["indicators"]:
+            found = finlit._compile(ind).findall(text)
+            if found:
+                hits += len(found)
+                hit_terms.append(ind)
+        if hits:
+            score += p["severity"] + (hits - 1)
+            matches.append({"pattern_id": p["id"], "name": p["name"],
+                            "category": p["category"]})
+    if score < 4:
+        return None
+    band = ("critical" if score >= 13 else "high" if score >= 8 else "medium")
+    return {"engine_used": "Phase 1.6: Deterministic Knowledge Router -> Scam Shield",
+            "confidence": 0.0, "ml_note": _ML_NOTE,
+            "response": (f"This matches known scam patterns ({band} risk, "
+                         f"score {score}): " +
+                         "; ".join(m["name"] for m in matches[:3]) +
+                         ". Do NOT pay or share details. Full analysis + reporting "
+                         "contacts: POST /v1/finlit/scam-check."),
+            "scam": {"risk_score": score, "risk_level": band,
+                     "matched_patterns": matches,
+                     "catalogue": "GET /v1/finlit/scam-patterns"}}
+
+
+def _p16_pack(text: str, kind: str):
+    """Keyword search over the sourced services/history packs."""
+    words = _content_words(text)[:6]
+    if not words:
+        return None
+    if kind == "services":
+        from . import everyday_services as mod
+        entries = mod._load_pack()["entries"]
+        label, route = "Everyday Services Pack", "/v1/services"
+    else:
+        from . import african_history as mod
+        entries = mod._load_archive()["entries"]
+        label, route = "African History Archive", "/v1/history"
+    # Rarity-weighted matching (deterministic TF-IDF-lite): a word's weight is
+    # 1 / number of pack entries containing it. Generic prose words ("need",
+    # "work", "money") appear in almost every entry and weigh nearly nothing;
+    # domain terms ("srd", "uif", "zimbabwe") are rare and weigh a lot.
+    # A pack answers only on real topical signal, never on stray common words.
+    word_weight = {}
+    for w in words:
+        doc_count = len(mod._search(entries, w))
+        if doc_count:
+            word_weight[w] = 1.0 / doc_count
+    hits: Dict[str, float] = {}
+    for w, weight in word_weight.items():
+        for e in mod._search(entries, w):
+            hits[e["id"]] = hits.get(e["id"], 0.0) + weight
+    if not hits:
+        return None
+    by_id = {e["id"]: e for e in entries}
+    # Title anchoring: a query word that names the entry's own title/id is a
+    # strong topical signal; prose-only overlap ("money", "work", "need") is
+    # not. Among anchored entries prefer the most anchor words, then score.
+    candidates = []
+    for eid, score in hits.items():
+        title_text = (by_id[eid]["title"] + " " + eid).lower()
+        anchors = sum(1 for w in word_weight if w in title_text)
+        if anchors:
+            candidates.append((anchors, score, eid))
+    if candidates:
+        candidates.sort(key=lambda t: (-t[0], -t[1]))
+        anchors, _score, best_id = candidates[0]
+        title_text = (by_id[best_id]["title"] + " " + best_id).lower()
+        named = len(words) == 1 and words[0] in title_text
+        if not (_score >= 0.4 or anchors >= 2 or named):
+            return None
+    else:
+        # No title anchor anywhere: accept only a single-word query that
+        # names an entry title directly; everything else is not topical.
+        top = max(hits, key=hits.get)
+        title_text = (by_id[top]["title"] + " " + top).lower()
+        if len(words) == 1 and words[0] in title_text:
+            best_id = top
+        else:
+            return None
+    ent = by_id[best_id]
+    s = mod._summary(ent)
+    return {"engine_used": f"Phase 1.6: Deterministic Knowledge Router -> {label}",
+            "confidence": 0.0, "ml_note": _ML_NOTE,
+            "response": (f"{s['title']}: {s['summary']}"),
+            "entry": {"id": best_id, "topical_score": round(hits[best_id], 3),
+                      "sources_via": f"GET {route} (entry '{best_id}')"}}
+
+
+def _p16_radar(text: str):
+    words = set(_content_words(text))
+    if not (words & _RADAR_WORDS):
+        return None
+    from . import tech_radar
+    matches = tech_radar.solve(text, limit=2)
+    if not matches:
+        return None
+    top = matches[0]["technology"]
+    alt = (f" Also worth knowing: {matches[1]['technology']['name']}."
+           if len(matches) > 1 else "")
+    return {"engine_used": "Phase 1.6: Deterministic Knowledge Router -> Technology Radar",
+            "confidence": 0.0, "ml_note": _ML_NOTE,
+            "response": (f"Technology that solves this: {top['name']} - "
+                         f"{top['description']} Cost: {top['cost']}. "
+                         f"Official source: {top['link']}.{alt}"),
+            "technology": {"id": top["id"], "link": top["link"],
+                           "radar": "GET /v1/innovation/technologies"}}
+
+
+def _p16_news(text: str):
+    words = set(_content_words(text))
+    if not (words & _NEWS_WORDS):
+        return None
+    try:
+        from . import news_pulse
+        payload = news_pulse._gather_topic("world")
+    except Exception:
+        return None
+    if payload["count"] == 0:
+        return None
+    lines = [f"- {it['title']} ({it['source']}, {it['published']})"
+             for it in payload["items"][:3]]
+    return {"engine_used": "Phase 1.6: Deterministic Knowledge Router -> World Pulse",
+            "confidence": 0.0, "ml_note": _ML_NOTE,
+            "response": "Latest cited world headlines:\n" + "\n".join(lines),
+            "news": {"generated_at": payload["generated_at"],
+                     "feeds_ok": payload["feeds_ok"],
+                     "endpoint": "GET /v1/news/headlines"}}
+
+
+def _p16_wikipedia(text: str):
+    topic = _extract_topic(text)
+    if not topic:
+        return None
+    try:
+        from . import free_knowledge
+        w = free_knowledge.wikipedia_summary(topic)
+    except Exception:
+        return None
+    if not w.get("extract"):
+        return None
+    return {"engine_used": "Phase 1.6: Deterministic Knowledge Router -> Wikipedia (live)",
+            "confidence": 0.0, "ml_note": _ML_NOTE,
+            "response": f"{w['title']}: {w['extract']}",
+            "source": {"title": w["title"], "url": w.get("url", ""),
+                       "note": "live Wikipedia lookup - verify at the link"}}
+
+
+def _phase16_fallback(text: str):
+    """Ordered deterministic routing. First real answer wins. Packs require
+    >=2 distinct keyword hits (or a single-word title match), so a lone common
+    word like "world" never hijacks a genuine question — the live Wikipedia
+    backstop catches those."""
+    handlers = [_p16_scam, _p16_news]
+    if any(text.startswith(p) for p in _FACTUAL_PREFIXES):
+        handlers.append(_p16_wikipedia)
+    handlers.extend([lambda t: _p16_pack(t, "services"),
+                     lambda t: _p16_pack(t, "history"),
+                     _p16_radar, _p16_wikipedia])
+    for handler in handlers:
+        try:
+            out = handler(text)
+        except Exception:
+            out = None  # a failing surface must never kill the front door
+        if out is not None:
+            return out
+    return None
+
+
+def _phase16_escalation(t0: float, pii_redacted: bool) -> Dict[str, Any]:
+    """Honest no-dead-end: say what the engine CAN do, offer research."""
+    return {"engine_used": "Phase 1.6: Knowledge Router - Guided Escalation",
+            "confidence": 0.0, "ml_note": _ML_NOTE,
+            "response": ("I could not match that to a knowledge surface - I would "
+                         "rather say so than guess. What I CAN do right now: check "
+                         "a suspicious message for scam patterns, answer SASSA/SARS/UIF/"
+                         "NSFAS questions, explore the African History Archive, find a "
+                         "free technology for a problem you describe, give today's cited "
+                         "news headlines, or research a topic in depth."),
+            "escalation": {"available": True, "route": "/v1/deep-research",
+                           "method": "POST",
+                           "payload_hint": {"query": "<your question>"},
+                           "opt_in_required": True},
+            "latency_ms": _ms(t0), "pii_redacted": pii_redacted}
+
+
 
 class HybridInput(BaseModel):
     text: str = ""
@@ -222,10 +479,14 @@ class HybridEngine:
 
         ml = self._load_ml()
         if not ml:
-            return {"engine_used": "Phase 1.5: ML unavailable (sklearn not installed)",
-                    "confidence": 0.0,
-                    "response": "Guardrails active; ML classifier offline on this node.",
-                    "latency_ms": _ms(t0), "pii_redacted": pii_redacted}
+            # FRONTDOOR-FIX-1: no dead end. Degrade to the deterministic
+            # knowledge router; unmatched input gets an honest escalation.
+            fb = _phase16_fallback(normalized)
+            if fb is not None:
+                fb["latency_ms"] = _ms(t0)
+                fb["pii_redacted"] = pii_redacted
+                return fb
+            return _phase16_escalation(t0, pii_redacted)
         vectorizer, model = ml
         X = vectorizer.transform([normalized])
         prediction = int(model.predict(X)[0])
@@ -302,4 +563,5 @@ async def hybrid_health() -> Dict[str, Any]:
     return {"kill_switch": "hybrid_ai" in os.getenv("DISABLED_ENGINES", ""),
             "corpus_size": len(_engine.corpus),
             "classes": [m["label"] for m in INTENT_META.values()],
-            "sklearn_available": _engine._load_ml() is not False}
+            "sklearn_available": _engine._load_ml() is not False,
+            "ml_offline_fallback": "Phase 1.6 deterministic knowledge router (no dead ends)"}
