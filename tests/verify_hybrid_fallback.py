@@ -131,4 +131,46 @@ r = c.get("/v1/hybrid/health")
 check("health 200", r.status_code == 200)
 check("health names Phase 1.6 fallback", "Phase 1.6" in r.json()["ml_offline_fallback"])
 
-print("\nFRONTDOOR-FIX-1 verification: all checks passed.")
+# 11. ML-1 / Phase 2.5: sklearn PRESENT but sub-gate => router still answers.
+# Deterministic stubbed ML (no sklearn dependency in this battery): predicts
+# class 0 at 17.4% — exactly the production noise-floor observation.
+class _StubVec:
+    def transform(self, texts):
+        return texts
+
+
+class _StubModel:
+    def predict(self, X):
+        return [0]
+
+    def predict_proba(self, X):
+        return [[0.174, 0.118, 0.118, 0.118, 0.118, 0.118, 0.118, 0.118]]
+
+
+hybrid._engine._ml = (_StubVec(), _StubModel())
+free_knowledge.wikipedia_summary = lambda title: {
+    "title": "Earth", "url": "https://en.wikipedia.org/wiki/Earth",
+    "extract": "Earth formed about 4.54 billion years ago."}
+r = ask("how old is the world ?")
+b = r.json()
+check("Phase 2.5 answered", b["engine_used"].startswith("Phase 2.5"), b["engine_used"])
+check("Phase 2.5 real content", "4.54 billion" in b["response"])
+check("Phase 2.5 honest confidence", b["ml_confidence"] == 0.174)
+check("Phase 2.5 note names the gate", "below gate" in b["ml_note"])
+
+# 12. Phase 2.5 pack hit: sub-gate SRD question gets the services answer
+r = ask("How do I apply for the SRD grant from SASSA?")
+b = r.json()
+check("Phase 2.5 services routed", "Everyday Services" in b["engine_used"], b["engine_used"])
+check("Phase 2.5 entry returned", len(b["response"]) > 60)
+
+# 13. Phase 2.5 no-match: Phase 3 escalation preserved (unchanged behaviour)
+free_knowledge.wikipedia_summary = lambda title: {}
+r = ask("zzz qqq xwxwx")
+b = r.json()
+check("Phase 3 still escalates", "Phase 3" in b["engine_used"], b["engine_used"])
+check("Phase 3 honest boundary", "below the" in b["boundary"])
+check("Phase 3 offers research", b["escalation"]["route"] == "/v1/deep-research")
+hybrid._engine._ml = False  # restore the offline-node state
+
+print("\nFRONTDOOR-FIX-1 + ML-1 verification: all checks passed.")

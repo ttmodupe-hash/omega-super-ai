@@ -13,6 +13,11 @@ v5.18: TVET engineering classes (Electrical N4-N6, Mechanical N4-N6),
 admin-gated live calibration (near-miss samples retrain without redeploy),
 latency + pii_redacted telemetry on every response.
 
+v5.38 (ML-1, 2026-09-24): Phase 2.5 — when sklearn IS installed but
+confidence lands below the intent gate, the knowledge router is
+consulted BEFORE escalating: a sourced surface answer beats a refusal.
+In-domain queries above the gate are untouched (golden set 20/20).
+
 v5.37 (FRONTDOOR-FIX-1, 2026-09-24): ML-offline is no longer a dead end.
 When sklearn is absent the front door degrades to Phase 1.6 - a deterministic
 knowledge router over the engine's real surfaces (Scam Shield, Everyday
@@ -494,6 +499,20 @@ class HybridEngine:
 
         gate = override_threshold or INTENT_THRESHOLDS.get(prediction, self.default_threshold)
         if confidence < gate:
+            # ML-1 / Phase 2.5: sub-gate confidence consults the deterministic
+            # knowledge router BEFORE escalating - a sourced surface answer
+            # beats a refusal. Above-gate in-domain queries never reach here.
+            fb = _phase16_fallback(normalized)
+            if fb is not None:
+                fb["engine_used"] = fb["engine_used"].replace(
+                    "Phase 1.6", "Phase 2.5", 1)
+                fb["ml_note"] = (f"ML confidence {round(confidence * 100, 1)}% below "
+                                 f"gate {round(gate * 100, 1)}%; answered via the "
+                                 "deterministic knowledge router.")
+                fb["ml_confidence"] = round(confidence, 3)
+                fb["latency_ms"] = _ms(t0)
+                fb["pii_redacted"] = pii_redacted
+                return fb
             # KNOWLEDGE_GAP_POLICY v1.0.0 (2026-09-20): no static dead ends.
             # 1) Transparently signal the boundary (the honest number stays).
             # 2) Offer the proactive research route instead of stopping.

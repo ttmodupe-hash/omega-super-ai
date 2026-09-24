@@ -15,6 +15,16 @@ websockets==12.0          # also bundled by uvicorn[standard], pinned explicitly
 requests==2.31.0
 pydantic==2.6.4
 
+# ML front-door classifier (hybrid_ai Phase 2; lazy-imported - engine boots
+# without it: Phase 1.6/2.5 deterministic router covers ML-offline nodes).
+# ML-1 (2026-09-24): the screenshot bug - sklearn was never in the manifest.
+# Versions = the exact trio verified in-sandbox on Python 3.12 (golden set 20/20).
+numpy==2.2.5
+scipy==1.16.2
+scikit-learn==1.7.2
+joblib==1.5.2           # scikit-learn runtime dep, pinned for reproducibility
+threadpoolctl==3.6.0    # scikit-learn runtime dep, pinned for reproducibility
+
 # Persistence (PostgreSQL default; MySQL via env DATABASE_URL dialect)
 SQLAlchemy==2.0.28
 psycopg2-binary==2.9.9
