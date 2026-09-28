@@ -1,133 +1,205 @@
-# Luqi AI v24.3.0 -- Remaining Files Push Guide
+#!/usr/bin/env python3
+"""
+Push multiple files or entire directories to GitHub using the Git Data API
+in a single atomic commit.
 
-## What's New in v24.3.0
+Usage:
+    export GITHUB_TOKEN=ghp_xxxxxxxx
+    python3 push_large_file.py backend/ script.py path/to/file.txt "Commit message"
+"""
 
-### Digital Wellness System (NEW)
-Prevents digital fatigue and promotes healthy screen habits:
+import os
+import sys
+import json
+import base64
+import urllib.request
+import urllib.error
+from pathlib import Path
 
-| File | Size | Purpose |
-|------|------|---------|
-| `backend/v24_wellness_endpoints.py` | 45 KB | **18 REST API endpoints** for wellness |
-| `backend/digital_wellness.py` | 175 KB | **3,629 lines** - Core wellness engine with 200+ tips |
-| `web/wellness.html` | 80 KB | **1,609 lines** - Beautiful wellness dashboard |
+REPO_OWNER = "ttmodupe-hash"
+REPO_NAME = "omega-super-ai"
+BRANCH = "main"
 
-### Corporate Branding — Limitless Telecoms (NEW)
 
-| File | Size | Purpose |
-|------|------|---------|
-| `backend/branding.py` | 20 KB | Corporate identity module (colors, logos, company info) |
-| `backend/v24_branding_endpoints.py` | 4 KB | **7 branding API endpoints** |
-| `web/manifest.json` | 1.5 KB | PWA manifest with Limitless Telecoms branding |
-| `web/icons/*` | 1-184 KB | **15 logo variants** (favicon, PWA icons, OG image) |
+def get_token():
+    token = os.environ.get("GITHUB_TOKEN", "").strip() or os.environ.get("GH_TOKEN", "").strip()
+    if not token:
+        print("ERROR: Missing token. Set GITHUB_TOKEN or GH_TOKEN.")
+        sys.exit(1)
+    return token
 
----
 
-## Already Pushed to GitHub (via MCP)
+def github_api(token, path, method="GET", data=None):
+    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/{path}"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "Luqi-AI-Large-File-Push",
+    }
+    body = None
+    if data is not None:
+        body = json.dumps(data).encode("utf-8")
+        headers["Content-Type"] = "application/json"
 
-### v24.1.0 Infrastructure
-- `.gitignore`, `pyproject.toml`, `Makefile`
-- `.github/workflows/ci.yml`
-- `backend/middleware_enhanced.py`
-- `backend/cache_manager.py`
-- `backend/background_tasks.py`
+    req = urllib.request.Request(url, data=body, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        error_msg = e.read().decode("utf-8", errors="ignore")
+        print(f"  API Error ({e.code}): {error_msg[:300]}")
+        return None
 
-### v24.2.0 Core Systems
-- `README.md` (1,160 lines, complete v24 rewrite)
-- `backend/health_system.py` (2,076 lines, 12 probes)
-- `backend/config_validator.py` (960 lines)
-- `backend/lifecycle_manager.py` (1,006 lines)
-- `backend/secrets_manager.py` (2,151 lines)
 
-### v24.3.0 Wellness + Branding
-- `backend/v24_wellness_endpoints.py` (1,530 lines, 18 endpoints)
-- `backend/branding.py` (20 KB, corporate identity module)
-- `backend/v24_branding_endpoints.py` (4 KB, 7 branding endpoints)
-- `web/manifest.json` (PWA manifest with Limitless Telecoms branding)
-- `chunks_to_push/merge_files.py` (merge script)
-- `chunks_to_push/manifest.json` (updated with wellness chunks)
+def create_blob(token, file_path):
+    try:
+        content = file_path.read_bytes()
+    except Exception as e:
+        print(f"  ERROR: Could not read file {file_path}: {e}")
+        return None
 
----
+    size_mb = len(content) / (1024 * 1024)
 
-## Remaining Files to Push (Use Chunk System or Direct Git)
+    if size_mb > 100:
+        print(f"  SKIP: {file_path.name} ({size_mb:.2f} MB) exceeds GitHub 100MB API limit.")
+        return None
 
-### Large Files (chunked in `chunks_to_push/`)
+    b64_content = base64.b64encode(content).decode("utf-8")
+    data = {"encoding": "base64", "content": b64_content}
+    result = github_api(token, "git/blobs", method="POST", data=data)
+    
+    if result and "sha" in result:
+        print(f"  Created blob: {file_path.as_posix()} ({size_mb:.2f} MB) -> {result['sha'][:8]}")
+        return result["sha"]
+    return None
 
-| File | Size | Chunks |
-|------|------|--------|
-| `backend/whatsapp_bot.py` | 146 KB | 2 |
-| `backend/jobs_skills.py` | 197 KB | 3 |
-| `backend/netai_training.py` | 244 KB | 4 |
-| `backend/project_management.py` | 204 KB | 3 |
-| `backend/digital_workspace.py` | 293 KB | 4 |
-| `backend/knowledge_academy.py` | 299 KB | 4 |
-| `backend/government_services.py` | 337 KB | 5 |
-| `web/index.html` | 138 KB | 2 |
-| `backend/digital_wellness.py` | 175 KB | **3** |
-| `web/wellness.html` | 80 KB | **2** |
 
-**Total: 10 files, 32 chunks, ~2.1 MB**
+def collect_file_paths(paths):
+    """Recursively collect all files from files and directories."""
+    files_to_process = []
+    for p_str in paths:
+        p = Path(p_str)
+        if p.is_file():
+            files_to_process.append(p)
+        elif p.is_dir():
+            # Recursively collect all non-hidden files inside directory
+            for entry in p.rglob("*"):
+                if entry.is_file() and not any(part.startswith(".") for part in entry.parts):
+                    files_to_process.append(entry)
+        else:
+            print(f"WARNING: Path not found or invalid: {p_str}")
+    return sorted(list(set(files_to_process)))
 
-### Binary Assets (must push via git — cannot use chunk system)
 
-| File | Size | Purpose |
-|------|------|---------|
-| `web/icons/luqi-logo.jpeg` | 5 KB | Original Limitless Telecoms logo |
-| `web/icons/luqi-logo.png` | 14 KB | Logo PNG version |
-| `web/icons/favicon-16x16.png` | 1 KB | Favicon 16x16 |
-| `web/icons/favicon-32x32.png` | 3 KB | Favicon 32x32 |
-| `web/icons/icon-48x48.png` to `icon-192x192.png` | 5-46 KB | PWA icons (9 sizes) |
-| `web/icons/apple-touch-icon.png` | 42 KB | Apple touch icon |
-| `web/icons/icon-384x384.png` | 123 KB | Large PWA icon |
-| `web/icons/icon-512x512.png` | 184 KB | Large PWA icon |
-| `web/icons/luqi-logo-og.png` | 156 KB | Social sharing image |
+def get_relative_repo_path(file_path):
+    """
+    Normalizes local paths to relative POSIX paths suitable for GitHub repository trees.
+    """
+    resolved = file_path.resolve()
+    cwd = Path.cwd().resolve()
+    
+    try:
+        rel = resolved.relative_to(cwd)
+    except ValueError:
+        # Fallback if file is outside the current working directory
+        rel = file_path
 
----
+    # Convert Windows backslashes to POSIX slashes and strip leading separators
+    return rel.as_posix().lstrip("/")
 
-## How to Push
 
-### Option 1: Direct Git Push (Fastest)
+def push_batch(token, input_paths, commit_message):
+    file_paths = collect_file_paths(input_paths)
+    if not file_paths:
+        print("ERROR: No valid files found to commit.")
+        return False
 
-When back on your machine:
+    print(f"Preparing commit with {len(file_paths)} file(s)...")
 
-```bash
-cd /path/to/omega-super-ai
+    # 1. Fetch current HEAD commit
+    ref_info = github_api(token, f"git/ref/heads/{BRANCH}")
+    if not ref_info:
+        print(f"ERROR: Could not fetch ref heads/{BRANCH}")
+        return False
+    parent_commit_sha = ref_info["object"]["sha"]
 
-# Step 1: Merge chunks into original files (10 large Python/HTML files)
-python3 chunks_to_push/merge_files.py
+    # 2. Get base tree
+    commit_info = github_api(token, f"git/commits/{parent_commit_sha}")
+    if not commit_info:
+        print("ERROR: Could not fetch commit details")
+        return False
+    base_tree_sha = commit_info["tree"]["sha"]
 
-# Step 2: Copy icon assets (binary files — must use git, not MCP)
-cp -r /mnt/agents/output/omega-super-ai/web/icons web/
+    # 3. Create blobs for each file
+    tree_items = []
+    for file_path in file_paths:
+        blob_sha = create_blob(token, file_path)
+        if not blob_sha:
+            print(f"ERROR: Halting due to failed blob creation for {file_path}")
+            return False
 
-# Step 3: Verify all files are in place
-ls web/icons/          # Should show 15+ icon files
-ls backend/digital_wellness.py  # Should exist
-ls web/wellness.html   # Should exist
+        repo_path = get_relative_repo_path(file_path)
 
-# Step 4: Commit and push everything
-git add -A
-git commit -m "v24.3.0: Digital Wellness + Limitless Telecoms Branding
+        tree_items.append({
+            "path": repo_path,
+            "mode": "100644",
+            "type": "blob",
+            "sha": blob_sha,
+        })
 
-- Digital Wellness engine (3,629 lines, 200+ tips, fatigue scoring)
-- 18 wellness REST API endpoints
-- Wellness dashboard with break suggestions, Pomodoro, wind-down
-- 20-20-20 eye rule tracker with streaks
-- Corporate branding: Limitless Telecoms as parent company
-- 14 logo variants (favicon, PWA icons, OG image)
-- Branding API (7 endpoints: colors, logos, company info)
-- PWA manifest with Limitless Telecoms branding
-- v24.1 infrastructure: middleware, cache, tasks, CI/CD
-- v24.2 systems: health checks, config, lifecycle, secrets
-- Updated README for v24 (1,160 lines)"
-git push origin main
-```
+    # 4. Create new tree referencing all blobs
+    tree_data = {
+        "base_tree": base_tree_sha,
+        "tree": tree_items,
+    }
+    print("\nCreating tree...")
+    tree_result = github_api(token, "git/trees", method="POST", data=tree_data)
+    if not tree_result:
+        print("ERROR: Failed to create tree")
+        return False
+    new_tree_sha = tree_result["sha"]
 
----
+    # 5. Create commit
+    commit_data = {
+        "message": commit_message,
+        "tree": new_tree_sha,
+        "parents": [parent_commit_sha],
+    }
+    print("Creating commit...")
+    commit_result = github_api(token, "git/commits", method="POST", data=commit_data)
+    if not commit_result:
+        print("ERROR: Failed to create commit")
+        return False
+    new_commit_sha = commit_result["sha"]
 
-## Source Location
+    # 6. Update reference
+    ref_data = {"sha": new_commit_sha, "force": False}
+    ref_result = github_api(token, f"git/refs/heads/{BRANCH}", method="PATCH", data=ref_data)
 
-All source files are at: `/mnt/agents/output/omega-super-ai/`
+    if ref_result:
+        print(f"\nSUCCESS! Pushed {len(tree_items)} file(s) in a single commit.")
+        print(f"Commit URL: https://github.com/{REPO_OWNER}/{REPO_NAME}/commit/{new_commit_sha}")
+        return True
 
-Run the merge script to reconstruct all chunked files:
-```bash
-python3 /mnt/agents/output/omega-super-ai/chunks_to_push/merge_files.py
-```
+    print("ERROR: Failed to update branch reference")
+    return False
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python3 push_large_file.py <file1_or_dir1> [file2_or_dir2 ...] [commit_message]")
+        sys.exit(1)
+
+    args = sys.argv[1:]
+    
+    # Check if last argument looks like a custom commit message (not an existing path)
+    if len(args) > 1 and not Path(args[-1]).exists():
+        commit_msg = args[-1]
+        target_paths = args[:-1]
+    else:
+        target_paths = args
+        commit_msg = f"Add/update {len(target_paths)} target item(s)"
+
+    auth_token = get_token()
+    success = push_batch(auth_token, target_paths, commit_msg)
+    sys.exit(0 if success else 1)
