@@ -986,3 +986,30 @@ loadSystemMemory();
 </script>
 </body>
 </html>
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+import asyncio, json
+
+app = FastAPI()
+
+@app.websocket("/api/v25/jarvis/ws")
+async def websocket_endpoint(websocket: WebSocket, session_id: str):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_text()
+            payload = json.loads(data)
+            
+            # 1. Start frame
+            await websocket.send_text(json.dumps({"type": "start"}))
+            
+            # 2. Token Stream frame simulation or LLM stream call
+            response_text = f"JARVIS response streaming for session {session_id}..."
+            for word in response_text.split():
+                await websocket.send_text(json.dumps({"type": "token", "content": word + " "}))
+                await asyncio.sleep(0.04)
+                
+            # 3. End frame
+            await websocket.send_text(json.dumps({"type": "end"}))
+    except WebSocketDisconnect:
+        print(f"Session {session_id} disconnected")
