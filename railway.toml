@@ -1,14 +1,39 @@
-# Railway deployment configuration - OMEGA-LUQI engine.
-# CRITICAL: the LAB SANDBOX image (sleep infinity) now lives at lab/Dockerfile,
-# off the repo root, so Railway Dockerfile auto-detection cannot pick it up.
-# This override keeps Railway building the engine, not the sleeping lab container.
+# ==============================================================================
+# RAILWAY DEPLOYMENT CONFIGURATION — OMEGA-LUQI ENGINE
+# Enterprise-Grade Multi-Agent Lifecycle & Memory Orchestration Spec
+# ==============================================================================
+
 [build]
-builder = "NIXPACKS"          # python builder from requirements.txt
+# Forces Nixpacks auto-builder targeting root requirements.txt / pyproject.toml,
+# completely bypassing secondary Dockerfiles (e.g., ./lab/Dockerfile).
+builder = "NIXPACKS"
+buildCommand = "pip install --upgrade pip && pip install -r requirements.txt"
+
+[build.nixpacksPlan]
+# Ensures deterministic build phase with runtime system packages for async I/O
+providers = ["python"]
 
 [deploy]
+# Production start vector using bash orchestrator
 startCommand = "bash start.sh"
+
+# Healthcheck & Resiliency
 healthcheckPath = "/v1/health"
-healthcheckTimeout = 120
+healthcheckTimeout = 300
+healthcheckInterval = 15
+
+# Rolling zero-downtime deployment strategy
+deploymentStrategy = "ROLLING"
+
+# Failure Recovery Policy
 restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 5
-numReplicas = 1               # single worker: task ledger is in-memory unless STATE_BACKEND=redis
+restartPolicyMaxRetries = 10
+
+# Horizontal Scaling Vector
+# Note: For multi-replica scaling (>1), ensure STATE_BACKEND=redis is active
+numReplicas = 1
+
+# Resource Guardrails (Optimized for High-Throughput Async Memory Engines)
+[deploy.resources]
+cpu = "2000m"
+memory = "2048Mi"
