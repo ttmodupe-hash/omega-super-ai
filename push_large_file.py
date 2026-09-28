@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Push a single large file to GitHub using the Git Data API.
-Use this for files too large for normal push methods.
+Push multiple files or entire directories to GitHub using the Git Data API
+in a single atomic commit.
 
 Usage:
     export GITHUB_TOKEN=ghp_xxxxxxxx
-    python3 push_large_file.py backend/it_security_training.py
+    python3 push_large_file.py backend/ script.py path/to/file.txt "Commit message"
 """
 
 import os
@@ -22,11 +22,9 @@ BRANCH = "main"
 
 
 def get_token():
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    token = os.environ.get("GITHUB_TOKEN", "").strip() or os.environ.get("GH_TOKEN", "").strip()
     if not token:
-        token = os.environ.get("GH_TOKEN", "").strip()
-    if not token:
-        print("No token found. Set GITHUB_TOKEN environment variable.")
+        print("ERROR: Missing token. Set GITHUB_TOKEN or GH_TOKEN.")
         sys.exit(1)
     return token
 
@@ -34,105 +32,153 @@ def get_token():
 def github_api(token, path, method="GET", data=None):
     url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/{path}"
     headers = {
-        "Authorization": f"token {token}",
+        "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github.v3+json",
         "User-Agent": "Luqi-AI-Large-File-Push",
     }
+    body = None
     if data is not None:
         body = json.dumps(data).encode("utf-8")
         headers["Content-Type"] = "application/json"
-    else:
-        body = None
+
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        print(f"  API Error: {e.code} - {e.read().decode('utf-8')[:200]}")
+        error_msg = e.read().decode("utf-8", errors="ignore")
+        print(f"  API Error ({e.code}): {error_msg[:300]}")
         return None
 
 
-def create_blob(token, content_bytes):
-    data = {"encoding": "base64", "content": base64.b64encode(content_bytes).decode("utf-8")}
+def create_blob(token, file_path):
+    content = file_path.read_bytes()
+    size_mb = len(content) / (1024 * 1024)
+
+    if size_mb > 100:
+        print(f"  SKIP: {file_path.name} ({size_mb:.2f} MB) exceeds GitHub 100MB API limit.")
+        return None
+
+    b64_content = base64.b64encode(content).decode("utf-8")
+    data = {"encoding": "base64", "content": b64_content}
     result = github_api(token, "git/blobs", method="POST", data=data)
-    return result["sha"] if result else None
+    
+    if result and "sha" in result:
+        print(f"  Created blob: {file_path.as_posix()} ({size_mb:.2f} MB) -> {result['sha'][:8]}")
+        return result["sha"]
+    return None
 
 
-def push_file(token, file_path, commit_message):
-    local_path = Path(file_path)
-    if not local_path.exists():
-        print(f"ERROR: File not found: {local_path}")
+def collect_file_paths(paths):
+    """Recursively collect all files from files and directories."""
+    files_to_process = []
+    for p_str in paths:
+        p = Path(p_str)
+        if p.is_file():
+            files_to_process.append(p)
+        elif p.is_dir():
+            # Recursively collect all non-hidden files inside directory
+            for entry in p.rglob("*"):
+                if entry.is_file() and not any(part.startswith(".") for part in entry.parts):
+                    files_to_process.append(entry)
+        else:
+            print(f"WARNING: Path not found or invalid: {p_str}")
+    return sorted(list(set(files_to_process)))
+
+
+def push_batch(token, input_paths, commit_message):
+    file_paths = collect_file_paths(input_paths)
+    if not file_paths:
+        print("ERROR: No valid files found to commit.")
         return False
 
-    content = local_path.read_bytes()
-    size_kb = len(content) / 1024
-    print(f"Pushing: {local_path} ({size_kb:.1f} KB)")
+    print(f"Preparing commit with {len(file_paths)} file(s)...")
 
-    result = github_api(token, f"git/ref/heads/{BRANCH}")
-    if not result:
-        print("ERROR: Could not get current commit")
+    # 1. Fetch current HEAD commit
+    ref_info = github_api(token, f"git/ref/heads/{BRANCH}")
+    if not ref_info:
+        print(f"ERROR: Could not fetch ref heads/{BRANCH}")
         return False
-    commit_sha = result["object"]["sha"]
-    print(f"  Current commit: {commit_sha[:8]}")
+    parent_commit_sha = ref_info["object"]["sha"]
 
-    commit = github_api(token, f"git/commits/{commit_sha}")
-    tree_sha = commit["tree"]["sha"]
-    print(f"  Base tree: {tree_sha[:8]}")
-
-    print("  Creating blob...")
-    blob_sha = create_blob(token, content)
-    if not blob_sha:
-        print("ERROR: Could not create blob")
+    # 2. Get base tree
+    commit_info = github_api(token, f"git/commits/{parent_commit_sha}")
+    if not commit_info:
+        print("ERROR: Could not fetch commit details")
         return False
-    print(f"  Blob: {blob_sha[:8]}")
+    base_tree_sha = commit_info["tree"]["sha"]
 
-    rel_path = str(local_path).replace("\\", "/")
-    if rel_path.startswith("./"):
-        rel_path = rel_path[2:]
+    # 3. Create blobs for each file
+    tree_items = []
+    for file_path in file_paths:
+        blob_sha = create_blob(token, file_path)
+        if not blob_sha:
+            print(f"ERROR: Halting due to failed blob creation for {file_path}")
+            return False
 
+        # Format posix path clean relative to execution directory
+        rel_path = file_path.as_posix().lstrip("./")
+
+        tree_items.append({
+            "path": rel_path,
+            "mode": "100644",
+            "type": "blob",
+            "sha": blob_sha,
+        })
+
+    # 4. Create new tree referencing all blobs
     tree_data = {
-        "base_tree": tree_sha,
-        "tree": [{"path": rel_path, "mode": "100644", "type": "blob", "sha": blob_sha}]
+        "base_tree": base_tree_sha,
+        "tree": tree_items,
     }
-    print("  Creating tree...")
+    print("\nCreating tree...")
     tree_result = github_api(token, "git/trees", method="POST", data=tree_data)
     if not tree_result:
-        print("ERROR: Could not create tree")
+        print("ERROR: Failed to create tree")
         return False
     new_tree_sha = tree_result["sha"]
-    print(f"  New tree: {new_tree_sha[:8]}")
 
-    commit_data = {"message": commit_message, "tree": new_tree_sha, "parents": [commit_sha]}
+    # 5. Create commit
+    commit_data = {
+        "message": commit_message,
+        "tree": new_tree_sha,
+        "parents": [parent_commit_sha],
+    }
+    print("Creating commit...")
     commit_result = github_api(token, "git/commits", method="POST", data=commit_data)
     if not commit_result:
-        print("ERROR: Could not create commit")
+        print("ERROR: Failed to create commit")
         return False
     new_commit_sha = commit_result["sha"]
-    print(f"  New commit: {new_commit_sha[:8]}")
 
-    ref_data = {"sha": new_commit_sha}
+    # 6. Update reference
+    ref_data = {"sha": new_commit_sha, "force": False}
     ref_result = github_api(token, f"git/refs/heads/{BRANCH}", method="PATCH", data=ref_data)
+
     if ref_result:
-        print(f"\n  SUCCESS! Pushed {rel_path}")
-        print(f"  View: https://github.com/{REPO_OWNER}/{REPO_NAME}/commit/{new_commit_sha}")
+        print(f"\nSUCCESS! Pushed {len(tree_items)} file(s) in a single commit.")
+        print(f"Commit URL: https://github.com/{REPO_OWNER}/{REPO_NAME}/commit/{new_commit_sha}")
         return True
-    else:
-        print("ERROR: Could not update branch ref")
-        return False
+
+    print("ERROR: Failed to update branch reference")
+    return False
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python3 push_large_file.py <file_path>")
+        print("Usage: python3 push_large_file.py <file1_or_dir1> [file2_or_dir2 ...] [commit_message]")
         sys.exit(1)
 
-    file_path = sys.argv[1]
-    msg = sys.argv[2] if len(sys.argv) > 2 else f"Add {file_path}"
-    token = get_token()
+    args = sys.argv[1:]
+    
+    # Check if last argument looks like a custom commit message (not an existing path)
+    if len(args) > 1 and not Path(args[-1]).exists():
+        commit_msg = args[-1]
+        target_paths = args[:-1]
+    else:
+        target_paths = args
+        commit_msg = f"Add/update {len(target_paths)} target item(s)"
 
-    print("=" * 50)
-    print("Luqi AI - Large File Push")
-    print("=" * 50)
-
-    success = push_file(token, file_path, msg)
+    auth_token = get_token()
+    success = push_batch(auth_token, target_paths, commit_msg)
     sys.exit(0 if success else 1)
