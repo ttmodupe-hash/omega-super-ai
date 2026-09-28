@@ -6,15 +6,49 @@ on:
   pull_request:
     branches: ["main"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
+  security-events: write
 
 jobs:
+  # ============================================================================
+  # STAGE 1: SECURITY AUDIT & LINTING
+  # ============================================================================
+  security_and_audit:
+    name: 🛡️ Security Audit & Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+
+      - name: Initialize Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Security Tools
+        run: pip install bandit safety
+
+      - name: Run Bandit Security Analysis
+        run: bandit -r . -x ./tests -ll
+
+      - name: Check Dependencies for Known Vulnerabilities
+        run: safety check --ignore 70612 || true
+
+  # ============================================================================
+  # STAGE 2: VALIDATE, MIGRATE & TEST
+  # ============================================================================
   validate_and_test:
+    name: 🧪 Validate, Migrate & Run Test Suite
+    needs: security_and_audit
     runs-on: ubuntu-latest
 
     services:
-      # Real PostgreSQL so the startup path and schema integrity are exercised
       postgres:
         image: postgres:16-alpine
         env:
@@ -24,7 +58,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U luqi"
+          --health-cmd "pg_isready -U luqi -d luqi_ai"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 5
@@ -44,7 +78,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Apply Database Migrations (Alembic upgrade head)
+      - name: Apply Database Migrations (Alembic)
         env:
           DATABASE_URL: "postgresql+psycopg2://luqi:testpass@localhost:5432/luqi_ai"
         run: alembic upgrade head
@@ -54,11 +88,21 @@ jobs:
           LUQI_ADMIN_SECRET: "TemporaryTestingSecretKey_2026!"
           XI_API_KEY: "MockToken"
           KIMI_API_KEY: "MockSyncVerificationTokenOnly"
-          # Points at the CI Postgres service - proves models.py schema builds cleanly
           DATABASE_URL: "postgresql+psycopg2://luqi:testpass@localhost:5432/luqi_ai"
-        run: pytest -v test_orchestrator.py test_security_gates.py test_auth_hardening.py test_failover.py test_backup_and_gate.py test_wallet_integration.py
+        run: |
+          pytest -v \
+            test_orchestrator.py \
+            test_security_gates.py \
+            test_auth_hardening.py \
+            test_failover.py \
+            test_backup_and_gate.py \
+            test_wallet_integration.py
 
+  # ============================================================================
+  # STAGE 3: BUILD & LAYER-CACHE
+  # ============================================================================
   build_lab_image:
+    name: 🐳 Build & Layer-Cache Docker Image
     needs: validate_and_test
     runs-on: ubuntu-latest
     steps:
@@ -68,38 +112,132 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Secure Laboratory Base Image
-        run: docker build -t luqi-lab-base:latest .
+      - name: Build Secure Base Image with GHA Cache
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: luqi-lab-base:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # Uncomment to push the lab image to your registry so cloud nodes pull it:
-      # - name: Log in to Container Registry
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: <your-registry>
-      #     username: ${{ secrets.REGISTRY_USER }}
-      #     password: ${{ secrets.REGISTRY_TOKEN }}
-      # - name: Push Lab Image
-      #   run: |
-      #     docker tag luqi-lab-base:latest <your-registry>/luqi-lab-base:latest
-      #     docker push <your-registry>/luqi-lab-base:latest
-
+  # ============================================================================
+  # STAGE 4: PRODUCTION DEPLOYMENT & NOTIFICATIONS
+  # ============================================================================
   deploy:
+    name: 🚀 Deploy to Production Nodes & Notify
     needs: build_lab_image
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     environment: production
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Deploy to Production Node (AWS af-south-1)
+      # ------------------------------------------------------------------------
+      # PRIMARY TARGET: RAILWAY AUTO-DEPLOYMENT
+      # ------------------------------------------------------------------------
+      - name: Install Railway CLI & Trigger Deployment
+        id: railway_deploy
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.PROD_SERVER_SSH_KEY }}
-          SERVER_IP: ${{ secrets.PROD_SERVER_IP }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          echo "Establishing secure production pipeline via SSH..."
-          # Replace with a real SSH/rsync action, e.g. appleboy/ssh-action:
-          #   appleboy/ssh-action@v1 with host/user/key + script:
-          #     cd /opt/luqi-core && git pull && pip install -r requirements.txt \
-          #       && systemctl restart luqi-core
-          echo "Luqi-AI production deployment placeholder - wire your SSH action here."
+          if [ -n "$RAILWAY_TOKEN" ]; then
+            echo "::notice ::Triggering Railway deployment via CLI..."
+            npm i -g @railway/cli
+            railway up --detach
+          else
+            echo "::warning ::RAILWAY_TOKEN secret missing. Skipping Railway deployment."
+          fi
+
+      # ------------------------------------------------------------------------
+      # SECONDARY TARGET: AWS CAPE TOWN (af-south-1) DIRECT NODE DEPLOYMENT
+      # ------------------------------------------------------------------------
+      - name: Deploy to AWS af-south-1 Direct Node via SSH
+        if: secrets.PROD_SERVER_SSH_KEY != ''
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: ${{ secrets.PROD_SERVER_USER || 'ubuntu' }}
+          key: ${{ secrets.PROD_SERVER_SSH_KEY }}
+          script: |
+            set -e
+            echo "Connected to AWS node in af-south-1. Executing production pull..."
+            cd /opt/luqi-core
+            git pull origin main
+            source venv/bin/activate || python3 -m venv venv && source venv/bin/activate
+            pip install -r requirements.txt
+            alembic upgrade head
+            sudo systemctl restart luqi-core
+            echo "Deployment completed successfully on remote node."
+
+      # ------------------------------------------------------------------------
+      # SMOKE VERIFICATION PROBE
+      # ------------------------------------------------------------------------
+      - name: Production Health Check Verification
+        id: health_check
+        run: |
+          echo "Waiting 12 seconds for production container boot..."
+          sleep 12
+          ENDPOINT="https://luqi-ai-production.up.railway.app/v1/health"
+          RESPONSE=$(curl -s$ENDPOINT || true)
+          echo "Health Response: $RESPONSE"
+          if echo "$RESPONSE" | grep -q '"status":"operational"'; then
+            echo "Service is operational!"
+            exit 0
+          else
+            echo "Health check failed!"
+            exit 1
+          fi
+
+      # ------------------------------------------------------------------------
+      # NOTIFICATIONS: DISCORD & SLACK WEBHOOKS
+      # ------------------------------------------------------------------------
+      - name: Send Discord Notification
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          if [ -n "$DISCORD_WEBHOOK" ]; then
+            STATUS="${{ job.status }}"
+            COLOR=65280
+            if [ "$STATUS" != "success" ]; then COLOR=16711680; fi
+            
+            PAYLOAD=$(cat <<EOF
+            {
+              "embeds": [{
+                "title": "🚀 OMEGA-LUQI Deployment: $STATUS",
+                "color": $COLOR,
+                "fields": [
+                  {"name": "Commit", "value": "${{ github.sha }}", "inline": true},
+                  {"name": "Author", "value": "${{ github.actor }}", "inline": true},
+                  {"name": "Branch", "value": "${{ github.ref_name }}", "inline": true},
+                  {"name": "Target", "value": "https://luqi-ai-production.up.railway.app", "inline": false}
+                ],
+                "footer": {"text": "OMEGA-LUQI Engine Sync Pipeline"}
+              }]
+            }
+          EOF
+            )
+            curl -H "Content-Type: application/json" -X POST -d "$PAYLOAD" "$DISCORD_WEBHOOK"
+          fi
+
+      - name: Send Slack Notification
+        if: always()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -n "$SLACK_WEBHOOK_URL" ]; then
+            STATUS="${{ job.status }}"
+            ICON=":white_check_mark:"
+            if [ "$STATUS" != "success" ]; then ICON=":x:"; fi
+            
+            PAYLOAD=$(cat <<EOF
+            {
+              "text": "$ICON *OMEGA-LUQI Sync Pipeline*: Status: *$STATUS*\n*Commit*: \`${{ github.sha }}\` by *${{ github.actor }}*\n*Endpoint*: https://luqi-ai-production.up.railway.app"
+            }
+          EOF
+            )
+            curl -H "Content-Type: application/json" -X POST -d "$PAYLOAD" "$SLACK_WEBHOOK_URL"
+          fi
