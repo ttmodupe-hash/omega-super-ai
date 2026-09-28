@@ -15,3 +15,12 @@
 [phases.setup]
 nixPkgs = ["python312", "gcc"]
 nixLibs = ["zlib", "stdenv.cc.cc.lib"]
+
+[variables]
+# Exclude sensitive runtime keys from build-time Docker ARG/ENV injection
+# (Fixes BuildKit SecretsUsedInArgOrEnv warnings)
+LUQI_ADMIN_SECRET = ""
+JWT_SECRET_SIGNING_KEY = ""
+KIMI_API_KEY = ""
+DATABASE_URL = ""
+MONTHLY_TOKEN_BUDGET_USD = ""
