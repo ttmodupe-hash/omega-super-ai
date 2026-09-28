@@ -1,70 +1,341 @@
 // components/LuqiEngineChat.tsx
-import React, { useState } from 'react';
+"use client";
+
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Send,
+  ShieldAlert,
+  Sparkles,
+  Bot,
+  User,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+  RefreshCw,
+  Info,
+} from "lucide-react";
+
+interface ChatMessage {
+  id: string;
+  sender: "user" | "engine";
+  query: string;
+  mode?: string;
+  verified?: boolean;
+  content: any;
+  timestamp: string;
+}
+
+const MODES = [
+  { id: "auto", name: "Auto Router", desc: "Smart Routing" },
+  { id: "scam_shield", name: "Scam Shield", desc: "Fraud & Fraudulent Check" },
+  { id: "civic_sassa", name: "Gov & SASSA", desc: "Grants & Official Verification" },
+  { id: "edu_builder", name: "Knowledge", desc: "Deep Topic Explanation" },
+];
+
+const PRESET_QUERIES = [
+  {
+    label: "Scam Check",
+    query: "Invest R500, get R5000 back in 7 days, guaranteed",
+    mode: "scam_shield",
+  },
+  {
+    label: "SASSA Grant",
+    query: "How do I reapply for the SRD R370 grant for this month?",
+    mode: "civic_sassa",
+  },
+  {
+    label: "Tech Learning",
+    query: "Explain how AI multi-agent orchestration works simply",
+    mode: "edu_builder",
+  },
+];
 
 export default function LuqiEngineChat() {
-  const [query, setQuery] = useState('');
-  const [response, setResponse] = useState<any>(null);
+  const [query, setQuery] = useState("");
+  const [selectedMode, setSelectedMode] = useState("auto");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleExecute = async (inputQuery: string, selectedMode = 'auto') => {
-    setLoading(true);
-    setQuery(inputQuery);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-    const res = await fetch('/api/v1/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: inputQuery, mode: selectedMode })
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
+
+  const handleExecute = async (inputQuery: string, overrideMode?: string) => {
+    if (!inputQuery.trim() || loading) return;
+
+    const activeMode = overrideMode || selectedMode;
+    const userMessageId = `msg-${Date.now()}`;
+    const timestamp = new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
     });
 
-    const data = await res.json();
-    setResponse(data);
-    setLoading(false);
+    setError(null);
+    setLoading(true);
+    setQuery("");
+
+    // Add user message to UI immediately
+    const userMessage: ChatMessage = {
+      id: userMessageId,
+      sender: "user",
+      query: inputQuery,
+      mode: activeMode,
+      content: inputQuery,
+      timestamp,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+
+    try {
+      const res = await fetch("/api/v1/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: inputQuery, mode: activeMode }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Engine error: ${res.status} ${res.statusText}`);
+      }
+
+      const data = await res.json();
+
+      const engineMessage: ChatMessage = {
+        id: `res-${Date.now()}`,
+        sender: "engine",
+        query: inputQuery,
+        mode: data.mode || activeMode,
+        verified: Boolean(data.verified),
+        content: data.content,
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+
+      setMessages((prev) => [...prev, engineMessage]);
+    } catch (err: any) {
+      setError(err.message || "Failed to reach LuqiEngine route.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleExecute(query);
+    }
+  };
+
+  const renderContent = (content: any) => {
+    if (typeof content === "string") {
+      return <p className="whitespace-pre-wrap leading-relaxed">{content}</p>;
+    }
+    return (
+      <pre className="whitespace-pre-wrap font-mono text-xs bg-slate-950/60 p-3 rounded-lg border border-slate-800 text-amber-200 overflow-x-auto">
+        {JSON.stringify(content, null, 2)}
+      </pre>
+    );
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800">
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Check a suspicious offer, ask about SASSA, or learn a topic..."
-          className="flex-1 bg-slate-800 text-white px-4 py-3 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-500"
-        />
-        <button
-          onClick={() => handleExecute(query)}
-          className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-6 py-3 rounded-lg transition-colors"
-        >
-          {loading ? 'Routing...' : 'Chat Now'}
-        </button>
-      </div>
-
-      {/* Preset Action Trigger Example */}
-      <div className="text-sm text-slate-400 flex items-center gap-2">
-        <span>Try live demo:</span>
-        <button
-          onClick={() => handleExecute("Invest R500, get R5000 back in 7 days, guaranteed", "scam_shield")}
-          className="underline hover:text-amber-400 text-left"
-        >
-          “Invest R500, get R5000 back in 7 days...”
-        </button>
-      </div>
-
-      {response && (
-        <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-mono uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-1 rounded">
-              Mode: {response.mode}
-            </span>
-            <span className={`text-xs font-mono ${response.verified ? 'text-green-400' : 'text-red-400'}`}>
-              {response.verified ? '✓ VERIFIED SOURCE' : '⚠ UNVERIFIED'}
-            </span>
+    <div className="max-w-4xl mx-auto flex flex-col h-[750px] bg-slate-950 text-slate-100 rounded-2xl shadow-2xl border border-slate-800 overflow-hidden">
+      {/* Engine Header */}
+      <div className="flex items-center justify-between px-6 py-4 bg-slate-900/80 border-b border-slate-800 backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <pre className="whitespace-pre-wrap text-slate-200 text-sm font-sans">
-            {JSON.stringify(response.content, null, 2)}
-          </pre>
+          <div>
+            <h2 className="font-bold text-lg text-slate-100 tracking-tight flex items-center gap-2">
+              LuqiEngine Chat
+              <span className="text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                v1.0
+              </span>
+            </h2>
+            <p className="text-xs text-slate-400">
+              Autonomous Verification & Civic AI Assistant
+            </p>
+          </div>
         </div>
-      )}
+
+        {/* Mode Selector */}
+        <div className="hidden sm:flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setSelectedMode(m.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                selectedMode === m.id
+                  ? "bg-amber-500 text-slate-950 shadow-sm font-semibold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+              }`}
+            >
+              {m.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Chat Thread */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-slate-800">
+        {messages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-4">
+            <div className="p-4 bg-slate-900/50 border border-slate-800 rounded-2xl text-slate-500">
+              <Bot className="w-10 h-10 text-amber-400" />
+            </div>
+            <div className="max-w-md space-y-2">
+              <h3 className="font-semibold text-slate-200">How can LuqiEngine assist today?</h3>
+              <p className="text-sm text-slate-400">
+                Submit an investment opportunity to verify legitimacy, inquire about government services, or query technical subjects.
+              </p>
+            </div>
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex gap-3 max-w-[85%] ${
+                msg.sender === "user" ? "ml-auto flex-row-reverse" : "mr-auto"
+              }`}
+            >
+              {/* Avatar */}
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                  msg.sender === "user"
+                    ? "bg-amber-500 text-slate-950"
+                    : "bg-slate-800 border border-slate-700 text-amber-400"
+                }`}
+              >
+                {msg.sender === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+              </div>
+
+              {/* Message Content */}
+              <div
+                className={`flex flex-col space-y-2 ${
+                  msg.sender === "user" ? "items-end" : "items-start"
+                }`}
+              >
+                <div
+                  className={`p-4 rounded-2xl border ${
+                    msg.sender === "user"
+                      ? "bg-amber-500/10 border-amber-500/20 text-slate-100 rounded-tr-none"
+                      : "bg-slate-900/90 border-slate-800 text-slate-200 rounded-tl-none shadow-md"
+                  }`}
+                >
+                  {/* Metadata Header for Engine Responses */}
+                  {msg.sender === "engine" && (
+                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-800/80 text-xs font-mono">
+                      <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded uppercase font-semibold">
+                        Mode: {msg.mode}
+                      </span>
+                      <span
+                        className={`flex items-center gap-1 font-semibold px-2 py-0.5 rounded ${
+                          msg.verified
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                        }`}
+                      >
+                        {msg.verified ? (
+                          <>
+                            <CheckCircle2 className="w-3 h-3" /> VERIFIED SOURCE
+                          </>
+                        ) : (
+                          <>
+                            <AlertTriangle className="w-3 h-3" /> UNVERIFIED / HIGH RISK
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  {renderContent(msg.content)}
+                </div>
+
+                <span className="text-[10px] text-slate-500 px-1 font-mono">
+                  {msg.timestamp}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+
+        {/* Loading Spinner */}
+        {loading && (
+          <div className="flex gap-3 max-w-[85%] mr-auto items-start">
+            <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-amber-400 flex items-center justify-center">
+              <Bot className="w-4 h-4" />
+            </div>
+            <div className="p-4 rounded-2xl rounded-tl-none bg-slate-900/90 border border-slate-800 flex items-center gap-3 text-slate-400 text-sm">
+              <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+              <span>Engine is analyzing query and routing sources...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Error Container */}
+        {error && (
+          <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3 text-rose-300 text-sm">
+            <ShieldAlert className="w-5 h-5 flex-shrink-0 text-rose-400" />
+            <div className="flex-1">
+              <p className="font-semibold">Execution Error</p>
+              <p className="text-xs text-rose-400/80">{error}</p>
+            </div>
+          </div>
+        )}
+
+        <div ref={chatEndRef} />
+      </div>
+
+      {/* Preset Action Triggers */}
+      <div className="px-6 py-2 bg-slate-900/40 border-t border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-none">
+        <span className="text-xs text-slate-500 font-mono flex items-center gap-1 flex-shrink-0">
+          <Info className="w-3 h-3" /> Quick Test:
+        </span>
+        {PRESET_QUERIES.map((preset, idx) => (
+          <button
+            key={idx}
+            onClick={() => handleExecute(preset.query, preset.mode)}
+            disabled={loading}
+            className="text-xs bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-amber-400 border border-slate-800 rounded-lg px-3 py-1 whitespace-nowrap transition-colors flex-shrink-0"
+          >
+            <span className="text-amber-500/70 font-mono mr-1">[{preset.label}]</span>
+            "{preset.query.length > 35 ? `${preset.query.substring(0, 35)}...` : preset.query}"
+          </button>
+        ))}
+      </div>
+
+      {/* Input Bar */}
+      <div className="p-4 bg-slate-900 border-t border-slate-800">
+        <div className="relative flex items-center">
+          <textarea
+            rows={1}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Check a suspicious offer, ask about SASSA, or learn a topic..."
+            className="w-full bg-slate-950 text-slate-100 pl-4 pr-14 py-3.5 rounded-xl border border-slate-800 focus:outline-none focus:border-amber-500/60 focus:ring-1 focus:ring-amber-500/60 resize-none text-sm placeholder:text-slate-500"
+          />
+          <button
+            onClick={() => handleExecute(query)}
+            disabled={!query.trim() || loading}
+            className="absolute right-2 p-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-800 disabled:text-slate-600 text-slate-950 font-bold rounded-lg transition-colors"
+          >
+            {loading ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Send className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
