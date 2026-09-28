@@ -1,83 +1,25 @@
-# Railway Deployment (browser-only, no terminal)
+┌─────────────────────────┐
+                       │   GitHub Repository     │
+                       │ ttmodupe-hash/omega-... │
+                       └────────────┬────────────┘
+                                    │ (Native Auto-Deploy on push)
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Railway Project Canvas                          │
+│                                                                        │
+│   ┌─────────────────────────┐           ┌──────────────────────────┐   │
+│   │   PostgreSQL Service    │           │    FastAPI App Service   │   │
+│   │  (Plugin: DB_URL)       ├──────────►│  (Builds via Nixpacks)   │   │
+│   └─────────────────────────┘           └─────────────┬────────────┘   │
+│                                                       │                │
+└───────────────────────────────────────────────────────┼────────────────┘
+                                                        │
+                                                        ▼
+                                       https://<project>.up.railway.app
+Deployment Checklist1. Project CreationLog into railway.app using GitHub authentication.Click New Project $\rightarrow$ Deploy from GitHub repo $\rightarrow$ Select ttmodupe-hash/omega-super-ai.Railway automatically reads railway.toml (utilizing the Nixpacks builder, uvicorn entrypoint, and /v1/health health check).2. Database ProvisioningCRITICAL: Do NOT select MySQL. The schema, wallet ledger, migrations, and RLS policies require PostgreSQL. (Note: Since v5.35.10, non-Postgres configurations will boot in a degraded/DB-less state rather than crashing, but database features will remain disabled.)In the canvas, click New $\rightarrow$ Database $\rightarrow$ Add PostgreSQL.Open the Postgres service settings, go to the Connect tab, and copy DATABASE_URL (references ${{Postgres.DATABASE_URL}}).3. Environment Variables StrategyIn the App Service $\rightarrow$ Variables tab, set the following required keys:VariableDescription & GuidanceDATABASE_URLPostreSQL reference (postgresql+psycopg2://...)LUQI_ADMIN_SECRET32-byte secure random stringJWT_SECRET_SIGNING_KEYFresh secure random signing keyKIMI_API_KEYActive Moonshot API keyMulti-Node / Scaling Configuration:STATE_BACKEND=redisREDIS_URL (Required prior to setting numReplicas > 1 so the 30% gate ledger is shared)4. Automatic Migrations Executionstart.sh executes alembic upgrade head automatically on every deployment boot before starting the application listener.Resilience Mechanism: Migrations execute against valid PostgreSQL URLs only. Invalid database configurations fall back gracefully to a degraded state while logging warning outputs. Look for "[start] schema at head" in the deploy logs.5. Verification & Health Probes               [ Deployment Verification Sequence ]
 
-Prerequisite: the repo is pushed to GitHub (see PUSH_COMMANDS.sh). Railway
-deploys FROM GitHub - it cannot receive files any other way.
-
-## Step 1 - Create the project (5 min, all browser)
-1. https://railway.app -> Login with GitHub.
-2. **New Project -> Deploy from GitHub repo** -> select `ttmodupe-hash/omega-super-ai`.
-   Railway auto-detects `railway.toml` (Nixpacks builder, uvicorn start, /v1/health check).
-
-## Step 2 - Attach Postgres (required)
-Railway filesystems are EPHEMERAL - a SQLite file would vanish on every
-redeploy. The engine handles this natively: migrations + wallet + RLS all run
-on Postgres.
-
-**WARNING: it MUST be PostgreSQL - NOT MySQL.** The schema (RLS policies,
-wallet ledger, migrations) is PostgreSQL-specific. A MySQL service provides a
-mysql:// DATABASE_URL the engine cannot use. (Since v5.35.10 the engine
-survives this misconfiguration and boots degraded/DB-less - fix it anyway:
-delete the MySQL service, add PostgreSQL instead.)
-1. In the project canvas: **New -> Database -> Add PostgreSQL**.
-2. Open the Postgres service -> **Connect** tab -> copy the provided `DATABASE_URL`
-   (it references `${{Postgres.DATABASE_URL}}` - Railway resolves it).
-3. Add it to the app service's Variables (see Step 3).
-
-## Step 3 - Required variables (app service -> Variables)
-| Variable | Source |
-|---|---|
-| `DATABASE_URL` | from the Postgres plugin reference above (postgresql+psycopg2://...) |
-| `LUQI_ADMIN_SECRET` | `openssl rand -hex 32` equivalent - generate anywhere; never paste real values into chats |
-| `JWT_SECRET_SIGNING_KEY` | fresh random, same discipline |
-| `KIMI_API_KEY` | your Moonshot key (the one already active) |
-| Optional: `XI_API_KEY`, `AFRICAS_TALKING_API_KEY` + `ADMIN_PHONE_NUMBER`, `HUME_WEBHOOK_SECRET` | per feature |
-| Optional multi-node: `STATE_BACKEND=redis` + `REDIS_URL` (Railway Redis plugin) | REQUIRED before replicas > 1 - the 30% gate ledger must be shared across workers |
-| Optional adaptive nudges: `LUQI_ADAPTIVE_NUDGES=1` + `LUQI_NUDGE_WEBHOOK_URL` | proactive learner check-ins via your WhatsApp/SMS gateway (off by default; without the webhook URL nudges are only logged, never silently "sent") |
-
-Tier 2/3 variables from deploy/.env.active_now.template - uncomment as features go live.
-
-## Step 4 - Migrations: AUTOMATIC on deploy
-start.sh (invoked by railway.toml) runs `alembic upgrade head` on every boot
-before serving - idempotent, no manual step. RESILIENCE LAW (v5.35.10):
-migrations only run against PostgreSQL URLs; a non-Postgres DATABASE_URL or a
-failed migration logs a loud WARNING and the engine boots DEGRADED (DB-less,
-routes active, wallet settlement fail-closed) instead of dying behind a proxy
-404. Watch the deploy logs for "[start] schema at head" - anything else means
-read the warning above it. Without DATABASE_URL the engine boots DB-less and
-migrations are skipped with a log line.
-
-## Step 5 - Verify
-1. Service -> **Settings -> Generate Domain** (gives https://<project>.up.railway.app).
-2. Browse: `https://<domain>/v1/health` -> `{"status":"operational"}`.
-3. `https://<domain>/v1/system/token-status` with your admin header -> board states.
-4. `https://<domain>/docs` -> full OpenAPI surface.
-5. Railway -> Deployments: the healthcheck must be green (railway.toml path /v1/health).
-
-## Step 6 - Custom domain + PWA
-1. **Settings -> Domains -> Add Custom Domain** -> point DNS (CNAME to Railway's target).
-2. Railway terminates TLS automatically - no certbot, no nginx.
-3. Update `PUBLIC_BASE_URL` (certificate URLs) to the custom domain.
-
-## What Railway replaces from the AWS path
-- nginx/TLS/certbot -> Railway proxy + managed domains.
-- systemd -> Railway's restart policy (railway.toml).
-- Terraform EC2 -> the Railway project itself.
-- VERIFY_STAGING.sh steps 2 (docker socket) remains N/A - sandbox terminals will
-  report degraded until a Docker-capable node exists; the API is fully functional.
-
-## Scaling note
-`numReplicas = 1` until STATE_BACKEND=redis + REDIS_URL are set (shared task ledger,
-see docs/SRE.md). Then raise replicas in railway.toml / the service settings.
-
-## Verifying a live deployment
-Every push to main auto-deploys via Railway's native GitHub integration - no
-broker workflow required. To verify a live deployment, run the
-**Production Smoke Verification** workflow (Actions -> workflow_dispatch ->
-enter your https://...up.railway.app URL). It runs the full route matrix
-against production, read-only.
-
-## Production smoke: stale-deploy detection + admin auth
-The verifier compares the live /v1/health version against the pushed commit's
-version - a mismatch means Railway serves an old build (fails the run).
-Admin probes authenticate via the PROD_ADMIN_SECRET repository secret
-(Settings -> Secrets and variables -> Actions), never a workflow input.
+   1. Generate Domain  ──► Settings -> Domains -> Generate Domain
+   2. Health Status    ──► GET https://<domain>/v1/health -> {"status":"operational"}
+   3. System Board     ──► GET https://<domain>/v1/system/token-status
+   4. OpenAPI Docs     ──► GET https://<domain>/docs
+6. Custom Domain & DNSUnder Settings $\rightarrow$ Domains, select Add Custom Domain.Add a CNAME record in your DNS provider pointing to Railway's target host. TLS termination is managed automatically by Railway.Update PUBLIC_BASE_URL in your environment variables to reflect the new custom domain.7. Automated Production Smoke VerificationTo verify live releases post-push:Navigate to GitHub Actions $\rightarrow$ Production Smoke Verification $\rightarrow$ Run workflow.Enter your Railway endpoint URL (https://<domain>.up.railway.app).The workflow validates API routes read-only, confirms live v1/health commit hashes against the source repository, and authenticates using the PROD_ADMIN_SECRET secret.
