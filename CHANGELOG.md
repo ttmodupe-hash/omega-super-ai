@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.37.0] - 2026-09-28
+### Added
+- Dead Man's Switch Engine (`core/dead_man_switch.py`): Time-based heartbeat monitoring with multi-tier notification escalation and emergency fail-closed state locks.
+- Data Portability Core (`core/data_portability.py`): VPC-compliant user data export/import routines with integrated PII scrubbing via `core/pii_scrub.py`.
+- Multimodal Accessibility Layer (`core/deaf_accessibility.py`): Sign-language gloss notation transformer, visual event dispatchers, and high-contrast alert payload structuring.
+- Test verification battery (`tests/verify_superai_upgrades.py`): Full test coverage for vitality checks, export scrubbing, and visual gloss transformations.
+
 ## [5.36.0] - 2026-09-22
 ### Added
 - African History Archive v1.0.0: 26 sourced entries, /v1/history endpoints, BCE-aware timeline, >=2 sources enforced at load, UNESCO base, 28-check verification battery (shipped in the 5.35.8-5.35.10 line; changelog drift corrected here).
@@ -21,7 +28,6 @@
 - 5 orchestrator failures: with a live DB the engine correctly requires an authenticated HUMAN SESSION for gate releases (403 on admin-header-only). Tests previously passed only against the DB-less degraded path. Fix = register/login fixture presenting a user JWT.
 - 1 wiring-audit gap: engine mounts surface via app.mount(); audit metric cannot see inside mounts (rework: compare against app.openapi() paths).
 
-
 ## [5.35.6] - 2026-09-15
 ### Fixed
 - alembic 0001: DDL path resolves repo root (was alembic/core -> FileNotFoundError); skips comment-only SQL fragments; bootstraps luqi_app_user role (idempotent DO-block).
@@ -30,10 +36,8 @@
 - 003/004: CREATE TABLE IF NOT EXISTS (ORM mirrors already create user_skill_profiles, cert_ledger, dead_man_switch_registry).
 - Proven locally: alembic upgrade head passes 0001->004 on fresh Postgres 16; engine boots with Database layer initialised.
 
-
 ## [5.35.0] - 2026-09-15
-- Spatial telemetry: server-side physics for client-rendered 3D labs (pure load evaluation,
-  safety envelope). Passing simulations earn real skill credit via the engine (unlocks, certificates).
+- Spatial telemetry: server-side physics for client-rendered 3D labs (pure load evaluation, safety envelope). Passing simulations earn real skill credit via the engine (unlocks, certificates).
 
 ## [5.34.0] - 2026-09-15
 
@@ -56,11 +60,9 @@
 ## [5.35.2] - 2026-09-15
 ### Fixed
 - enterprise_models: ACTUALLY added the missing Integer import. v5.35.1's guard matched the word 'Integer' elsewhere in the file and skipped the edit; the import line is verified by direct inspection in this release.
-- core/enterprise_models.py: added missing Integer import (NameError crashed alembic
-  upgrade head on CI and would crash the app on boot; unblocks CI and Railway).
+- core/enterprise_models.py: added missing Integer import (NameError crashed alembic upgrade head on CI and would crash the app on boot; unblocks CI and Railway).
 - Tags: removed mis-pointed v5.29.1 / v5.31.0 (both pointed at July commits).
-- Submission consensus: three independent checks (validator, structural quality, safety) must agree;
-  disagreement routes to human review. No hardcoded skills, JWT auth, works across all trades.
+- Submission consensus: three independent checks (validator, structural quality, safety) must agree; disagreement routes to human review. No hardcoded skills, JWT auth, works across all trades.
 
 ## [5.33.0] - 2026-09-15
 - Certificate dashboard (static/credentials.html): skills, hours, certificates with public verify links.
@@ -68,31 +70,22 @@
 - Real-time unlock alerts: WhatsApp via Twilio (env-gated) with SMS fallback; never blocks the unlock.
 
 ## [5.32.0] - 2026-09-15
-- Public credential verification: GET /v1/credentials/verify/{serial} checks the real cert ledger
-  (employer-facing, read-only). External provider registry listed honestly as PENDING_INTEGRATION.
+- Public credential verification: GET /v1/credentials/verify/{serial} checks the real cert ledger (employer-facing, read-only). External provider registry listed honestly as PENDING_INTEGRATION.
 
 ## [5.31.5] - 2026-09-15
-- Cross-artifact consistency audits: router wiring (no orphaned APIRouters in core/,
-  30+ mounted) and secret inventory (every *_KEY/*_SECRET/*_TOKEN in the env template
-  is represented on the token board).
+- Cross-artifact consistency audits: router wiring (no orphaned APIRouters in core/, 30+ mounted) and secret inventory (every *_KEY/*_SECRET/*_TOKEN in the env template is represented on the token board).
 
 ## [5.31.4] - 2026-09-15
-- Production smoke advanced: stale-deploy detection (live /v1/health version must equal the pushed
-  commit's version) and GitHub-Secrets admin auth (PROD_ADMIN_SECRET).
+- Production smoke advanced: stale-deploy detection (live /v1/health version must equal the pushed commit's version) and GitHub-Secrets admin auth (PROD_ADMIN_SECRET).
 
 ## [5.31.3] - 2026-09-15
-- Production smoke workflow (prod_smoke.yml + tools/prod_smoke.py): runs the route matrix against a
-  live deployment on demand. Rejected the pasted "deployment broker" (syntax error, broken API host,
-  created a new Railway project per push; Railway auto-deploys natively).
+- Production smoke workflow (prod_smoke.yml + tools/prod_smoke.py): runs the route matrix against a live deployment on demand. Rejected the pasted "deployment broker" (syntax error, broken API host, created a new Railway project per push; Railway auto-deploys natively).
 
 ## [5.31.2] - 2026-09-15
-- start.sh boot wrapper: Alembic migrations run automatically before serving (conditional on
-  DATABASE_URL, loud failure on real migration errors). Railway deployments need no manual migration step.
+- start.sh boot wrapper: Alembic migrations run automatically before serving (conditional on DATABASE_URL, loud failure on real migration errors). Railway deployments need no manual migration step.
 
 ## [5.31.1] - 2026-09-15
-- Railway deployment layer: railway.toml (Nixpacks override of the lab Dockerfile, uvicorn start,
-  /v1/health check), RAILWAY_DEPLOYMENT.md (browser-only runbook: Postgres plugin, variables,
-  migration one-shot, custom domain), runbook host-choice pointer.
+- Railway deployment layer: railway.toml (Nixpacks override of the lab Dockerfile, uvicorn start, /v1/health check), RAILWAY_DEPLOYMENT.md (browser-only runbook: Postgres plugin, variables, migration one-shot, custom domain), runbook host-choice pointer.
 
 ## [5.31.0] - 2026-09-15
 - Migration 004: dead_man_switch_registry persisted to Postgres (FORCE RLS, corrected GUC, heartbeat trigger on user_skill_profiles); ORM on shared Base.
@@ -107,13 +100,9 @@
 - AGENTS.md assistant-onboarding blueprint at repo root (repo-as-source-of-truth for any future AI session).
 
 ## [5.29.1] - 2026-09-15
-- Monolith consolidation: original omega-super-ai repo (v25.1.0, 351 files) archived at
-  legacy/omega-super-ai-v25.1.0/; capability gap analysis published
-  (docs/OMEGA_SUPERAI_GAP_ANALYSIS.md) with ranked port candidates
-  (dead_mans_switch, data_portability, accessibility_deaf lead).
+- Monolith consolidation: original omega-super-ai repo (v25.1.0, 351 files) archived at legacy/omega-super-ai-v25.1.0/; capability gap analysis published (docs/OMEGA_SUPERAI_GAP_ANALYSIS.md) with ranked port candidates (dead_mans_switch, data_portability, accessibility_deaf lead).
 
-All notable changes to the OMEGA-LUQI engine. One line per version: what it
-lets you do that you couldn't before.
+All notable changes to the OMEGA-LUQI engine. One line per version: what it lets you do that you couldn't before.
 
 ## [5.29.0] - 2026-09-15
 - Hume EVI ingestion hooks: HMAC-verified webhooks, distress intervention routes to the real crisis line + mentor alert. Client subscription remains the integration step.
