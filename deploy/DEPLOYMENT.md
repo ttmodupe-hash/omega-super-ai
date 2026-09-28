@@ -168,5 +168,214 @@ async def run_tests():
 if __name__ == "__main__":
     asyncio.run(run_tests())
 
+"""dead_man_switch_registry and force RLS policies
+
+Revision ID: 0004_dead_man_switch
+Revises: 0003_skill_engine_tables
+Create Date: 2026-09-15 11:20:00.000000
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+
+# revision identifiers, used by Alembic.
+revision: str = '0004_dead_man_switch'
+down_revision: Union[str, None] = '0003_skill_engine_tables'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    # 1. Create dead_man_switch_registry table
+    op.execute("""
+    CREATE TABLE IF NOT EXISTS dead_man_switch_registry (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        inactivity_limit_days INT NOT NULL DEFAULT 30,
+        grace_period_days INT NOT NULL DEFAULT 7,
+        last_heartbeat TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE', -- ACTIVE, WARNING, BREACHED
+        trusted_contacts JSONB DEFAULT '[]'::jsonb,
+        gate_task_id VARCHAR(64) NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT uq_dms_user UNIQUE (user_id)
+    );
+    """)
+
+    # 2. Enable and Force Row Level Security (RLS)
+    op.execute("ALTER TABLE dead_man_switch_registry ENABLE ROW LEVEL SECURITY;")
+    op.execute("ALTER TABLE dead_man_switch_registry FORCE ROW LEVEL SECURITY;")
+
+    # 3. Apply Tenant Isolation RLS Policy
+    # Utilizes app.current_user_id GUC set by the request context middleware
+    op.execute("""
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_policies 
+            WHERE tablename = 'dead_man_switch_registry' 
+            AND policyname = 'dms_user_isolation_policy'
+        ) THEN
+            CREATE POLICY dms_user_isolation_policy ON dead_man_switch_registry
+                FOR ALL
+                TO luqi_app_user
+                USING (user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid)
+                WITH CHECK (user_id = NULLIF(current_setting('app.current_user_id', true), '')::uuid);
+        END IF;
+    END
+    $$;
+    """)
+
+    # 4. Create trigger function to auto-update last_heartbeat on profile activity
+    op.execute("""
+    CREATE OR REPLACE FUNCTION update_dms_heartbeat_on_activity()
+    RETURNS TRIGGER AS $$
+    BEGIN
+        INSERT INTO dead_man_switch_registry (user_id, last_heartbeat, status, updated_at)
+        VALUES (NEW.user_id, NOW(), 'ACTIVE', NOW())
+        ON CONFLICT (user_id) 
+        DO UPDATE SET 
+            last_heartbeat = NOW(),
+            status = 'ACTIVE',
+            updated_at = NOW();
+        RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    """)
+
+    # 5. Attach activity trigger to user_skill_profiles updates
+    op.execute("""
+    DROP TRIGGER IF EXISTS trg_dms_heartbeat_skill_profile ON user_skill_profiles;
+    CREATE TRIGGER trg_dms_heartbeat_skill_profile
+        AFTER INSERT OR UPDATE ON user_skill_profiles
+        FOR EACH ROW
+        EXECUTE FUNCTION update_dms_heartbeat_on_activity();
+    """)
+
+
+def downgrade() -> None:
+    # Drop trigger and function
+    op.execute("DROP TRIGGER IF EXISTS trg_dms_heartbeat_skill_profile ON user_skill_profiles;")
+    op.execute("DROP FUNCTION IF EXISTS update_dms_heartbeat_on_activity();")
+
+    # Drop RLS policy
+    op.execute("DROP POLICY IF EXISTS dms_user_isolation_policy ON dead_man_switch_registry;")
+
+    # Drop table
+    op.execute("DROP TABLE IF EXISTS dead_man_switch_registry CASCADE;")    
     
+"""
+core/models.py (Excerpt)
+
+SQLAlchemy ORM models for the OMEGA-LUQI engine database persistence layer.
+"""
+
+import uuid
+from datetime import datetime, timezone
+from typing import List, Optional, Any, Dict
+
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    DateTime,
+    ForeignKey,
+    Text,
+    func,
+)
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import relationship, Mapped, mapped_column
+
+# Import shared Base declaration
+from core.database import Base
+
+
+class DeadManSwitchRegistry(Base):
+    """
+    Persists user vitality tracking thresholds, trusted contacts, 
+    and 30% gate escalation state locks.
+    """
+    __tablename__ = "dead_man_switch_registry"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), 
+        primary_key=True, 
+        default=uuid.uuid4
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), 
+        ForeignKey("users.id", ondelete="CASCADE"), 
+        nullable=False, 
+        unique=True
+    )
+    inactivity_limit_days: Mapped[int] = mapped_column(
+        Integer, 
+        default=30, 
+        nullable=False
+    )
+    grace_period_days: Mapped[int] = mapped_column(
+        Integer, 
+        default=7, 
+        nullable=False
+    )
+    last_heartbeat: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        server_default=func.now(), 
+        nullable=False
+    )
+    status: Mapped[str] = mapped_column(
+        String(20), 
+        default="ACTIVE", 
+        nullable=False
+    )  # ACTIVE, WARNING, BREACHED
     
+    # List of trusted contacts: [{"name": "Jane", "email": "jane@example.com", "phone": "+27820000000"}]
+    trusted_contacts: Mapped[List[Dict[str, Any]]] = mapped_column(
+        JSONB, 
+        server_default="[]", 
+        nullable=True
+    )
+    gate_task_id: Mapped[Optional[str]] = mapped_column(
+        String(64), 
+        nullable=True
+    )
+    
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        server_default=func.now(), 
+        nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        server_default=func.now(), 
+        onupdate=func.now(), 
+        nullable=False
+    )
+
+    # Relationships
+    user = relationship("User", back_populates="dead_man_switch")
+
+    def __repr__(self) -> str:
+        return (
+            f"<DeadManSwitchRegistry(user_id={self.user_id}, "
+            f"status='{self.status}', last_heartbeat={self.last_heartbeat})>"
+        )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert ORM instance to clean dictionary payload."""
+        return {
+            "id": str(self.id),
+            "user_id": str(self.user_id),
+            "inactivity_limit_days": self.inactivity_limit_days,
+            "grace_period_days": self.grace_period_days,
+            "last_heartbeat": self.last_heartbeat.isoformat() if self.last_heartbeat else None,
+            "status": self.status,
+            "trusted_contacts": self.trusted_contacts or [],
+            "gate_task_id": self.gate_task_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
