@@ -295,7 +295,14 @@ def _p16_pack(text: str, kind: str):
         anchors, _score, best_id = candidates[0]
         title_text = (by_id[best_id]["title"] + " " + best_id).lower()
         named = len(words) == 1 and words[0] in title_text
-        if not (_score >= 0.4 or anchors >= 2 or named):
+        # ROUTER-GUARD-1 (2026-09-29): a single title anchor on a LONG query is
+        # a stray-token match, not topical signal - the live engine answered
+        # "which race between black and white..." with the Postbank Black Card
+        # guide because the token "black" anchored its title. Rarity inside a
+        # 15-entry pack is not topicality. Long queries (3+ content words)
+        # need at least two title anchors; short queries keep the score rule.
+        # Fail closed: weak matches escalate to the honest confidence gate.
+        if not (anchors >= 2 or named or (_score >= 0.4 and len(words) <= 2)):
             return None
     else:
         # No title anchor anywhere: accept only a single-word query that
