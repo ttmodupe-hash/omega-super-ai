@@ -44,8 +44,10 @@ from .geocoding import router as geocoding_router
 from .tool_router import router as tool_router
 from .free_geo_apis import router as free_geo_router
 from .memory import router as memory_router
+from .med_study import router as med_study_router
 from .feedback import router as feedback_router
-from .site_stats import router as site_stats_router
+from .field_gateway import build_router as build_field_gateway_router
+from .site_stats import site_stats_router
 from .hybrid_ai import router as hybrid_router
 from .chat_gateway import router as chat_gateway_router
 from .knowledge_base import router as kb_router
@@ -462,6 +464,8 @@ app.include_router(task_runner_router)
 app.include_router(recalibrate_router)
 app.include_router(ops_audit_router)
 app.include_router(truth_router)
+app.include_router(build_field_gateway_router(verify_admin))  # Issue 22/23: SMS front door, dormant without AT_API_KEY
+app.include_router(med_study_router)  # MED-1: sourced medical study pack, fail-closed data
 
 
 # ---------- PWA Static Serving (LAST) ----------
