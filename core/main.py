@@ -1,4 +1,3 @@
-
 """
 OMEGA-LUQI AI Unified Engine (core/main.py) v2.0.0
 Merged from the OMEGA AI baseline and the Project Bug Fixes stream:
@@ -47,6 +46,7 @@ from .memory import router as memory_router
 from .feedback import router as feedback_router
 from .site_stats import router as site_stats_router
 from .hybrid_ai import router as hybrid_router
+from .chat_gateway import router as chat_gateway_router
 from .knowledge_base import router as kb_router
 from .ops_metrics import router as ops_router
 from .cost_telemetry import router as cost_router
@@ -438,6 +438,7 @@ app.include_router(site_stats_router)
 app.include_router(news_pulse_router)
 app.include_router(tech_radar_router)
 app.include_router(hybrid_router)
+app.include_router(chat_gateway_router)
 app.include_router(kb_router)
 app.include_router(ops_router)
 app.include_router(cost_router)
