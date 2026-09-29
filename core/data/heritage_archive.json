@@ -1,0 +1,311 @@
+{
+  "name": "Luqi-ai Sovereign Heritage & Theological Archive",
+  "version": "1.0.0",
+  "updated": "2026-09-29",
+  "description": "A curated, sourced index of African and multi-traditional heritage: the Ethiopian canon and Ge'ez manuscript tradition, Islamic verification science and Golden Age scholarship, and deep human history. Every entry carries real, checkable primary sources. Where scholars disagree or a popular claim outruns its evidence, the entry says so.",
+  "disclaimer": "This archive is a study index, not a religious ruling and not the final scholarly word. It points to primary sources and mainstream scholarship so you can verify everything yourself. Sacred texts are described, not adjudicated. Where evidence is contested, the contest is shown.",
+  "traditions": ["ethiopian_canon", "islamic_scholarship", "deep_history"],
+  "entries": [
+    {
+      "id": "ethiopian-canon-81",
+      "tradition": "ethiopian_canon",
+      "title": "The 81-Book Canon of the Ethiopian Orthodox Tewahedo Church",
+      "era": "canon stabilised over the 4th-15th centuries CE",
+      "region": "Ethiopian highlands (Aksum and successor kingdoms)",
+      "summary": "The Ethiopian Orthodox Tewahedo Church recognises 81 books — 46 Old Testament and 35 New Testament — the broadest canon of any Christian tradition (Protestant 66, Catholic 73, Eastern Orthodox ~76-78). Because the Ethiopian church developed outside the Roman imperial canon debates, it preserved Second Temple Jewish and early Christian texts that every other church excluded or lost.",
+      "key_points": [
+        "81 books: 46 Old Testament + 35 New Testament, listed by the Church itself.",
+        "Includes 1 Enoch, Jubilees, and 1-3 Meqabyan — canonical nowhere else (the Eritrean Orthodox Tewahedo canon is identical).",
+        "Scripture is preserved in Ge'ez, an ancient South Semitic language still used liturgically though no longer spoken vernacularly.",
+        "Some editions count up to 88 when church-order texts (Sinodos, Books of the Covenant, Didascalia) are enumerated separately — the '81' figure is the traditional count."
+      ],
+      "primary_sources": [
+        "Official canon list of the Ethiopian Orthodox Tewahedo Church (46 OT + 35 NT)",
+        "Ge'ez manuscript corpus held in Ethiopian monastic libraries",
+        "Comparative canon tables: Protestant 66 / Catholic 73 (Council of Trent, 1546) / Ethiopian 81"
+      ],
+      "scholarly_note": "The exact enumeration varies between manuscripts and catalogues (81 traditional; up to 88 with separate counting of church-order texts). That variance is itself part of the record, not a defect to hide.",
+      "see_also": ["enoch-geez-survival", "jubilees-geez-survival", "meqabyan-books", "axum-ezana-conversion"]
+    },
+    {
+      "id": "enoch-geez-survival",
+      "tradition": "ethiopian_canon",
+      "title": "1 Enoch: The Book the World Lost and Ethiopia Kept",
+      "era": "composed c. 300-100 BCE; preserved complete in Ge'ez",
+      "region": "Ethiopia (preservation); Judea/Qumran (origins)",
+      "summary": "1 Enoch — an apocalyptic Second Temple Jewish work attributed to Enoch 'the seventh from Adam' — was read as authoritative by some early Christians (the New Testament letter of Jude quotes it) but excluded from every canon by the 5th century CE, everywhere except Ethiopia. It survives in complete form only in Ge'ez.",
+      "key_points": [
+        "Complete text exists only in Classical Ethiopic (Ge'ez); Aramaic fragments were found among the Dead Sea Scrolls at Qumran, confirming the translation's antiquity and general reliability.",
+        "Scottish traveller James Bruce brought three Ge'ez manuscripts of 1 Enoch to Europe in 1773 — the first complete copies European scholars had seen in centuries; Archbishop Richard Laurence published the first English translation in 1821.",
+        "The book's five sections (Watchers, Parables, Astronomical Book, Dream Visions, Epistle) shaped early Jewish and Christian thought on angels, judgement, and the Son of Man figure.",
+        "Early church writers including Tertullian (c. 160-225 CE) argued for its authority, citing Jude's quotation."
+      ],
+      "primary_sources": [
+        "Ge'ez manuscripts of 1 Enoch (Mets'hafe Henok), Ethiopian monastic collections",
+        "Qumran Aramaic fragments of Enochic literature (Dead Sea Scrolls)",
+        "James Bruce's 1773 Ge'ez codices; R. Laurence English translation (1821); R.H. Charles critical edition",
+        "Epistle of Jude 1:14-15 quoting 1 Enoch"
+      ],
+      "scholarly_note": "Canonical status is a statement about the Ethiopian church's tradition, not a claim that other churches 'removed' it by a single act — the exclusion was a gradual narrowing across the 2nd-4th centuries, and the Ethiopian canon simply never narrowed.",
+      "see_also": ["ethiopian-canon-81", "jubilees-geez-survival"]
+    },
+    {
+      "id": "jubilees-geez-survival",
+      "tradition": "ethiopian_canon",
+      "title": "The Book of Jubilees: Complete Only in Ge'ez",
+      "era": "composed c. 2nd century BCE",
+      "region": "Ethiopia (preservation); Judea/Qumran (origins)",
+      "summary": "Jubilees (Mets'hafe Kufale, 'Book of Division') retells Genesis and Exodus organised into 49-year jubilee cycles and legislates a 364-day solar calendar. Like 1 Enoch, it is canonical only in the Ethiopian and Eritrean Orthodox churches and survives complete only in Ge'ez.",
+      "key_points": [
+        "Robert Charles published the first critical English translation in 1902, working from Ge'ez manuscripts with fragmentary Latin and Syriac witnesses.",
+        "Hebrew fragments later found at Qumran confirmed the antiquity and general fidelity of the Ethiopic version.",
+        "The 364-day calendar it prescribes matches the calendar ideology of the Qumran community — a window into Second Temple Jewish diversity.",
+        "Without Ethiopian scribes, Jubilees would be known today only from fragments."
+      ],
+      "primary_sources": [
+        "Ge'ez manuscripts of Jubilees (Mets'hafe Kufale)",
+        "Qumran Hebrew fragments of Jubilees (Dead Sea Scrolls)",
+        "R.H. Charles, critical translation (1902)"
+      ],
+      "scholarly_note": "Jubilees and 1 Enoch share the 364-day calendar and antediluvian framing — studying them together shows they travelled as a pair through Ethiopian transmission.",
+      "see_also": ["enoch-geez-survival", "ethiopian-canon-81"]
+    },
+    {
+      "id": "meqabyan-books",
+      "tradition": "ethiopian_canon",
+      "title": "1-3 Meqabyan: Ethiopian Books That Are Not the Maccabees",
+      "era": "medieval Ethiopian composition/compilation",
+      "region": "Ethiopia",
+      "summary": "The Ethiopian canon includes three books of Meqabyan whose name resembles 'Maccabees' but whose content is entirely different — a distinct cycle of history, martyrology, and exhortation. Confusing the two is the most common error outsiders make about the Ethiopian canon.",
+      "key_points": [
+        "1, 2 and 3 Meqabyan are unique to the Ethiopian/Eritrean canon; they are not translations of 1-2 Maccabees.",
+        "The Tewahedo canon accepts Meqabyan instead of — not in addition to — the Maccabean books known in Catholic and Orthodox Bibles.",
+        "The names share an etymological root but the texts' contents diverge completely."
+      ],
+      "primary_sources": [
+        "Ge'ez manuscripts of 1-3 Meqabyan",
+        "Ethiopian Orthodox Tewahedo canonical registry"
+      ],
+      "scholarly_note": "English translations of Meqabyan are scarce and of varying quality; this archive flags that openly rather than pretending a settled English text exists.",
+      "see_also": ["ethiopian-canon-81"]
+    },
+    {
+      "id": "garima-gospels",
+      "tradition": "ethiopian_canon",
+      "title": "The Garima Gospels: Among the World's Earliest Illuminated Christian Books",
+      "era": "c. 390-570 CE (radiocarbon dated)",
+      "region": "Abba Garima Monastery, near Adwa, Tigray, Ethiopia",
+      "summary": "The Garima Gospels — two illuminated Gospel books on parchment, kept continuously at the Abba Garima monastery — are radiocarbon-dated to c. 390-570 CE, placing them among the earliest surviving illuminated Christian manuscripts anywhere, and among the oldest still housed in their original home.",
+      "key_points": [
+        "Two volumes (Garima 1 and 2), written on animal-skin parchment in Ge'ez, hundreds of folios with full-page illuminations.",
+        "Radiocarbon analysis at Oxford dated the manuscripts to late antique ranges (c. 390-570 CE), overlapping the lifetime tradition assigns to Abba Garima himself (arrived c. 494 CE by tradition).",
+        "They demonstrate that a sophisticated Christian book culture existed in the Aksumite kingdom within a generation of its conversion."
+      ],
+      "primary_sources": [
+        "Garima Gospels manuscripts, Abba Garima Monastery (in situ)",
+        "Radiocarbon dating results (Oxford), published in scholarship on Ethiopian manuscripts",
+        "Tradition of Abba Garima's arrival from Constantinople c. 494 CE"
+      ],
+      "scholarly_note": "Radiocarbon gives ranges, not single years; '390-570 CE' is the honest span. The tradition that Garima himself wrote them is exactly that — a tradition — and is labelled as such.",
+      "see_also": ["axum-ezana-conversion", "ethiopian-canon-81"]
+    },
+    {
+      "id": "axum-ezana-conversion",
+      "tradition": "ethiopian_canon",
+      "title": "Aksum and King Ezana: Christianity Becomes a State Religion in Africa",
+      "era": "4th century CE (Frumentius active c. 340-347+)",
+      "region": "Kingdom of Aksum (modern Ethiopia/Eritrea)",
+      "summary": "In the 4th century the Red Sea kingdom of Aksum — a trading power minting its own coinage — became one of the first states in the world to adopt Christianity officially, when King Ezana was baptised under the influence of Frumentius, a Syrian from Tyre who became the first bishop of Aksum.",
+      "key_points": [
+        "Frumentius and Aedesius were brought to the Aksumite court c. 340 CE; Frumentius became tutor to the crown prince Ezana.",
+        "Around 347 CE, Athanasius of Alexandria ordained Frumentius bishop; he returned, baptised King Ezana, and Christianity became the official religion of the Aksumite kingdom.",
+        "Aksumite coins document the shift: pre-Christian issues carry disc-and-crescent symbols, later issues the cross — material evidence minted by the state itself.",
+        "Ethiopians addressed Frumentius as 'abuna' (Our Father) — the title still borne by the patriarch of the Ethiopian Orthodox Church.",
+        "A letter survives from the Arian emperor Constantius II asking Ezana to hand Frumentius over for doctrinal inspection; Ezana refused or ignored it — an early assertion of African ecclesial independence."
+      ],
+      "primary_sources": [
+        "Rufinus of Aquileia, Ecclesiastical History (4th-century account sourced from Aedesius at Tyre)",
+        "Aksumite coinage sequence (pagan to Christian iconography)",
+        "Constantius II's surviving letter to Ezana and Saizana",
+        "Ezana's own trilingual inscriptions (Ge'ez, Greek, Sabaean)"
+      ],
+      "scholarly_note": "The broad arc (Frumentius, Ezana, official conversion) is among the best-attested events of late-antique Africa; details of court chronology rest on Rufinus' single narrative line, which historians note.",
+      "see_also": ["garima-gospels", "ethiopian-canon-81"]
+    },
+    {
+      "id": "isnad-ilm-al-rijal",
+      "tradition": "islamic_scholarship",
+      "title": "Isnad and 'Ilm al-Rijal: Islam's Science of Verification",
+      "era": "systematised 8th-10th centuries CE",
+      "region": "Abbasid caliphate and the wider Islamic world",
+      "summary": "To protect the record of the Prophet's sayings and actions from fabrication and error, classical Muslim scholars built one of history's most rigorous authentication systems: every report carries its isnad (chain of narrators) and matn (text), and every narrator is audited through biographical dictionaries ('ilm al-rijal) for honesty, memory, and verified meetings.",
+      "key_points": [
+        "Reports are graded sahih (authentic), hasan (good), da'if (weak), mawdu' (fabricated) — based on chain integrity AND textual analysis together; a beautiful text with a broken chain is rejected.",
+        "Al-Bukhari and Muslim applied the strictest criteria, accepting only unbroken chains of impeccably reliable narrators; their collections anchor the Six Books (al-Kutub al-Sittah).",
+        "Critics like Ibn Hajar al-'Asqalani and al-Dhahabi compiled vast biographical evaluations — narrator-by-narrator credit records, centuries before modern citation review.",
+        "Cross-validation (al-i'tibar: mutaba'ah and shahid checks) searched for independent parallel chains to catch hidden defects — a peer-review instinct formalised a millennium early.",
+        "Written documentation began in the Prophet's own lifetime (e.g., the Sahifa of Hammam ibn Munabbih), correcting the myth of two purely oral centuries."
+      ],
+      "primary_sources": [
+        "Sahih al-Bukhari and Sahih Muslim (with their stated acceptance criteria)",
+        "Ibn Hajar al-'Asqalani, Tahdhib al-Tahdhib (biographical evaluation)",
+        "Al-Dhahabi, Mizan al-I'tidal (critical narrator assessment)",
+        "Early manuscripts: Sahifa of Hammam ibn Munabbih"
+      ],
+      "scholarly_note": "Modern academic hadith criticism (e.g., isnad-cum-matn analysis associated with Harald Motzki) both uses and audits the classical method — the archive presents the classical system as its practitioners defined it, and notes that Western scholarship debates specific attributions.",
+      "see_also": ["ibn-alhaytham-optics", "timbuktu-manuscripts"]
+    },
+    {
+      "id": "ibn-alhaytham-optics",
+      "tradition": "islamic_scholarship",
+      "title": "Ibn al-Haytham and the Kitab al-Manazir: Experimental Science in 11th-Century Cairo",
+      "era": "965 - c. 1040 CE; Optics completed c. 1011-1021 CE",
+      "region": "Basra (birth); Cairo under the Fatimid caliph al-Hakim (work)",
+      "summary": "Abu Ali al-Hasan ibn al-Haytham (Latin: Alhazen) resolved the ancient dispute over vision — proving by mathematics and controlled experiment that light enters the eye (intromission) rather than the eye emitting rays (extramission). His seven-volume Kitab al-Manazir (Book of Optics) was the most important work in optics between antiquity and the 17th century.",
+      "key_points": [
+        "Kitab al-Manazir, completed c. 1011-1021 CE: seven volumes covering sight, reflection, and refraction, grounded in experimental observation.",
+        "He is honoured as 'the father of optics'; his insistence on testing claims against experiment makes him a foundational figure in the scientific method itself.",
+        "Translated into Latin as De Aspectibus (associated with Witelo, c. 1270) and printed by Friedrich Risner in 1572 — it directly shaped Kepler and the European optical tradition.",
+        "His output spanned over 200 attributed works across mathematics, astronomy, physics, and medicine; 96 were catalogued by Ibn Abi Usaibi'a, with around 50 surviving.",
+        "He wrote the Optics during a period of house arrest in Cairo — after famously feigning madness to escape a Fatimid caliph's impossible demand to regulate the Nile flood."
+      ],
+      "primary_sources": [
+        "Kitab al-Manazir (Book of Optics), seven volumes, c. 1011-1021 CE",
+        "Latin transmission: De Aspectibus; Risner's Opticae Thesaurus (Basel, 1572)",
+        "Ibn Abi Usaibi'a's biographical catalogue of his works",
+        "His Al-Shukuk 'ala Batlamyus (Doubts on Ptolemy)"
+      ],
+      "scholarly_note": "'Father of optics' is an honorific, not a metric; the checkable claim is the transmission chain — Arabic original to Latin translation to Kepler — which is documented.",
+      "see_also": ["ibn-sina-canon", "isnad-ilm-al-rijal"]
+    },
+    {
+      "id": "ibn-sina-canon",
+      "tradition": "islamic_scholarship",
+      "title": "Ibn Sina's Canon of Medicine: A Textbook for Six Centuries",
+      "era": "980-1037 CE; Canon completed c. 1025 CE",
+      "region": "Bukhara and Hamadan (Persian world)",
+      "summary": "Ibn Sina (Latin: Avicenna) organised the medical knowledge of his age into al-Qanun fi al-Tibb (The Canon of Medicine), a five-volume synthesis so systematic that it remained a standard medical reference in Islamic institutions and European universities into the 1600s — one of the longest-serving textbooks in history.",
+      "key_points": [
+        "The Canon's five books cover general principles, simple drugs, organ-specific diseases, systemic diseases, and compound remedies — an encyclopaedic clinical architecture.",
+        "In Latin translation it anchored medical curricula at centres such as Montpellier and Leuven for centuries; estimates of its European reign run to the 16th-17th centuries.",
+        "Beyond medicine, Ibn Sina's physics anticipated principles of motion (his theory of mayl/inclination treated a projectile's motion as persisting unless impeded — a step toward inertia later formalised in Europe).",
+        "His philosophical works (the Kitab al-Shifa, 'Book of Healing') shaped both Islamic and scholastic European thought."
+      ],
+      "primary_sources": [
+        "Al-Qanun fi al-Tibb (Canon of Medicine), five volumes, c. 1025 CE",
+        "Latin Canon manuscripts and early printed editions used in European medical schools",
+        "Kitab al-Shifa (physics and philosophy sections)"
+      ],
+      "scholarly_note": "'Used until the 17th century' varies by institution — some universities retired it earlier, some later; the archive states the conservative range rather than a single dramatic date.",
+      "see_also": ["ibn-alhaytham-optics"]
+    },
+    {
+      "id": "timbuktu-manuscripts",
+      "tradition": "islamic_scholarship",
+      "title": "The Manuscripts of Timbuktu: Africa's Written Scholarship",
+      "era": "13th century CE onward; modern conservation from 1973",
+      "region": "Timbuktu and the Niger bend (Mali)",
+      "summary": "Timbuktu's scholarly families preserved hundreds of thousands of manuscripts — law, theology, astronomy, mathematics, medicine, poetry, contracts, market records — written in Arabic and in African languages in Arabic script. They document centuries of African governance, jurisprudence, science, and trade in Africa's own hand.",
+      "key_points": [
+        "Estimates of surviving regional holdings run to several hundred thousand manuscripts (figures around 700,000 are commonly cited); many remain in family libraries such as the Mamma Haidara, Fondo Kati, and Al-Wangari collections.",
+        "The Ahmed Baba Institute, founded by the Malian state in 1973, collects and conserves manuscripts; UNESCO inscribed Timbuktu's three great mosques (including Sankore) and sixteen saints' mausoleums on the World Heritage List in 1988.",
+        "In 2012, when armed militants occupied Timbuktu, librarians and families smuggled manuscripts to safety in chests and rice sacks — a modern rescue of an ancient archive.",
+        "The holdings refute the colonial-era fiction that precolonial Africa had no written history: here is the writing, in quantity, on subjects from inheritance law to astronomy."
+      ],
+      "primary_sources": [
+        "Ahmed Baba Institute collections (est. 1973)",
+        "Family libraries: Mamma Haidara Memorial Library, Fondo Kati, Al-Wangari, Imam Essayouti collections",
+        "UNESCO World Heritage inscription, Timbuktu (1988)",
+        "Documented 2012 evacuation of manuscripts during the militant occupation"
+      ],
+      "scholarly_note": "The exact total count is genuinely uncertain — manuscripts remain dispersed in private hands; the archive cites the range and says why precision is impossible, rather than blessing one number.",
+      "see_also": ["mansa-musa-hajj", "isnad-ilm-al-rijal"]
+    },
+    {
+      "id": "mansa-musa-hajj",
+      "tradition": "islamic_scholarship",
+      "title": "Mansa Musa's Hajj (1324-25): West Africa Announces Itself",
+      "era": "1324-1325 CE (reign c. 1312-1337)",
+      "region": "Mali Empire; Cairo; Mecca",
+      "summary": "Mansa Musa, ruler of the Mali Empire at its peak, made the hajj to Mecca in 1324-25 with a vast caravan and enormous quantities of gold. His months in Cairo — giving and spending so freely that gold's local price fell — made West Africa's wealth famous across the Mediterranean world; the 1375 Catalan Atlas drew him enthroned, holding gold.",
+      "key_points": [
+        "Mali controlled the trans-Saharan gold-salt trade, sitting between the Bambuk and Bure goldfields and the caravan routes — the material basis of its power.",
+        "The most detailed surviving account is by Shihab al-'Umari, who arrived in Egypt years later and recorded testimony from people who had witnessed the visit — testimony, not an eyewitness ledger.",
+        "Al-'Umari reported that the caravan 'depressed the value of gold in Egypt' and that a lower rate persisted for roughly twelve years.",
+        "Modern reappraisal (historian Warren Schultz) supports a real, sharp short-term drop in Cairo's gold value, while cautioning that the twelve-year figure rests on a single source and caravan-size figures vary wildly — the archive presents both the account and the audit.",
+        "Musa brought scholars and architects home, built mosques and schools, and cemented Timbuktu's rise as a centre of learning."
+      ],
+      "primary_sources": [
+        "Shihab al-'Umari, Masalik al-Absar (14th-century account of the Cairo visit)",
+        "Catalan Atlas (1375), depiction of Mansa Musa holding gold",
+        "Warren Schultz, 'Mansa Musa's Gold in Mamluk Cairo: A Reappraisal' (modern historiography)",
+        "Northwestern University's Caravans of Gold project (trade-route documentation)"
+      ],
+      "scholarly_note": "This entry is the archive's honesty demonstration: a famous story kept WITH its evidential warning label. Claims like 'richest person in history' or '$400 billion' are modern back-calculations, not contemporary records — the archive does not repeat them as fact.",
+      "see_also": ["timbuktu-manuscripts"]
+    },
+    {
+      "id": "human-origins-africa",
+      "tradition": "deep_history",
+      "title": "The African Origins of Humankind: Fossils and Genomes",
+      "era": "c. 300,000 years ago to present",
+      "region": "Jebel Irhoud (Morocco); Omo Kibish (Ethiopia); continent-wide",
+      "summary": "The oldest known fossils of anatomically modern Homo sapiens come from Africa: Jebel Irhoud in Morocco (c. 315,000 years, published 2017) and Omo I in Ethiopia (redated to at least c. 233,000 years, 2022). Genetic evidence likewise places the deepest branches of the human family tree in Africa.",
+      "key_points": [
+        "Jebel Irhoud (Morocco): Homo sapiens fossils dated to c. 315,000 years — Hublin and colleagues, Nature, 2017 — extended our species' known age by roughly 100,000 years and showed early sapiens ranged across Africa, not one corner of it.",
+        "Omo I (Ethiopia): redated to a minimum of c. 233,000 years — Vidal and colleagues, Nature, 2022 — securing the Ethiopian rift's place in the earliest sapiens record.",
+        "Genetic diversity is greatest within African populations and decreases with distance from Africa — the genomic signature of a single African origin with later dispersals.",
+        "Earlier milestones in the deeper human lineage (Australopithecus, Homo habilis, Homo erectus) are likewise overwhelmingly African."
+      ],
+      "primary_sources": [
+        "Hublin et al., 'New fossils from Jebel Irhoud, Morocco and the pan-African origin of Homo sapiens', Nature (2017)",
+        "Vidal et al., 'Age of the oldest known Homo sapiens from eastern Africa', Nature (2022)",
+        "Global human genetic diversity studies (e.g., serial founder effect literature)"
+      ],
+      "scholarly_note": "Dates in palaeoanthropology carry error bars and are revised as methods improve — this archive states the published figures with their papers, and will update when the journals do.",
+      "see_also": ["kush-nubia-25th-dynasty"]
+    },
+    {
+      "id": "great-zimbabwe",
+      "tradition": "deep_history",
+      "title": "Great Zimbabwe: Stone Architecture and the Fight Over Who Built It",
+      "era": "built c. 11th-15th centuries CE; peak occupation c. 1100-1450",
+      "region": "Masvingo Province, Zimbabwe",
+      "summary": "Great Zimbabwe — the largest ancient stone ruin in sub-Saharan Africa, a dry-stone city of 10,000-18,000 people at its peak — was built by the ancestors of the Shona people as the capital of a trading kingdom. Its attribution became a century-long historiographical battle: colonial authorities denied its African origin, a suppression that lasted until Zimbabwean independence in 1980.",
+      "key_points": [
+        "Dry-stone construction (no mortar) at monumental scale; the Great Enclosure's wall is among the largest single ancient structures in sub-Saharan Africa.",
+        "Peak occupation c. 1100-1450 CE with a population of 10,000-18,000; wealth flowed from gold and ivory trade reaching the Swahili coast and beyond (Chinese ceramics and Arabian glass excavated on site).",
+        "UNESCO World Heritage Site since 1986.",
+        "The name itself — 'houses of stone' in Shona — records the African authorship the colonial narrative tried to erase; archaeologists (e.g., Gertrude Caton-Thompson's 1929 excavation) had established Shona authorship scientifically decades before politics accepted it."
+      ],
+      "primary_sources": [
+        "UNESCO World Heritage List: Great Zimbabwe National Monument (1986)",
+        "Gertrude Caton-Thompson, 'The Zimbabwe Culture' (1931) — the excavation report that settled the authorship question archaeologically",
+        "Excavated trade goods: Chinese porcelain, Near Eastern glass at the site"
+      ],
+      "scholarly_note": "The Conical Tower's exact function remains genuinely uncertain (royal, ritual, or storage symbolism) — the archive keeps that question open rather than inventing an answer.",
+      "see_also": ["human-origins-africa"]
+    },
+    {
+      "id": "kush-nubia-25th-dynasty",
+      "tradition": "deep_history",
+      "title": "Kush: The Nubian Kingdom That Ruled Egypt",
+      "era": "Kingdom of Kush c. 1070 BCE - 350 CE; 25th Dynasty c. 744-656 BCE",
+      "region": "Nubia (modern Sudan): Kerma, Napata, Meroë",
+      "summary": "The Kingdom of Kush — centred successively at Kerma, Napata, and Meroë — was one of antiquity's great powers: its kings conquered and ruled Egypt as the 25th Dynasty (the 'Black Pharaohs' Piye, Shabaka, Taharqa), and its later capital Meroë left more standing pyramids than Egypt itself.",
+      "key_points": [
+        "25th Dynasty c. 744-656 BCE: Kushite kings ruled Egypt — Piye's Victory Stela records the conquest in the king's own words.",
+        "Meroë's royal necropolises preserve over 200 pyramids — more than all of Egypt — across a far smaller area.",
+        "Meroë was an iron-working and trading centre linking inner Africa to the Red Sea and Mediterranean worlds; the Meroitic script remains only partially deciphered — an open frontier of African epigraphy.",
+        "Kushite monuments are UNESCO-listed (Gebel Barkal and the Napatan sites, 2003; Meroë Island sites, 2011)."
+      ],
+      "primary_sources": [
+        "Piye Victory Stela (Cairo Museum; Nubian Museum record)",
+        "Pyramid fields of Meroë (Begrawiya), Sudan",
+        "UNESCO World Heritage listings: Gebel Barkal and the Sites of the Napatan Region (2003); Archaeological Sites of the Island of Meroë (2011)"
+      ],
+      "scholarly_note": "'Black Pharaohs' is a modern label; the primary record is the stelae and the pyramids. The partial undecipherment of Meroitic is stated openly — a standing invitation to African linguists.",
+      "see_also": ["human-origins-africa", "great-zimbabwe"]
+    }
+  ]
+}

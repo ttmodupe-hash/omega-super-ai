@@ -65,6 +65,7 @@ from .submission_consensus import router as consensus_router
 from .spatial_telemetry import router as spatial_router
 from .feature_flags import router as feature_flags_router
 from .health_sources import router as health_router
+from .heritage_engine import router as heritage_router
 from .research_sources import router as research_router
 from .payment_routers import regional_payment_router
 from .mesh_relay import router as mesh_relay_router
@@ -466,6 +467,7 @@ app.include_router(ops_audit_router)
 app.include_router(truth_router)
 app.include_router(build_field_gateway_router(verify_admin))  # Issue 22/23: SMS front door, dormant without AT_API_KEY
 app.include_router(med_study_router)  # MED-1: sourced medical study pack, fail-closed data
+app.include_router(heritage_router)  # HERITAGE-1: sourced heritage/theological archive, fail-closed data
 
 
 # ---------- PWA Static Serving (LAST) ----------
