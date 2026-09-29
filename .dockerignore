@@ -1,0 +1,19 @@
+# Build-context hygiene: secrets and junk never enter the Docker build at all
+.git
+**/.env
+**/.env.*
+!**/.env.example
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+node_modules/
+engine.zip
+*.bundle
+chunks_security/
+chunks_to_push/
+training_parts/

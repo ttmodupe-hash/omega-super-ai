@@ -4,14 +4,15 @@
 # ==============================================================================
 
 [build]
-# Forces Nixpacks auto-builder targeting root requirements.txt / pyproject.toml,
-# completely bypassing secondary Dockerfiles (e.g., ./lab/Dockerfile).
-builder = "NIXPACKS"
-buildCommand = "pip install --upgrade pip && pip install -r requirements.txt"
-
-[build.nixpacksPlan]
-# Ensures deterministic build phase with runtime system packages for async I/O
-providers = ["python"]
+# Dockerfile builder (2026-09-29): the Nixpacks auto-builder generated ARG/ENV
+# instructions for every service variable, persisting runtime-only secrets in
+# image history and tripping BuildKit's SecretsUsedInArgOrEnv warning (blanking
+# values via nixpacks.toml [variables] did not help - the rule fires on names).
+# With a hand-written Dockerfile no secret is ever declared as ARG/ENV; Railway
+# injects JWT_SECRET_SIGNING_KEY, KIMI_API_KEY, LUQI_ADMIN_SECRET et al. into
+# the runtime container only. nixpacks.toml stays in-tree as the rollback path.
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 # Production start vector using bash orchestrator
