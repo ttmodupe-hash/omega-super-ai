@@ -62,6 +62,66 @@ GUARDRAILS = [
      "response": "SECURITY: SQL injection pattern detected and blocked."},
 ]
 
+# ---------- PERSONA-1 (2026-09-30): deterministic persona & small-talk surface ----------
+# Conversational identity prompts ("how old are you?", "who are you?", greetings)
+# contain zero domain-indexed keywords, so the TF-IDF gate correctly refused them
+# (17.4% < 25% live incident). That behaviour is right for DOMAIN questions but
+# wrong for persona chat: identity answers are facts we hold deterministically.
+# Placement law: this surface runs AFTER the GUARDRAILS loop (security screening
+# is never bypassed) and BEFORE the ML/gate path. Tight anchored patterns only -
+# a stray "who are you" inside a real question must not hijack routing.
+_CAPABILITY_SUMMARY = (
+    "check a suspicious message for scam patterns, answer SASSA/SARS/UIF/NSFAS "
+    "questions, explore the African History Archive, find a free technology for a "
+    "problem you describe, give today's cited news headlines, or research a topic "
+    "in depth."
+)
+
+PERSONA_RULES = [
+    {"id": "PERSONA_GREETING",
+     "pattern": re.compile(
+         r"^(hello|hi|hey|sawubona|dumela|molweni|sanibonani|"
+         r"good\s(morning|afternoon|evening))[\s!.?]*$", re.I),
+     "response": ("Sawubona! I'm Luqi-ai - your learning and consumer-protection "
+                  "companion. Ask me to " + _CAPABILITY_SUMMARY)},
+    {"id": "PERSONA_AGE",
+     "pattern": re.compile(r"^\s*(so,?\s*)?(how old are you|what('s| is) your age)[?\s!.]*$", re.I),
+     "response": ("I'm software, so I don't have an age - and I would rather say "
+                  "so than invent one. What is true: I'm Luqi-ai, a sovereign African "
+                  "learning engine, live now and launching first in South Africa.")},
+    {"id": "PERSONA_IDENTITY",
+     "pattern": re.compile(r"^(who|what) are you[?\s!.]*$|tell me about yourself[?\s!.]*$", re.I),
+     "response": ("I'm Luqi-ai - a sovereign African learning engine. My mission: "
+                  "help people understand finance, avoid scams, and learn the "
+                  "importance of investing. Every answer comes with sources or an "
+                  "honest UNVERIFIED label - I would rather say so than guess.")},
+    {"id": "PERSONA_CREATOR",
+     "pattern": re.compile(
+         r"^\s*(so,?\s*)?(who (created|made|built|designed|developed) you|"
+         r"(who is|who's|what is|what's) your (creator|maker|developer|founder))[?\s!.]*$", re.I),
+     "response": ("I was built by the Luqi-ai team as a sovereign, community-first "
+                  "African engine - with a strict human-approval gate on anything "
+                  "sensitive, so no autonomous system can move money or file anything "
+                  "alone. What I can vouch for precisely is what I do: " + _CAPABILITY_SUMMARY)},
+    {"id": "PERSONA_CAPABILITY",
+     "pattern": re.compile(
+         r"^\s*(so,?\s*)?(what can you do|what do you do|how can you help( me)?|"
+         r"what('s| is) your purpose)[?\s!.]*$", re.I),
+     "response": ("Right now, deterministically and for free, I can " + _CAPABILITY_SUMMARY)},
+]
+
+
+def _persona_route(text: str) -> Optional[Dict[str, Any]]:
+    """Deterministic identity/small-talk surface. First match wins; no ML, no LLM,
+    zero external cost. Returns None when the input is not persona chat."""
+    for rule in PERSONA_RULES:
+        if rule["pattern"].search(text):
+            return {"engine_used": "Phase 1.5: Persona & Small-Talk Router",
+                    "confidence": 1.0, "rule_id": rule["id"],
+                    "response": rule["response"]}
+    return None
+
+
 # pilot corpus - seed data; /calibrate appends admin-vetted near-misses
 TRAINING_CORPUS = [
     ("How do I change my password and login pin?", 0),
@@ -529,6 +589,15 @@ class HybridEngine:
                         "confidence": 1.0, "rule_id": rule["id"],
                         "response": rule["response"], "latency_ms": _ms(t0),
                         "pii_redacted": pii_redacted}
+
+        # PERSONA-1: identity/small-talk answers are deterministic facts, not
+        # archive retrievals - answer before the ML gate can refuse them.
+        # Guardrails have already run above: security screening is never bypassed.
+        persona = _persona_route(normalized)
+        if persona is not None:
+            persona["latency_ms"] = _ms(t0)
+            persona["pii_redacted"] = pii_redacted
+            return persona
 
         ml = self._load_ml()
         if not ml:
