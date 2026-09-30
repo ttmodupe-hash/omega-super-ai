@@ -259,6 +259,41 @@ class TranslateRequest(BaseModel):
 
 # ── Endpoints ────────────────────────────────────────────────────────────
 
+# ── Dialect register (DIALECT-1) ─────────────────────────────────────────
+# Township lingua francas are real and matter. What does NOT exist yet is a
+# fine-tuned dialect dataset or phonetic TTS mapping — those are funded,
+# dataset-licensed roadmap items. So the register is honest: profiles exist
+# as system-prompt register entries that activate when the engine language
+# models are enabled, and the status field says so in the open. Nothing here
+# pretends to speak today.
+DIALECT_PROFILES: Dict[str, Dict[str, Any]] = {
+    "sepetori": {
+        "name": "Sepetori (Pretoria township lingua franca)",
+        "base_languages": ["nso", "tn", "af", "en", "zu"],
+        "region": "Pretoria / Tshwane townships (ZA)",
+        "status": "registry_only_activates_with_language_models",
+        "strategy": "Code-switching-aware system-prompt register profile over "
+                    "the Sepedi/Setswana/Afrikaans/English base languages; "
+                    "no fine-tuned dialect dataset exists yet.",
+        "speech": "No speech output today; phonetic TTS mapping for local "
+                  "cadence is planned with the voice roadmap.",
+    },
+}
+
+
+@router.get("/dialects")
+async def dialects() -> Dict[str, Any]:
+    """The dialect register — honest activation status, zero pretence."""
+    return {
+        "count": len(DIALECT_PROFILES),
+        "profiles": [{"code": c, **p} for c, p in DIALECT_PROFILES.items()],
+        "note": "Dialect profiles are prompt-register entries, not live "
+                "speech. Answer generation in African languages activates "
+                "when the engine language models are enabled at launch; "
+                "until then answers remain in English.",
+    }
+
+
 @router.get("/languages")
 async def list_languages(request: Request) -> Dict[str, Any]:
     """The 22-language registry with HONEST coverage stats."""

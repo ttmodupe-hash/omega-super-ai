@@ -215,6 +215,7 @@ TOPICS: List[Dict[str, Any]] = [
         "id": "budgeting-basics",
         "title": "Budgeting: telling your money where to go",
         "minutes": 15,
+        "keywords": ["budget", "budgeting", "takeaways"],
         "content": (
             "A budget is a plan you make BEFORE the money arrives.\n\n"
             "1. Start with NET income — what actually lands in your account.\n"
@@ -230,6 +231,7 @@ TOPICS: List[Dict[str, Any]] = [
         "id": "emergency-fund",
         "title": "The emergency fund: your first financial shield",
         "minutes": 10,
+        "keywords": ["emergency", "funeral", "money-market"],
         "content": (
             "Before investing anything, build an emergency fund — 1 month of essential "
             "expenses first, then grow toward 3–6 months.\n\n"
@@ -245,6 +247,7 @@ TOPICS: List[Dict[str, Any]] = [
         "id": "understanding-debt",
         "title": "Debt: the tool that cuts both ways",
         "minutes": 15,
+        "keywords": ["debt", "ncr", "duplum", "mashonisa"],
         "content": (
             "Debt is expensive fuel. Used for an asset that grows or earns (education, "
             "a home, tools for a business) it can build wealth. Used for consumption "
@@ -263,6 +266,7 @@ TOPICS: List[Dict[str, Any]] = [
         "id": "investing-basics",
         "title": "Investing basics: how money actually grows",
         "minutes": 20,
+        "keywords": ["tfsa", "investing", "invest", "etf", "etfs", "annuities", "diversify"],
         "content": (
             "Investing is owning assets that produce value — not betting on tips.\n\n"
             "Core truths:\n"
@@ -282,6 +286,7 @@ TOPICS: List[Dict[str, Any]] = [
         "id": "compound-growth",
         "title": "Compound growth: the eighth wonder, in numbers",
         "minutes": 10,
+        "keywords": ["compound"],
         "content": (
             "Compound growth means your returns start earning their own returns.\n\n"
             "R10 000 at 10% per year:\n"
@@ -299,6 +304,7 @@ TOPICS: List[Dict[str, Any]] = [
         "id": "scam-self-defence",
         "title": "Scam self-defence: the five rules",
         "minutes": 10,
+        "keywords": ["otp", "otps", "safps"],
         "content": (
             "Five rules that stop almost every scam:\n\n"
             "1. GUARANTEED RETURNS DO NOT EXIST. Any promise of fixed high returns is fraud.\n"
