@@ -36,7 +36,9 @@ zu = next(l for l in b["languages"] if l["code"] == "zu")
 tn = next(l for l in b["languages"] if l["code"] == "tn")
 check("zu coverage honest (13/13 seeded)", zu["catalogue_keys_translated"] == 13,
       f"{zu['catalogue_keys_translated']}/{zu['catalogue_keys_total']}")
-check("tn coverage honest (1 app.name only)", tn["catalogue_keys_translated"] == 1)
+check("LANG-1: tn coverage 13/13 (was 1 app.name only)", tn["catalogue_keys_translated"] == 13)
+check("LANG-1: every locale fully seeded (13/13)",
+      all(l["catalogue_keys_translated"] == 13 for l in b["languages"]))
 
 # 2. Negotiation matrix
 n = negotiate("zu-ZA, zu;q=0.9, en;q=0.8")
@@ -59,24 +61,30 @@ check("xh greeting translated", "Molo" in b["strings"]["companion.greeting"]["te
 check("no fallback notice when fully seeded", b["fallback_notice"] is None)
 check("coverage counts", b["coverage"]["keys_translated"] == 13 and b["coverage"]["keys_on_english_fallback"] == 0)
 
-# 4. /strings — CLI flow (LUQI_LANG=tn -> header), explicit never-silent fallback
+# 4. /strings — CLI flow (LUQI_LANG=tn -> header); LANG-1: tn now FULLY seeded
 r = c.get("/v1/i18n/strings", headers={"Accept-Language": "tn"})
 b = r.json()
 check("cli flow served tn", b["negotiation"]["served"] == "tn")
 fb = b["strings"]["companion.greeting"]
-check("tn greeting EXPLICIT english fallback", fb["fallback"] is True and fb["translated"] is False
-      and "Sawubona" in fb["text"])
+check("LANG-1: tn greeting translated (no fallback)", fb["fallback"] is False
+      and fb["translated"] is True and "Dumela" in fb["text"])
 check("every key carries flags", all("translated" in v and "fallback" in v for v in b["strings"].values()))
-check("fallback notice present (never silent)", b["fallback_notice"] is not None
-      and "Senyesemane" not in b["fallback_notice"])  # tn itself unseeded -> notice falls back to en text
-check("coverage honest for tn", b["coverage"]["keys_on_english_fallback"] == 12)  # 13 keys - app.name
+check("LANG-1: zero fallback keys + no notice when fully seeded",
+      b["coverage"]["keys_on_english_fallback"] == 0 and b["fallback_notice"] is None)
+# Never-silent fallback law kept under test at unit level — every registry
+# locale is now seeded, so the per-key fallback path is exercised with an
+# unknown locale (the guarantee itself is unchanged):
+res = i18n._resolve_catalogue(engine, "xx")
+check("unknown locale -> ALL keys explicit fallback (never silent)",
+      all(v["fallback"] is True and v["translated"] is False for v in res["strings"].values())
+      and res["fallback_notice"] is not None and "not been translated yet" in res["fallback_notice"])
 
 # 5. Seeded TM in DB
 from sqlalchemy.orm import Session
 from core.i18n_models import I18nString
 with Session(engine) as s:
     n_seed = s.query(I18nString).filter_by(source="seed").count()
-check("catalogue seeded into TM store", n_seed >= 90, f"rows={n_seed}")
+check("LANG-1: catalogue seeded into TM store (13 keys x 22 locales)", n_seed == 286, f"rows={n_seed}")
 
 # 6. /translate — TM miss -> machine translate -> cache; TM hit -> no LLM
 import os
