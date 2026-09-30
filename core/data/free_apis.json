@@ -1,0 +1,103 @@
+{
+  "catalogue_version": "1.0.0",
+  "built": "2026-09-30",
+  "source": "User-provided Apipheny article paste, adjudicated under house law (mission alignment + cost law + no-unverified-claims law)",
+  "honesty_notes": [
+    "Every entry in verified_no_key returned HTTP 200 from the build environment on verified_on — no unverified claims.",
+    "free_key_tier entries require vendor registration for a free key; they could not be live-verified without one (sandbox_verified=false).",
+    "Free tiers change without notice — verify provider terms before building on any entry.",
+    "CORRECTION to the source article: CoinMarketCap was listed under 'no key required' — it actually requires an API key. It is excluded here.",
+    "CoinGecko and IPify were unreachable from the build environment after repeated retries and are excluded rather than claimed."
+  ],
+  "verified_no_key": [
+    {
+      "name": "Exchange Rate (open.er-api.com)",
+      "url_example": "https://open.er-api.com/v6/latest/USD",
+      "category": "currency",
+      "mission_pillar": "finance-literacy",
+      "auth": "none",
+      "sandbox_verified": true,
+      "verified_on": "2026-09-30",
+      "note": "ZAR pairs included; free tier documented at ~1.5k requests/month."
+    },
+    {
+      "name": "Frankfurter (ECB reference rates)",
+      "url_example": "https://api.frankfurter.dev/v1/latest?base=USD&symbols=ZAR",
+      "category": "currency",
+      "mission_pillar": "finance-literacy",
+      "auth": "none",
+      "sandbox_verified": true,
+      "verified_on": "2026-09-30",
+      "note": "European Central Bank reference rates; no key, no signup."
+    },
+    {
+      "name": "World Bank Open Data",
+      "url_example": "https://api.worldbank.org/v2/country/ZAF/indicator/NY.GDP.MKTP.CD?format=json",
+      "category": "economics",
+      "mission_pillar": "finance-literacy",
+      "auth": "none",
+      "sandbox_verified": true,
+      "verified_on": "2026-09-30",
+      "note": "Official development indicators for every country — GDP, inflation, poverty, education. Authoritative source for learning real economics."
+    },
+    {
+      "name": "Open-Meteo",
+      "url_example": "https://api.open-meteo.com/v1/forecast?latitude=-26.2&longitude=28.0&current_weather=true",
+      "category": "weather",
+      "mission_pillar": "agriculture",
+      "auth": "none",
+      "sandbox_verified": true,
+      "verified_on": "2026-09-30",
+      "note": "Free for non-commercial use; serves the agricultural-advisor mission."
+    },
+    {
+      "name": "Universities List (Hipolabs)",
+      "url_example": "http://universities.hipolabs.com/search?country=South+Africa",
+      "category": "education",
+      "mission_pillar": "education",
+      "auth": "none",
+      "sandbox_verified": true,
+      "verified_on": "2026-09-30",
+      "note": "HTTP endpoint (not HTTPS); South African universities included."
+    },
+    {
+      "name": "REST Countries",
+      "url_example": "https://restcountries.com/v3.1/name/south%20africa?fields=name,currencies,languages",
+      "category": "geography",
+      "mission_pillar": "education",
+      "auth": "none",
+      "sandbox_verified": true,
+      "verified_on": "2026-09-30",
+      "note": "Country data: currencies, languages, capitals — useful for learner content."
+    }
+  ],
+  "free_key_tier": [
+    {
+      "name": "Alpha Vantage",
+      "url_example": "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=MSFT&apikey=YOUR_FREE_KEY",
+      "category": "stocks",
+      "mission_pillar": "finance-literacy",
+      "auth": "free-key",
+      "sandbox_verified": false,
+      "verified_on": null,
+      "note": "Free key after registration; vendor documents ~25 requests/day on the free tier."
+    },
+    {
+      "name": "Financial Modeling Prep",
+      "url_example": "https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=YOUR_FREE_KEY",
+      "category": "stocks",
+      "mission_pillar": "finance-literacy",
+      "auth": "free-key",
+      "sandbox_verified": false,
+      "verified_on": null,
+      "note": "Company financials for learning how to read statements; free key tier, limited."
+    }
+  ],
+  "rejected_from_source": [
+    {"entries": "TheRundown, Football Betting Tips, Tennis Odds, 3 Card Poker Odds, Football Prediction", "reason": "ANTI-MISSION: betting/odds promotion conflicts with consumer financial protection and scam defense."},
+    {"entries": "YouTube to MP4, Get Video and Audio URL", "reason": "Platform terms-of-service risk; not mission-aligned."},
+    {"entries": "Yoda Translator, Meme Generator, Love Calculator, Jokes, Bored, Dogs, Robohash, Mirror-AI, SimSimi, Daily Comicstrips, Tic Tac Toe, Chart Lyrics, Text Similarity, Hearthstone", "reason": "Off-mission entertainment."},
+    {"entries": "CoinMarketCap (listed by source as no-key)", "reason": "CORRECTION: requires an API key — source article error."},
+    {"entries": "CoinGecko, IPify, IPinfo", "reason": "Unreachable from build environment after repeated retries — excluded per no-unverified-claims law."}
+  ]
+}
