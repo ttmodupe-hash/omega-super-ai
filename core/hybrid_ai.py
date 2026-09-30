@@ -34,7 +34,7 @@ import os
 import re
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -175,6 +175,7 @@ _FALLBACK_STOPWORDS = {
     "about", "how", "what", "when", "where", "who", "why", "which", "can",
     "could", "should", "would", "do", "does", "did", "please", "tell",
     "much", "many", "old", "get", "got", "have", "has", "had", "be", "been",
+    "explain",
     "am", "luqi", "ai", "hey", "hello", "hi", "there", "know", "from", "into",
 }
 
@@ -251,6 +252,29 @@ def _p16_scam(text: str):
                      "catalogue": "GET /v1/finlit/scam-patterns"}}
 
 
+def _finlit_search(entries: List[Dict[str, Any]], q: str) -> List[Dict[str, Any]]:
+    """Lesson search over title + content + curator keywords (FINLIT-ROUTE-1)."""
+    needle = q.strip().lower()
+    return [e for e in entries
+            if needle in (e["title"] + " " + e["content"] + " "
+                          + " ".join(e.get("keywords", []))).lower()]
+
+
+def _finlit_summary(e: Dict[str, Any]) -> Dict[str, str]:
+    """Return the lesson block richest in its own curator keywords, so the
+    answer names what the user asked about (e.g. the TFSA paragraph for a
+    TFSA question), plus an honest pointer to the full free lesson."""
+    blocks = [b.strip().replace("\n", " ") for b in e["content"].split("\n\n") if b.strip()]
+    kws = [k.lower() for k in e.get("keywords", [])]
+    best = (max(blocks, key=lambda bl: sum(1 for k in kws if k in bl.lower()))
+            if kws and blocks else (blocks[0] if blocks else e["title"]))
+    if len(best) > 300:
+        best = best[:297].rsplit(" ", 1)[0] + "..."
+    return {"title": e["title"],
+            "summary": (best + f" Full {e['minutes']}-minute lesson, free: "
+                               f"GET /v1/finlit/topics/{e['id']}.")}
+
+
 def _p16_pack(text: str, kind: str):
     """Keyword search over the sourced services/history packs."""
     words = _content_words(text)[:6]
@@ -260,10 +284,23 @@ def _p16_pack(text: str, kind: str):
         from . import everyday_services as mod
         entries = mod._load_pack()["entries"]
         label, route = "Everyday Services Pack", "/v1/services"
-    else:
+        searcher, summarizer = mod._search, mod._summary
+    elif kind == "history":
         from . import african_history as mod
         entries = mod._load_archive()["entries"]
         label, route = "African History Archive", "/v1/history"
+        searcher, summarizer = mod._search, mod._summary
+    else:
+        # FINLIT-ROUTE-1 (2026-09-30): money-skills lessons answer on the
+        # deterministic path too - the live engine gated "What is a TFSA?"
+        # (confidence 0.174) because only the services/history packs were
+        # searched. Each lesson carries curator keywords that provably appear
+        # in its own content (asserted in the routing battery) - honest
+        # anchoring, never keyword-stuffing. ROUTER-GUARD-1 applies unchanged.
+        from . import finlit as mod
+        entries = mod.TOPICS
+        label, route = "Money Skills Pack", "/v1/finlit/topics"
+        searcher, summarizer = _finlit_search, _finlit_summary
     # Rarity-weighted matching (deterministic TF-IDF-lite): a word's weight is
     # 1 / number of pack entries containing it. Generic prose words ("need",
     # "work", "money") appear in almost every entry and weigh nearly nothing;
@@ -271,12 +308,12 @@ def _p16_pack(text: str, kind: str):
     # A pack answers only on real topical signal, never on stray common words.
     word_weight = {}
     for w in words:
-        doc_count = len(mod._search(entries, w))
+        doc_count = len(searcher(entries, w))
         if doc_count:
             word_weight[w] = 1.0 / doc_count
     hits: Dict[str, float] = {}
     for w, weight in word_weight.items():
-        for e in mod._search(entries, w):
+        for e in searcher(entries, w):
             hits[e["id"]] = hits.get(e["id"], 0.0) + weight
     if not hits:
         return None
@@ -286,14 +323,16 @@ def _p16_pack(text: str, kind: str):
     # not. Among anchored entries prefer the most anchor words, then score.
     candidates = []
     for eid, score in hits.items():
-        title_text = (by_id[eid]["title"] + " " + eid).lower()
+        title_text = (by_id[eid]["title"] + " " + eid + " "
+                      + " ".join(by_id[eid].get("keywords", []))).lower()
         anchors = sum(1 for w in word_weight if w in title_text)
         if anchors:
             candidates.append((anchors, score, eid))
     if candidates:
         candidates.sort(key=lambda t: (-t[0], -t[1]))
         anchors, _score, best_id = candidates[0]
-        title_text = (by_id[best_id]["title"] + " " + best_id).lower()
+        title_text = (by_id[best_id]["title"] + " " + best_id + " "
+                      + " ".join(by_id[best_id].get("keywords", []))).lower()
         named = len(words) == 1 and words[0] in title_text
         # ROUTER-GUARD-1 (2026-09-29): a single title anchor on a LONG query is
         # a stray-token match, not topical signal - the live engine answered
@@ -308,13 +347,14 @@ def _p16_pack(text: str, kind: str):
         # No title anchor anywhere: accept only a single-word query that
         # names an entry title directly; everything else is not topical.
         top = max(hits, key=hits.get)
-        title_text = (by_id[top]["title"] + " " + top).lower()
+        title_text = (by_id[top]["title"] + " " + top + " "
+                      + " ".join(by_id[top].get("keywords", []))).lower()
         if len(words) == 1 and words[0] in title_text:
             best_id = top
         else:
             return None
     ent = by_id[best_id]
-    s = mod._summary(ent)
+    s = summarizer(ent)
     return {"engine_used": f"Phase 1.6: Deterministic Knowledge Router -> {label}",
             "confidence": 0.0, "ml_note": _ML_NOTE,
             "response": (f"{s['title']}: {s['summary']}"),
@@ -391,6 +431,7 @@ def _phase16_fallback(text: str):
         handlers.append(_p16_wikipedia)
     handlers.extend([lambda t: _p16_pack(t, "services"),
                      lambda t: _p16_pack(t, "history"),
+                     lambda t: _p16_pack(t, "finlit"),
                      _p16_radar, _p16_wikipedia])
     for handler in handlers:
         try:
@@ -563,9 +604,26 @@ _engine = HybridEngine()
 
 @router.post("/process")
 async def process_hybrid(inp: HybridInput) -> Dict[str, Any]:
-    """Public, zero-external-cost front door: rules + local ML only."""
+    """Public, zero-external-cost front door: rules + local ML only.
+
+    CACHE-1: deterministic (pure-catalogue) answers are reused for
+    near-duplicate prompts; synthesized/escalated answers never are."""
     import asyncio
-    return await asyncio.to_thread(_engine.process, inp.text, inp.override_threshold)
+    from .semantic_cache import hybrid_cache
+    if inp.override_threshold is None:
+        # CACHE-1a (2026-09-29): store() strips the original latency_ms -
+        # serving it would be telemetry for work not done - but every other
+        # /process path carries the field and callers rely on it (the
+        # FRONTDOOR-FIX-1 battery asserts it). Stamp a freshly measured,
+        # honest ~0ms latency on hits instead of dropping the field.
+        t_cache = time.perf_counter()
+        hit = hybrid_cache.get(inp.text)
+        if hit is not None:
+            hit["latency_ms"] = _ms(t_cache)
+            return hit
+    result = await asyncio.to_thread(_engine.process, inp.text, inp.override_threshold)
+    hybrid_cache.store(inp.text, result)
+    return result
 
 
 @router.post("/calibrate", status_code=201)
@@ -585,9 +643,12 @@ async def run_eval(is_authenticated: bool = Depends(verify_admin)):
 
 @router.get("/health")
 async def hybrid_health() -> Dict[str, Any]:
-    """Public hybrid status: kill switch, corpus size, active classes."""
+    """Public hybrid status: kill switch, corpus size, active classes,
+    and CACHE-1 counters so savings are measured, not claimed."""
+    from .semantic_cache import hybrid_cache
     return {"kill_switch": "hybrid_ai" in os.getenv("DISABLED_ENGINES", ""),
             "corpus_size": len(_engine.corpus),
             "classes": [m["label"] for m in INTENT_META.values()],
             "sklearn_available": _engine._load_ml() is not False,
-            "ml_offline_fallback": "Phase 1.6 deterministic knowledge router (no dead ends)"}
+            "ml_offline_fallback": "Phase 1.6 deterministic knowledge router (no dead ends)",
+            "cache": hybrid_cache.stats()}
