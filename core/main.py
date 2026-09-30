@@ -67,6 +67,8 @@ from .feature_flags import router as feature_flags_router
 from .health_sources import router as health_router
 from .heritage_engine import router as heritage_router
 from .iks_engine import router as iks_router
+from .bill_audit import router as bill_audit_router
+from .async_jobs import router as jobs_router
 from .research_sources import router as research_router
 from .payment_routers import regional_payment_router
 from .mesh_relay import router as mesh_relay_router
@@ -150,7 +152,7 @@ def init_db() -> None:
     try:
         from sqlalchemy import create_engine
         from .models import Base
-        from . import enterprise_models, companion_models, reflexion_models, i18n_models, site_stats_models  # noqa: F401 - registers tables on shared Base
+        from . import enterprise_models, companion_models, reflexion_models, i18n_models, site_stats_models, job_models  # noqa: F401 - registers tables on shared Base
 
         engine = create_engine(DATABASE_URL, pool_pre_ping=True)
         from .sqlite_wal import configure_sqlite_engine
@@ -476,6 +478,8 @@ app.include_router(build_field_gateway_router(verify_admin))  # Issue 22/23: SMS
 app.include_router(med_study_router)  # MED-1: sourced medical study pack, fail-closed data
 app.include_router(heritage_router)  # HERITAGE-1: sourced heritage/theological archive, fail-closed data
 app.include_router(iks_router)  # IKS-1: sourced ethnobotanical archive, fail-closed data
+app.include_router(bill_audit_router)  # BILL-AUDIT-1: deterministic Consumer Shield bill audit
+app.include_router(jobs_router)  # JOBS-1: zero-infra async dispatch + polling + Postgres job ledger
 
 
 # ---------- PWA Static Serving (LAST) ----------
