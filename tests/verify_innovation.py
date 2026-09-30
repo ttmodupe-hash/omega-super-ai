@@ -98,7 +98,16 @@ entry = radar.build_daily_digest()
 check("digest built from feeds", entry is not None and entry["kind"] == "daily-research-digest")
 check("digest has 3 topics", set(entry["topics"].keys()) == {"science", "technology", "health"})
 check("digest entries cited", entry["topics"]["science"]["headlines"][0]["url"].startswith("https://"))
-check("digest carries date + generated_at", entry["date"] == "2026-09-24" and entry["generated_at"].endswith("Z"))
+# The digest stamps itself with the wall-clock date it was generated
+# (build_daily_digest uses time.gmtime()); the fixture feeds above only supply
+# headlines, so expecting their 2026-09-24 timestamp here was a time-bomb that
+# failed on every other day. Assert against the same UTC clock the code uses.
+import time as _time
+_today = _time.strftime("%Y-%m-%d", _time.gmtime())
+check("digest carries date + generated_at",
+      entry["date"] == _today
+      and entry["generated_at"].endswith("Z")
+      and entry["generated_at"][:10] == entry["date"])
 
 radar._journal_append(entry)
 r = c.get("/v1/innovation/journal")
