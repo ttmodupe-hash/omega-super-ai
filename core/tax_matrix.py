@@ -35,6 +35,68 @@ def compute_returns(financial_data: TaxFilingSchema) -> Dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# TAX-TURNOVER-1 (2026-09-30): SARS Turnover Tax estimate for micro businesses.
+# An external draft of this calculator was reviewed and its rates CONFIRMED
+# against the official SARS page before integration - no unverified tax
+# figure ever ships. Table for the 2026/27 year of assessment (years of
+# assessment ending between 1 March 2026 and 28 February 2027); Budget 2026
+# raised the qualifying turnover threshold from R1m to R2.3m and the 0% band
+# from R335k to R600k.
+# Source: https://www.sars.gov.za/types-of-tax/turnover-tax/
+TURNOVER_TAX_YEAR = "2026/27"
+TURNOVER_TAX_SOURCE = "https://www.sars.gov.za/types-of-tax/turnover-tax/"
+MAX_QUALIFYING_TURNOVER = 2_300_000.0
+
+
+def compute_turnover_tax(annual_turnover: float) -> Dict[str, Any]:
+    """SARS turnover-tax estimate on the verified 2026/27 table."""
+    t = float(annual_turnover)
+    if t < 0:
+        raise ValueError("annual_turnover must be >= 0")
+    if t <= 600_000:
+        bracket, tax = "R1 - R600,000: 0% of taxable turnover", 0.0
+    elif t <= 950_000:
+        bracket = "R600,001 - R950,000: 1% of taxable turnover above R600,000"
+        tax = 0.01 * (t - 600_000)
+    elif t <= 1_400_000:
+        bracket = "R950,001 - R1,400,000: R3,500 + 2% of taxable turnover above R950,000"
+        tax = 3_500.0 + 0.02 * (t - 950_000)
+    else:
+        bracket = "R1,400,001 and above: R12,500 + 3% of taxable turnover above R1,400,000"
+        tax = 12_500.0 + 0.03 * (t - 1_400_000)
+    qualifies = t <= MAX_QUALIFYING_TURNOVER
+    return {
+        "tax_year": TURNOVER_TAX_YEAR,
+        "annual_turnover": round(t, 2),
+        "qualifies_for_turnover_tax": qualifies,
+        "bracket": (bracket if qualifies else
+                    "annual turnover exceeds the R2.3 million qualifying threshold - "
+                    "standard income tax / VAT rules apply instead"),
+        "estimated_turnover_tax": round(tax, 2) if qualifies else None,
+        "effective_rate_pct": (round(100.0 * tax / t, 4) if (qualifies and t) else 0.0),
+        "source": TURNOVER_TAX_SOURCE,
+        "disclaimer": ("ESTIMATE ONLY - not a filed return and not tax advice. Turnover-tax "
+                       "qualification carries further SARS conditions (natural-person "
+                       "ownership, professional-service income limits and more); confirm "
+                       "with SARS or a registered tax practitioner before registering "
+                       "or paying."),
+    }
+
+
+class TurnoverTaxSchema(BaseModel):
+    annual_turnover: float
+
+
+@router.post("/v1/agent/turnover-tax-estimate")
+async def estimate_turnover_tax(payload: TurnoverTaxSchema) -> Dict[str, Any]:
+    """Pure estimate - no filing is created, so no human-gate lock is needed."""
+    from fastapi import HTTPException
+    if payload.annual_turnover < 0:
+        raise HTTPException(status_code=422, detail="annual_turnover must be >= 0")
+    return compute_turnover_tax(payload.annual_turnover)
+
+
 @router.post("/v1/agent/tax-compute")
 async def calculate_corporate_returns(financial_data: TaxFilingSchema) -> Dict[str, Any]:
     """Compute the return, then lock the filing behind the 30% human gate."""
