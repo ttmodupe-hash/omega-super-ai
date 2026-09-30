@@ -1,0 +1,209 @@
+{
+  "name": "Indigenous Knowledge Systems (IKS) Ethnobotanical Archive",
+  "version": "1.0.0",
+  "updated": "2026-09-29",
+  "description": "A curated, sourced registry of documented Southern African traditional plant knowledge — historical usage, honest research status, cautions, and the intellectual-property record of the communities who carried this knowledge.",
+  "disclaimer": "This archive catalogues documented historical and traditional plant use, with named sources you can check. It is not medical advice: it cannot evaluate your health, diagnose any condition, prescribe any treatment, or recommend any dose. For illness, consult a qualified health professional or a registered traditional health practitioner; in an emergency call 112 (free from any South African mobile) or go to your nearest clinic. No plant in this archive is a proven cure for cancer, HIV, or COVID-19 — anyone selling that certainty is selling a scam.",
+  "guardrails": [
+    "Catalogue, not clinic: entries document what is recorded in the ethnobotanical literature — never what you personally should take.",
+    "Every entry carries at least two named, checkable sources. Content that cannot be sourced does not ship.",
+    "Traditional use is reported as historical record, not as efficacy proof; the modern-research note says plainly what is and is not established.",
+    "Community knowledge is community property: entries record the intellectual-property and benefit-sharing status where one exists (the anti-biopiracy record)."
+  ],
+  "categories": [
+    "respiratory_tradition",
+    "immune_tonic_tradition",
+    "musculoskeletal",
+    "skin_and_digestion",
+    "everyday_infusion",
+    "urinary_tradition"
+  ],
+  "entries": [
+    {
+      "id": "lengana-artemisia-afra",
+      "category": "respiratory_tradition",
+      "title": "Lengana / Wildeals (African Wormwood)",
+      "latin_name": "Artemisia afra",
+      "vernacular_names": ["Lengana (Sesotho/Sepedi)", "Wildeals (Afrikaans)", "Umhlonyane (isiZulu/isiXhosa)", "African wormwood (English)"],
+      "region": "Widespread across South Africa, Lesotho and into tropical East Africa",
+      "summary": "One of the most widely documented traditional medicines in Southern Africa. Recorded use centres on respiratory complaints: leaves steamed as an inhalation or brewed as a tea for coughs, colds, chest congestion and fevers. It is a fixture of the written ethnobotanical record and of living practice from the Eastern Cape to Lesotho.",
+      "traditional_use": [
+        "Steam inhalation of crushed leaves for blocked chest, coughs and colds — the most consistently recorded use across sources.",
+        "Leaf tea or infusion for fever and general respiratory discomfort.",
+        "Recorded topical and wash uses in some traditions."
+      ],
+      "modern_research_note": "Laboratory research exists, but clinical proof in humans is not established. Critically: Artemisia afra is not the same plant as Artemisia annua (the source of the antimalarial drug artemisinin) — published analyses find A. afra contains little to no artemisinin, so claims that lengana treats malaria or COVID-19 rest on a confusion of species, not on evidence.",
+      "cautions": [
+        "The essential oil contains thujone; concentrated or prolonged use is not safe self-medication.",
+        "Not for use in pregnancy.",
+        "Persistent cough, fever or chest pain needs a clinic or doctor — TB and pneumonia are treatable but dangerous when self-managed."
+      ],
+      "scam_alert": "Lengana was heavily marketed with unproven 'cures COVID-19' claims. No plant in this archive is a proven cure for COVID-19, cancer or HIV. If a seller promises a cure, that promise is the product — walk away.",
+      "key_points": [
+        "Among the best-documented respiratory remedies in the Southern African record.",
+        "Species confusion with A. annua (artemisinin) is the root of most exaggerated claims.",
+        "Traditional steam and tea use is the documented core — not miracle cures."
+      ],
+      "sources": [
+        "Van Wyk, B.-E. & Gericke, N. (2000). People's Plants: A Guide to Useful Plants of Southern Africa. Briza Publications, Pretoria — Artemisia afra account.",
+        "Van Wyk, B.-E., Van Oudtshoorn, B. & Gericke, N. (2009, 2nd ed.). Medicinal Plants of South Africa. Briza Publications, Pretoria.",
+        "SANBI PlantZAfrica species account: Artemisia afra (pza.sanbi.org)."
+      ],
+      "see_also": ["motsepelo-sutherlandia", "aloe-ferox"]
+    },
+    {
+      "id": "motsepelo-sutherlandia",
+      "category": "immune_tonic_tradition",
+      "title": "Motsepelo / Cancer Bush (Kankerbos)",
+      "latin_name": "Sutherlandia frutescens",
+      "vernacular_names": ["Motsepelo (Sesotho)", "Kankerbos / cancer bush (Afrikaans/English)", "Unwele (isiZulu)", "Phetola (Setswana)"],
+      "region": "Dry western regions of South Africa (Northern and Western Cape, Free State) and into Namibia",
+      "summary": "A recorded tonic plant of the Khoisan and later Cape settler traditions, used for general wellbeing, appetite, and digestive complaints. Modern laboratory research has explored immune-modulating and adaptogen-like properties, but human clinical evidence remains preliminary.",
+      "traditional_use": [
+        "Bitter tonic infusions for general debility, appetite and digestive discomfort.",
+        "Recorded use as a general 'strengthening' remedy during illness recovery.",
+        "Topical washes recorded in some traditions."
+      ],
+      "modern_research_note": "The peer-reviewed review literature (notably van Wyk & Albrecht, 2008) records extensive laboratory and animal study — and is equally clear that robust human clinical trials are lacking. The common name 'cancer bush' reflects a traditional-use claim, not an established treatment: no regulatory body recognises Sutherlandia as a cancer therapy.",
+      "cautions": [
+        "A clinical study found Sutherlandia reduced the bioavailability of the antiretroviral atazanavir — dangerous interactions with chronic medication are real; never combine without a doctor or pharmacist.",
+        "Anyone with cancer who uses it instead of oncology care is gambling with their life.",
+        "Pregnancy safety is not established."
+      ],
+      "scam_alert": "This is the single most scam-abused plant in the archive: 'cancer bush cures cancer' is a sales pitch, not a finding. It costs people twice — their money, and the treatment time they lose. Report miracle-cure sellers to the SAHPRA and the National Consumer Commission.",
+      "key_points": [
+        "Real tonic tradition, real laboratory research — and no established clinical treatment.",
+        "The vernacular name is a historical record, not a medical claim.",
+        "Documented interaction risk with antiretrovirals — mixing without professional guidance is dangerous."
+      ],
+      "sources": [
+        "van Wyk, B.-E. & Albrecht, C. (2008). A review of the taxonomy, ethnobotany, chemistry and pharmacology of Sutherlandia frutescens. Journal of Ethnopharmacology 119: 620-629.",
+        "Van Wyk, B.-E., Van Oudtshoorn, B. & Gericke, N. (2009, 2nd ed.). Medicinal Plants of South Africa. Briza Publications, Pretoria.",
+        "SANBI PlantZAfrica species account: Sutherlandia frutescens (pza.sanbi.org)."
+      ],
+      "see_also": ["lengana-artemisia-afra", "rooibos-aspalathus"]
+    },
+    {
+      "id": "devils-claw-harpagophytum",
+      "category": "musculoskeletal",
+      "title": "Devil's Claw (Sengaparile)",
+      "latin_name": "Harpagophytum procumbens",
+      "vernacular_names": ["Devil's claw (English)", "Duiwelsklou (Afrikaans)", "Sengaparile (Setswana)", "Grapple plant (English)"],
+      "region": "Kalahari sands of Namibia, Botswana and the Northern Cape (South Africa)",
+      "summary": "A Kalahari plant whose secondary root tubers are among the best-evidenced African botanicals: European herbal monographs (ESCOP; formerly German Commission E) recognise devil's claw preparations for supportive treatment of painful, degenerative musculoskeletal conditions. San communities carried the knowledge; commercial harvest is now a major rural income — and a sustainability question.",
+      "traditional_use": [
+        "Recorded San use of tuber preparations for pain, digestive complaints and during pregnancy recovery (documented uses vary by community).",
+        "Adopted into European herbal medicine from the mid-20th century onward."
+      ],
+      "modern_research_note": "Unusually for this archive, human clinical trials exist: reviews find moderate evidence of benefit for low-back pain and osteoarthritis, and ESCOP publishes an official monograph (Harpagophyti radix). That makes it the exception that proves the archive's rule: real evidence is specific, bounded and published — not a miracle.",
+      "cautions": [
+        "May interact with anticoagulants (e.g. warfarin) and is cautioned against with stomach or duodenal ulcers and gallstones.",
+        "Not advised in pregnancy.",
+        "Wild-harvest pressure is a documented sustainability concern — buying certified-sustainable supply protects both the plant and the harvesters."
+      ],
+      "key_points": [
+        "The archive's strongest evidence case: ESCOP monograph + human trials for joint and back pain.",
+        "Kalahari San knowledge at the root of a global export trade — benefit-sharing remains contested terrain.",
+        "'Evidence-based' means a specific, limited claim — not a cure-all."
+      ],
+      "sources": [
+        "ESCOP (2019, 2nd ed. suppl.). Harpagophyti radix — Devil's claw root. European Scientific Cooperative on Phytotherapy Monographs, Exeter.",
+        "Van Wyk, B.-E. & Gericke, N. (2000). People's Plants: A Guide to Useful Plants of Southern Africa. Briza Publications, Pretoria — Harpagophytum procumbens account.",
+        "Van Wyk, B.-E., Van Oudtshoorn, B. & Gericke, N. (2009, 2nd ed.). Medicinal Plants of South Africa. Briza Publications, Pretoria."
+      ],
+      "see_also": ["aloe-ferox"]
+    },
+    {
+      "id": "aloe-ferox",
+      "category": "skin_and_digestion",
+      "title": "Bitter Aloe / Cape Aloe",
+      "latin_name": "Aloe ferox",
+      "vernacular_names": ["Bitteraalwyn (Afrikaans)", "iNhlaba (isiZulu)", "Cape aloe / bitter aloe (English)"],
+      "region": "Eastern Cape, KwaZulu-Natal, Western Cape and Free State (South Africa), Lesotho",
+      "summary": "Aloe ferox carries two distinct documented uses: the leaf gel applied to skin and burns (a living household tradition), and the dried leaf exudate — 'bitters' — a stimulant laxative recorded in pharmacopoeias and exported commercially for over a century. The two are different preparations with very different risk profiles.",
+      "traditional_use": [
+        "Fresh leaf gel applied to burns, wounds and skin irritations — the household use.",
+        "Dried leaf exudate (aloe bitters) as a laxative and 'digestive cleanser'.",
+        "Recorded use as a general tonic in some Cape traditions."
+      ],
+      "modern_research_note": "The laxative action of anthraquinones (aloin) is pharmacologically established — which is exactly why regulators restrict it: the EU moved against hydroxyanthracene-derivative aloe preparations in food supplements in 2021 over genotoxicity concerns. Skin-healing claims for the gel are plausible and widely recorded, but formal clinical evidence is thinner than the marketing.",
+      "cautions": [
+        "Bitters are a potent stimulant laxative: prolonged use causes electrolyte loss and dependence, and anthraquinone preparations are restricted in the EU supplement market.",
+        "Not for pregnancy, breastfeeding, or children.",
+        "A 'digestive cleanse' is marketing language, not physiology — the bowel cleans itself."
+      ],
+      "scam_alert": "Detox teas and 'aloe cleanse' programmes are a standing scam format: they sell you a laxative effect and call it health. Weight lost to a laxative is water and time, not fat.",
+      "key_points": [
+        "Two preparations, two stories: skin gel (household tradition) vs bitters (restricted stimulant laxative).",
+        "Over a century of documented commercial tapping in the Eastern and Western Cape.",
+        "Established pharmacology cuts both ways — real effect, real restriction."
+      ],
+      "sources": [
+        "Van Wyk, B.-E., Van Oudtshoorn, B. & Gericke, N. (2009, 2nd ed.). Medicinal Plants of South Africa. Briza Publications, Pretoria — Aloe ferox account.",
+        "SANBI PlantZAfrica species account: Aloe ferox (pza.sanbi.org).",
+        "Van Wyk, B.-E. & Gericke, N. (2000). People's Plants: A Guide to Useful Plants of Southern Africa. Briza Publications, Pretoria."
+      ],
+      "see_also": ["lengana-artemisia-afra", "devils-claw-harpagophytum"]
+    },
+    {
+      "id": "rooibos-aspalathus",
+      "category": "everyday_infusion",
+      "title": "Rooibos",
+      "latin_name": "Aspalathus linearis",
+      "vernacular_names": ["Rooibos (Afrikaans)", "Red bush tea (English)", "Bossiestee (Afrikaans, historical)"],
+      "region": "Cederberg and surrounds, Western Cape (South Africa) — grows wild nowhere else on Earth",
+      "summary": "A Khoisan tea tradition from the Cederberg that became a national drink and a global export — and the landmark case for protecting indigenous knowledge: in 2019 the rooibos industry signed a benefit-sharing agreement with the Khoi and San councils (a levy on the farm-gate price, paid into a community trust), and in 2021 'Rooibos/Red Bush' entered the EU register of protected designations of origin — the first African food product there.",
+      "traditional_use": [
+        "Infusion drunk as an everyday tea by Khoisan communities of the Cederberg — the documented root of the entire industry.",
+        "Recorded use for digestive comfort and as a calming household tea."
+      ],
+      "modern_research_note": "Rooibos is caffeine-free and rich in unique polyphenols (aspalathin occurs in no other known plant). Laboratory and small human studies explore antioxidant, blood-sugar and cardiovascular angles — promising research, not proven treatment. As a tea it is widely regarded as safe; concentrated extracts are a different product from tea.",
+      "cautions": [
+        "As tea: no significant cautions are documented at normal consumption.",
+        "Concentrated extracts and supplements are not 'just tea' — treat marketing claims accordingly."
+      ],
+      "key_points": [
+        "The 2019 Khoi and San benefit-sharing agreement is the archive's flagship anti-biopiracy precedent: community knowledge, community payment.",
+        "EU protected-origin status (2021) — the name now belongs to the place and its people, by law.",
+        "Proof that IKS can be honoured economically, not just academically."
+      ],
+      "sources": [
+        "Joubert, E. & de Beer, D. (2011). Rooibos (Aspalathus linearis) beyond the farm gate: from herbal tea to potential phytopharmaceutical. South African Journal of Botany 77: 869-886.",
+        "Department of Environmental Affairs / National Khoisan Council / San Council of South Africa / SA Rooibos Council (2019). Rooibos benefit-sharing agreement — public record, reported nationally (November 2019).",
+        "European Commission eAmbrosia register (2021): 'Rooibos / Red Bush' protected designation of origin entry.",
+        "SANBI PlantZAfrica species account: Aspalathus linearis (pza.sanbi.org)."
+      ],
+      "see_also": ["buchu-agathosma", "motsepelo-sutherlandia"]
+    },
+    {
+      "id": "buchu-agathosma",
+      "category": "urinary_tradition",
+      "title": "Buchu / Boegoe",
+      "latin_name": "Agathosma betulina",
+      "vernacular_names": ["Buchu (English, from Khoi)", "Boegoe (Afrikaans)", "Round-leaf buchu (English)"],
+      "region": "Fynbos of the Western Cape mountains (South Africa)",
+      "summary": "A Khoisan remedy recorded for urinary and stomach complaints — famously steeping leaves in brandy ('boegoe-brandewyn') — that entered colonial dispensaries and then world trade in the 19th century. Buchu later stood at the centre of one of South Africa's earliest bioprospecting benefit-sharing negotiations (2013), making it a twin case with rooibos in the intellectual-property record.",
+      "traditional_use": [
+        "Infusions and brandy tinctures of the leaves for urinary tract and stomach complaints — the core documented use.",
+        "Leaves also recorded in vinegar washes and as a general household remedy."
+      ],
+      "modern_research_note": "Buchu is documented in herbal monograph literature as a traditional diuretic and urinary remedy; robust modern clinical trials are lacking. The essential oil's pulegone content is a real toxicity ceiling, so professional dosing limits exist in the markets where buchu is sold — another case where 'natural' does not mean 'harmless'.",
+      "cautions": [
+        "Pulegone (in the essential oil) is hepatotoxic at high doses — concentrated buchu oil is not a home remedy.",
+        "Not advised in pregnancy or breastfeeding.",
+        "A urinary tract infection can ascend to the kidneys: burning, fever or back pain needs a clinic, and antibiotics when prescribed — buchu tea is not a substitute."
+      ],
+      "key_points": [
+        "Khoisan knowledge that reached 19th-century European pharmacies — an early globalisation of IKS.",
+        "2013 bioprospecting benefit-sharing negotiations put buchu in South Africa's IP-protection record alongside rooibos.",
+        "Traditional diuretic reputation is documented; clinical proof is not — the archive says both."
+      ],
+      "sources": [
+        "Van Wyk, B.-E., Van Oudtshoorn, B. & Gericke, N. (2009, 2nd ed.). Medicinal Plants of South Africa. Briza Publications, Pretoria — Agathosma betulina account.",
+        "SANBI PlantZAfrica species account: Agathosma betulina (pza.sanbi.org).",
+        "Van Wyk, B.-E. (2011). The potential of South African plants in the development of new medicinal products. South African Journal of Botany 77: 812-829."
+      ],
+      "see_also": ["rooibos-aspalathus"]
+    }
+  ]
+}
