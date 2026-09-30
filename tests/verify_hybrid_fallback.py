@@ -11,6 +11,15 @@ from fastapi.testclient import TestClient
 import core.hybrid_ai as hybrid
 import core.free_knowledge as free_knowledge
 import core.news_pulse as news_pulse
+import core.semantic_cache as semantic_cache
+
+# CACHE-1 was added after this battery: repeat prompts would be served from
+# the semantic cache and mask the routing behaviour under test (e.g. test 11
+# re-asks test 1's prompt but with ML stubbed - a cache hit would return the
+# stored Phase 1.6 label instead of exercising the Phase 2.5 path). Disable
+# the cache so every ask() runs the real engine path; cache behaviour is
+# covered by its own tests.
+semantic_cache.ENABLED = False
 
 app = FastAPI()
 app.include_router(hybrid.router)
@@ -173,4 +182,29 @@ check("Phase 3 honest boundary", "below the" in b["boundary"])
 check("Phase 3 offers research", b["escalation"]["route"] == "/v1/deep-research")
 hybrid._engine._ml = False  # restore the offline-node state
 
-print("\nFRONTDOOR-FIX-1 + ML-1 verification: all checks passed.")
+# 14. FINLIT-ROUTE-1: money-skills lessons answer on the deterministic path.
+# Live-engine observation (2026-09-30): "What is a TFSA?" gated at 0.174
+# because only the services/history packs were searched.
+r = ask("What is a TFSA?")
+b = r.json()
+check("finlit routed", "Money Skills Pack" in b["engine_used"], b["engine_used"])
+check("finlit TFSA paragraph returned", "TFSA" in b["response"])
+check("finlit sources route given", "/v1/finlit/topics" in b["entry"]["sources_via"])
+r = ask("explain compound interest")
+b = r.json()
+check("compound routed", "Money Skills Pack" in b["engine_used"], b["engine_used"])
+check("compound lesson returned", "Compound growth" in b["response"])
+# ROUTER-GUARD-1 still protects later handlers: the radar query must NOT be
+# hijacked by the budgeting lesson's "money" anchor.
+r = ask("I need work but I have no money for data")
+b = r.json()
+check("radar not hijacked by finlit", "Technology Radar" in b["engine_used"], b["engine_used"])
+# Keyword honesty: every curator keyword provably appears in its own lesson -
+# anchoring is earned by the content, never keyword-stuffing.
+import core.finlit as _fl
+for _t in _fl.TOPICS:
+    for _kw in _t.get("keywords", []):
+        check(f"keyword '{_kw}' honest for {_t['id']}",
+              _kw in (_t["title"] + " " + _t["content"]).lower())
+
+print("\nFRONTDOOR-FIX-1 + ML-1 + FINLIT-ROUTE-1 verification: all checks passed.")
