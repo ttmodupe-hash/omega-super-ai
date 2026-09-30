@@ -80,6 +80,7 @@ from .pedagogy_engine import pedagogy_router
 from .companion_engine import companion_router
 from .stripe_payments import stripe_router
 from .finlit import router as finlit_router
+from .resources import router as resources_router  # API-CATALOG-1: curated verified free-API resource
 from .news_pulse import router as news_pulse_router
 from .tech_radar import router as tech_radar_router
 from .african_history import router as african_history_router
@@ -425,6 +426,7 @@ app.include_router(pedagogy_router)
 app.include_router(companion_router)
 app.include_router(stripe_router)
 app.include_router(finlit_router)
+app.include_router(resources_router)  # API-CATALOG-1: GET /v1/resources/free-apis — honest curated catalogue
 app.include_router(african_history_router)
 app.include_router(everyday_services_router)
 app.include_router(orchestrator_router)
