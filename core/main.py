@@ -322,8 +322,7 @@ def _write_audit_record(request: Request, task, released_status) -> None:
 
 
 
-# ---------- Prometheus request telemetry (best-effort, never breaks business pat
-h) ----------
+# ---------- Prometheus request telemetry (best-effort, never breaks business path) ----------
 app.middleware("http")(metrics_middleware)
 
 
