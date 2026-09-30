@@ -10,7 +10,9 @@ Contract (preserved for all existing routes and the PWA):
   - missing KIMI_API_KEY  -> HTTPException 500 (fail-closed)
   - budget hard-stop      -> HTTPException 429, NO upstream call made (fail-closed)
   - upstream non-200      -> HTTPException(status, "Kimi Engine Fault: ...")
-  - network failure       -> requests.exceptions.RequestException (routes map to 503)
+  - network failure       -> requests.exceptions.RequestException (routes map to 503);
+                             transient faults retried with bounded jittered backoff
+  - upstream circuit OPEN -> HTTPException 503 fail-fast, NO upstream call made
   - success               -> assistant content string
 """
 import os
@@ -21,6 +23,16 @@ from fastapi import HTTPException
 
 from .kimi_gateway import KIMI_BASE_URL, KIMI_MODEL, KIMI_REASONING_EFFORT
 from .kimi_parse import extract_assistant_content
+from .resilience import RETRYABLE_STATUS, CircuitBreaker, CircuitOpenError, call_with_resilience
+
+# ONE breaker for the ONE upstream path (RESILIENCE-1). Process-local and
+# honestly reported as such by .status() — it resets on restart.
+KIMI_BREAKER = CircuitBreaker("kimi-upstream")
+
+
+def kimi_breaker_status() -> Dict[str, Any]:
+    """Introspection for health/debug surfaces; honestly process-local."""
+    return KIMI_BREAKER.status()
 
 
 def chat_completion(system: str, user: str, *,
@@ -60,17 +72,33 @@ def chat_completion(system: str, user: str, *,
         payload["tools"] = tools
         payload["tool_choice"] = "auto"
 
+    # bump counts ONCE per logical call, never per retry attempt (cost law).
     bump("kimi", len(system) + len(user))
-    res = requests.post(
-        f"{KIMI_BASE_URL}/chat/completions",
-        json=payload,
-        headers={"Authorization": f"Bearer {kimi_key}", "Content-Type": "application/json"},
-        timeout=timeout,
-    )
-    if res.status_code != 200:
-        raise HTTPException(status_code=res.status_code, detail=f"Kimi Engine Fault: {res.text[:400]}")
+
+    def _single_attempt() -> Dict[str, Any]:
+        res = requests.post(
+            f"{KIMI_BASE_URL}/chat/completions",
+            json=payload,
+            headers={"Authorization": f"Bearer {kimi_key}", "Content-Type": "application/json"},
+            timeout=timeout,
+        )
+        if res.status_code != 200:
+            raise HTTPException(status_code=res.status_code, detail=f"Kimi Engine Fault: {res.text[:400]}")
+        return res.json()
+
+    try:
+        data = call_with_resilience(
+            _single_attempt,
+            KIMI_BREAKER,
+            transient_exceptions=(requests.exceptions.RequestException,),
+            is_transient_status=lambda e: isinstance(e, HTTPException) and e.status_code in RETRYABLE_STATUS,
+        )
+    except CircuitOpenError as exc:
+        # Fail fast, honestly named, zero upstream spend, no 30s timeout stall.
+        # 503 keeps the route contract (transient upstream faults map to 503).
+        raise HTTPException(status_code=503, detail=f"Kimi upstream unavailable — {exc}") from exc
     maybe_alarm()
-    return extract_assistant_content(res.json())
+    return extract_assistant_content(data)
 
 
 def chat_dict(system: str, user: str, *, tools: Optional[list] = None,
