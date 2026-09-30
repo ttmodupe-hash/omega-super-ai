@@ -60,7 +60,11 @@ class EngineDiagnosticRunner:
     KEYWORD_TARGETS = {"animation", "visual", "training", "v25", "render"}
 
     def __init__(self, project_root: Optional[Path] = None) -> None:
-        self.project_root = project_root or Path(__file__).resolve().parent.parent
+        # This file lives at engine/test_animation_debug.py; the backend package
+        # it diagnoses lives at engine/backend/. parent.parent resolves to the
+        # merge-repo root, whose own backend/ package shadows engine/backend and
+        # breaks every import below.
+        self.project_root = project_root or Path(__file__).resolve().parent
         if str(self.project_root) not in sys.path:
             sys.path.insert(0, str(self.project_root))
         self.summary = DiagnosticSummary()
