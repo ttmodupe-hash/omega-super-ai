@@ -17,3 +17,10 @@ engine.zip
 chunks_security/
 chunks_to_push/
 training_parts/
+# ARCH-RESTRUCTURE-1 harvest: coverage/log/build artifacts stay out of context
+*.log
+.coverage
+htmlcov/
+dist/
+build/
+env/
