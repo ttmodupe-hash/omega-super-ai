@@ -69,6 +69,7 @@ from .heritage_engine import router as heritage_router
 from .iks_engine import router as iks_router
 from .bill_audit import router as bill_audit_router
 from .async_jobs import router as jobs_router
+from .civic_engine import router as civic_router
 from .research_sources import router as research_router
 from .payment_routers import regional_payment_router
 from .mesh_relay import router as mesh_relay_router
@@ -321,7 +322,8 @@ def _write_audit_record(request: Request, task, released_status) -> None:
 
 
 
-# ---------- Prometheus request telemetry (best-effort, never breaks business path) ----------
+# ---------- Prometheus request telemetry (best-effort, never breaks business pat
+h) ----------
 app.middleware("http")(metrics_middleware)
 
 
@@ -480,6 +482,7 @@ app.include_router(heritage_router)  # HERITAGE-1: sourced heritage/theological 
 app.include_router(iks_router)  # IKS-1: sourced ethnobotanical archive, fail-closed data
 app.include_router(bill_audit_router)  # BILL-AUDIT-1: deterministic Consumer Shield bill audit
 app.include_router(jobs_router)  # JOBS-1: zero-infra async dispatch + polling + Postgres job ledger
+app.include_router(civic_router)  # CIVIC-1: neutral, sourced voter education (LangGraph + fake sync loop rejected)
 
 
 # ---------- PWA Static Serving (LAST) ----------
